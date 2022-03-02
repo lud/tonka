@@ -1,0 +1,43 @@
+gitlab = issues_repository(params)
+issues = issues_fetch_all(gitlab)
+queries = map(params_groups, compile_mql)
+issues = filter_issues(issues, query)
+report = generate_report(issues, params)
+target = team_member(name)
+post = encode_slack_rich(report)
+transport = slack(target)
+post(transport, post)
+
+
+------------------------
+
+gitlab :: struct
+  - credentials :: string
+
+issues ::
+  - projects :: [string]
+  - source :: *gitlab
+
+groups[]
+  - label :: string
+  - query :: mql
+
+issues_groups
+  - issues :: *issues
+  - groups :: *groups
+
+issues_report
+  - issues_groups :: *issues_groups
+  - title :: string
+  - intro :: markdown
+
+target
+  - member :: member<slack>
+
+slack
+  - credentials :: string
+
+send_slack
+  - post :: *issues_report :: booklet
+  - target :: *target
+  - transport :: *slack

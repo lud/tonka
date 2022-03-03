@@ -2,8 +2,13 @@ defmodule Tonka.ReflectionTest do
   alias Tonka.Core.Reflection
   use ExUnit.Case, async: true
 
+  defmodule A do
+    @callback noop() :: :ok
+  end
+
   defmodule ImplementsA do
     @behaviour A
+    def noop, do: :ok
   end
 
   defmodule Other do

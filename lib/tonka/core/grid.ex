@@ -25,6 +25,14 @@ defmodule Tonka.Core.Grid do
     def message(_), do: "the grid has no input caster defined"
   end
 
+  defmodule UnmappedInputError do
+    defexception [:op_key, :input_key]
+
+    def message(%{op_key: op_key, input_key: input_key}) do
+      "unmapped input #{inspect(input_key)} for operation #{inspect(op_key)}"
+    end
+  end
+
   @enforce_keys [:specs, :outputs, :states, :input_caster]
   defstruct @enforce_keys
 
@@ -114,24 +122,12 @@ defmodule Tonka.Core.Grid do
 
     input_specs
     |> Enum.map(fn input ->
-      source_key = Map.fetch!(mapped_inputs, input.key)
+      input_key = input.key
 
-      output =
-        case source_key do
-          :incast ->
-            incast |> IO.inspect(label: "incast")
-            %{module: caster_module, params: caster_params} = incast
-            caster_params |> IO.inspect(label: "caster_params")
-            caster_module.output_spec(caster_params)
-
-          _ ->
-            %{module: source_module} = Map.fetch!(specs, source_key)
-            source_module.output_spec()
-        end
-
-      output |> IO.inspect(label: "output")
-
-      validate_type_compat(input, output, op_key)
+      with {:ok, source_key} <- fetch_mapped_input_source_key(mapped_inputs, input_key, op_key) do
+        output = fetch_mapped_source_output(specs, source_key, incast)
+        validate_type_compat(input, output, op_key)
+      end
     end)
     |> Enum.filter(fn
       :ok -> false
@@ -140,6 +136,27 @@ defmodule Tonka.Core.Grid do
     |> case do
       [] -> :ok
       errors -> {:error, Keyword.values(errors)}
+    end
+  end
+
+  defp fetch_mapped_input_source_key(mapped_inputs, input_key, op_key) do
+    case Map.fetch(mapped_inputs, input_key) do
+      :error -> {:error, %UnmappedInputError{op_key: op_key, input_key: input_key}}
+      {:ok, source_key} -> {:ok, source_key}
+    end
+  end
+
+  defp fetch_mapped_source_output(specs, source_key, incast) do
+    case source_key do
+      :incast ->
+        incast |> IO.inspect(label: "incast")
+        %{module: caster_module, params: caster_params} = incast
+        caster_params |> IO.inspect(label: "caster_params")
+        caster_module.output_spec(caster_params)
+
+      _ ->
+        %{module: source_module} = Map.fetch!(specs, source_key)
+        source_module.output_spec()
     end
   end
 

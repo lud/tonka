@@ -262,5 +262,27 @@ defmodule Tonka.GridTest do
     end
   end
 
-  test "the grid will verify that every input is mapped"
+  test "the grid will verify that the grid input is mapped" do
+    grid =
+      Grid.new()
+      |> Grid.add_operation("consumer", RequiresAText, inputs: %{mytext: "provider"})
+      # Here we provide and integer to the consumer, which cannt work
+      |> Grid.add_operation("provider", ProvidesAnInt, inputs: %{_: :incast})
+
+    assert_raise Grid.NoInputCasterError, fn ->
+      Grid.run(grid, :some_input)
+    end
+  end
+
+  test "the grid will verify that every input is mapped" do
+    grid =
+      Grid.new()
+      |> Grid.set_input(NoCaster, params: %{type: {:raw, :pid}})
+      # here we do not map the input :mytext for RequiresAText
+      |> Grid.add_operation("consumer", RequiresAText)
+
+    assert_raise Grid.UnmappedInputError, fn ->
+      Grid.run(grid, :some_input)
+    end
+  end
 end

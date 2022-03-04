@@ -1,49 +1,45 @@
 defmodule Tonka.Core.Grid do
+  alias Tonka.Core.Operation
+
+  alias Tonka.Core.Grid.{
+    InvalidInputTypeError,
+    NoInputCasterError,
+    UnmappedInputError
+  }
+
+  alias Tonka.Core.InputCaster
   alias __MODULE__
 
   @moduledoc """
   A grid is an execution context for multiple operations.
   """
 
-  defmodule InvalidInputTypeError do
-    defexception [:op_key, :input_key, :expected_type, :provided_type]
-
-    def message(%{
-          op_key: op_key,
-          input_key: input_key,
-          expected_type: input_type,
-          provided_type: provided_type
-        }) do
-      "invalid input type for operation #{inspect(op_key)} at input #{inspect(input_key)}," <>
-        " expected: #{inspect(input_type)} but got #{inspect(provided_type)}"
-    end
-  end
-
-  defmodule NoInputCasterError do
-    defexception []
-
-    def message(_), do: "the grid has no input caster defined"
-  end
-
-  defmodule UnmappedInputError do
-    defexception [:op_key, :input_key]
-
-    def message(%{op_key: op_key, input_key: input_key}) do
-      "unmapped input #{inspect(input_key)} for operation #{inspect(op_key)}"
-    end
-  end
+  @type input_caster_opt :: {:params, map}
+  @type input_caster_opts :: [input_caster_opt]
+  @type outputs :: %{optional(binary | :incast) => term}
+  @type op_spec :: %{module: module, input: %{optional(atom) => binary | :incast}, params: map}
+  @type specs :: %{optional(binary) => op_spec}
+  @type states :: %{optional(binary) => :uninitialized | :called}
 
   @enforce_keys [:specs, :outputs, :states, :input_caster]
   defstruct @enforce_keys
+
+  @type t :: %__MODULE__{
+          specs: specs,
+          outputs: outputs,
+          states: states,
+          input_caster: {InputCaster.t(), incast_params :: map}
+        }
 
   def new do
     %Grid{specs: %{}, outputs: %{}, states: %{}, input_caster: nil}
   end
 
-  def set_input(grid, module, spec \\ %{})
+  @spec set_input(t, InputCaster.buildable(), input_caster_opts | map) :: t
+  def set_input(grid, caster, spec \\ %{})
 
-  def set_input(%Grid{input_caster: nil} = grid, module, spec) do
-    %Grid{grid | input_caster: cast_incast_spec(module, spec)}
+  def set_input(%Grid{input_caster: _} = grid, caster, spec) do
+    %Grid{grid | input_caster: build_incast_spec(caster, spec)}
   end
 
   def add_operation(grid, key, module, spec \\ %{})
@@ -70,14 +66,16 @@ defmodule Tonka.Core.Grid do
     cast_op_spec(module, Map.new(spec))
   end
 
-  defp cast_incast_spec(module, spec) when is_map(spec) do
-    spec
-    |> Map.put(:module, module)
-    |> Map.put_new(:params, %{})
+  defp build_incast_spec(caster, spec) when is_map(spec) do
+    caster = InputCaster.build(caster)
+
+    spec = Map.put_new(spec, :params, %{})
+
+    {caster, spec}
   end
 
-  defp cast_incast_spec(module, spec) when is_list(spec) do
-    cast_incast_spec(module, Map.new(spec))
+  defp build_incast_spec(module, spec) when is_list(spec) do
+    build_incast_spec(module, Map.new(spec))
   end
 
   def validate(%Grid{} = grid) do
@@ -146,13 +144,10 @@ defmodule Tonka.Core.Grid do
     end
   end
 
-  defp fetch_mapped_source_output(specs, source_key, incast) do
+  defp fetch_mapped_source_output(specs, source_key, {incast, _}) do
     case source_key do
       :incast ->
-        incast |> IO.inspect(label: "incast")
-        %{module: caster_module, params: caster_params} = incast
-        caster_params |> IO.inspect(label: "caster_params")
-        caster_module.output_spec(caster_params)
+        incast.output_spec
 
       _ ->
         %{module: source_module} = Map.fetch!(specs, source_key)
@@ -185,9 +180,8 @@ defmodule Tonka.Core.Grid do
     grid |> validate!() |> call_input(input) |> run()
   end
 
-  defp call_input(%{input_caster: incast, outputs: outputs} = grid, input) do
-    %{module: caster_module, params: caster_params} = incast
-    output = caster_module.call(input, caster_params, %{})
+  defp call_input(%{input_caster: {incast, caster_params}, outputs: outputs} = grid, input) do
+    output = InputCaster.call(incast, input, caster_params, %{})
 
     %Grid{grid | outputs: Map.put(outputs, :incast, output)}
   end

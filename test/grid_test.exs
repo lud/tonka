@@ -7,7 +7,11 @@ defmodule Tonka.GridTest do
   defmodule NoCaster do
     @behaviour Tonka.Core.InputCaster
 
-    def output_spec(%{type: type}) do
+    def for_type(type) do
+      Tonka.Core.InputCaster.new(module: __MODULE__, output_spec: _output_spec(type))
+    end
+
+    def _output_spec(type) do
       %Operation.OutputSpec{type: type}
     end
 
@@ -75,7 +79,7 @@ defmodule Tonka.GridTest do
 
     grid =
       Grid.new()
-      |> Grid.set_input(NoCaster, params: %{type: {:raw, :pid}})
+      |> Grid.set_input(NoCaster.for_type({:raw, :pid}))
       |> Grid.add_operation("a", MessageParamSender,
         inputs: %{parent: :incast},
         params: %{message: {ref, "hello"}}
@@ -134,7 +138,7 @@ defmodule Tonka.GridTest do
 
     grid =
       Grid.new()
-      |> Grid.set_input(NoCaster, params: %{type: {:raw, :binary}})
+      |> Grid.set_input(NoCaster.for_type({:raw, :binary}))
       |> Grid.add_operation("a", InputMessageSender,
         inputs: %{message: "b"},
         params: %{parent: this}
@@ -216,7 +220,7 @@ defmodule Tonka.GridTest do
 
     grid =
       Grid.new()
-      |> Grid.set_input(NoCaster, params: %{type: {:raw, :pid}})
+      |> Grid.set_input(NoCaster.for_type({:raw, :pid}))
       |> Grid.add_operation("consumer", RequiresAText,
         inputs: %{mytext: "provider"},
         params: %{parent: self(), tag: ref}
@@ -233,7 +237,7 @@ defmodule Tonka.GridTest do
 
     grid =
       Grid.new()
-      |> Grid.set_input(NoCaster, params: %{type: {:raw, :pid}})
+      |> Grid.set_input(NoCaster.for_type({:raw, :pid}))
       |> Grid.add_operation("consumer", RequiresAText,
         inputs: %{mytext: "provider"},
         params: %{parent: self(), tag: ref}
@@ -277,7 +281,7 @@ defmodule Tonka.GridTest do
   test "the grid will verify that every input is mapped" do
     grid =
       Grid.new()
-      |> Grid.set_input(NoCaster, params: %{type: {:raw, :pid}})
+      |> Grid.set_input(NoCaster.for_type({:raw, :pid}))
       # here we do not map the input :mytext for RequiresAText
       |> Grid.add_operation("consumer", RequiresAText)
 

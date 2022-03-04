@@ -192,7 +192,6 @@ defmodule Tonka.Core.Grid do
 
   defp run(grid) do
     runnable = find_runnable(grid)
-    runnable |> IO.inspect(label: "runnable")
 
     case runnable do
       {:ok, key} -> grid |> call_op(key) |> run()

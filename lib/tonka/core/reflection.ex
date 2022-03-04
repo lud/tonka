@@ -1,4 +1,8 @@
 defmodule Tonka.Core.Reflection do
+  @moduledoc """
+  Helpers to extract information from language structures like modules or
+  functions.
+  """
   def implements_behaviour?(module, behaviour) do
     match_behaviour(behaviour, module.module_info(:attributes))
   end

@@ -13,7 +13,7 @@ defmodule Tonka.Core.Operation do
   @callback input_specs() :: [InputSpec.t()]
   @callback output_spec() :: OutputSpec.t()
 
-  @callback call(op_in, injects :: map) :: op_out
+  @callback call(op_in, params, injects :: map) :: op_out
 
   defmacro __using__(_) do
     quote do

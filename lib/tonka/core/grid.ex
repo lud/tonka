@@ -202,7 +202,7 @@ defmodule Tonka.Core.Grid do
 
     %{module: module, params: params} = Map.fetch!(specs, key)
 
-    output = module.call(inputs, %{Tonka.T.Params => params})
+    output = module.call(inputs, params, %{})
 
     %Grid{
       grid

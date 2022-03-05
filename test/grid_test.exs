@@ -71,7 +71,7 @@ defmodule Tonka.GridTest do
       }
     end
 
-    def call(%{parent: parent}, %{Tonka.T.Params => %{message: message}}) do
+    def call(%{parent: parent}, %{message: message}, _) do
       send(parent, message)
       :ok
     end
@@ -109,7 +109,7 @@ defmodule Tonka.GridTest do
       }
     end
 
-    def call(%{text: text}, %{Tonka.T.Params => %{tag: tag}}) do
+    def call(%{text: text}, %{tag: tag}, _) do
       {tag, String.upcase(text)}
     end
   end
@@ -130,7 +130,7 @@ defmodule Tonka.GridTest do
       }
     end
 
-    def call(%{message: message}, %{Tonka.T.Params => %{parent: parent}}) do
+    def call(%{message: message}, %{parent: parent}, _) do
       send(parent, message)
       :ok
     end
@@ -175,7 +175,7 @@ defmodule Tonka.GridTest do
       }
     end
 
-    def call(%{mytext: mytext}, %{Tonka.T.Params => %{parent: parent, tag: tag}})
+    def call(%{mytext: mytext}, %{parent: parent, tag: tag}, _)
         when is_binary(mytext) do
       message = {tag, String.upcase(mytext)}
       send(parent, message)
@@ -196,7 +196,7 @@ defmodule Tonka.GridTest do
       }
     end
 
-    def call(_, _) do
+    def call(_, _, _) do
       Base.encode16(:crypto.strong_rand_bytes(12))
     end
   end
@@ -214,7 +214,7 @@ defmodule Tonka.GridTest do
       }
     end
 
-    def call(_, _) do
+    def call(_, _, _) do
       :erlang.system_time()
     end
   end
@@ -252,7 +252,7 @@ defmodule Tonka.GridTest do
     # At this point everything is fine. But when we will try to build the grid
     # it will fail. It must not fail because of the guard in:
     #
-    #     def call(%{mytext: mytext}, %{Tonka.T.Params => %{parent: parent, tag: tag}})
+    #     def call(%{mytext: mytext}, %{parent: parent, tag: tag}, _)
     #         when is_binary(mytext)
     #
     # But rather raise an exception regarding the control of inputs

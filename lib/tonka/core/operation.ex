@@ -27,7 +27,13 @@ defmodule Tonka.Core.Operation do
     nil
   end
 
-  defmacro __before_compile__(env) do
-    nil
+  defmacro __before_compile__(_env) do
+    quote do
+      alias Tonka.Core.Operation
+      @spec input_specs() :: [Operation.InputSpec.t()]
+      def input_specs() do
+        :x
+      end
+    end
   end
 end

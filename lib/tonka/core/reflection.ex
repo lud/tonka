@@ -2,6 +2,9 @@ defmodule Tonka.Core.Reflection do
   @moduledoc """
   Helpers to extract information from language structures like modules or
   functions.
+
+  Type information is extracted from beam files, which is a slow operation.
+  These helpers are intended to be used in tests, not in production code.
   """
   def implements_behaviour?(module, behaviour) do
     match_behaviour(behaviour, module.module_info(:attributes))
@@ -47,9 +50,12 @@ defmodule Tonka.Core.Reflection do
     do: {:list, shrink_type(param)}
 
   defp shrink_type({:remote_type, _, [{:atom, _, :elixir}, {:atom, 0, elixir_type}, []]}),
-    do: elixir_type(elixir_type)
+    do: elixir_type_to_erlang_type(elixir_type)
 
-  defp elixir_type(:charlist),
+  defp shrink_type({:remote_type, _, [{:atom, _, module}, {:atom, _, type}, []]}),
+    do: {:remote_type, module, type}
+
+  defp elixir_type_to_erlang_type(:charlist),
     do: {:list, :char}
 
   defp find_function_spec(dbgi_attributes, module, function, arity) do

@@ -57,3 +57,8 @@ reset-database:
 
 seed-database:
     mix run priv/repo/seeds.exs
+
+clean-dep dep:
+    rm -rvf _build/dev/lib/{{dep}}
+    rm -rvf _build/test/lib/{{dep}}
+    rm -rvf _build/prod/lib/{{dep}}

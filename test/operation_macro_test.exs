@@ -5,11 +5,11 @@ defmodule Tonka.OperationMacroTest do
   alias Tonka.Test.Fixtures.OpOneInexistingInput
   use ExUnit.Case, async: true
 
-  test "the __using__ macro defines operation behaviour" do
+  test "using defines operation behaviour" do
     assert Reflection.implements_behaviour?(OpNoInputs, Operation)
   end
 
-  test "the __using__ macro exports input_specs/0 when no input is declared" do
+  test "using exports input_specs/0 when no input is declared" do
     assert Reflection.load_function_exported?(OpNoInputs, :input_specs, 0)
 
     {args, return} = Reflection.function_spec(OpNoInputs, :input_specs, 0)
@@ -19,7 +19,7 @@ defmodule Tonka.OperationMacroTest do
     assert [] = OpNoInputs.input_specs()
   end
 
-  test "the __using__ macro exports the actual input specs with typespec" do
+  test "using exports the actual input specs with typespec" do
     assert Reflection.load_function_exported?(OpOneInexistingInput, :input_specs, 0)
 
     {args, return} = Reflection.function_spec(OpOneInexistingInput, :input_specs, 0)
@@ -29,7 +29,7 @@ defmodule Tonka.OperationMacroTest do
     assert [%Operation.InputSpec{type: A.B.C, key: :myvar}] = OpOneInexistingInput.input_specs()
   end
 
-  test "the __using__ macro exports the output spec with typespec" do
+  test "using exports the output spec with typespec" do
     assert Reflection.load_function_exported?(OpOneInexistingInput, :output_spec, 0)
 
     {args, return} = Reflection.function_spec(OpOneInexistingInput, :output_spec, 0)
@@ -38,4 +38,14 @@ defmodule Tonka.OperationMacroTest do
 
     assert %Operation.OutputSpec{type: X.Y.Z} = OpOneInexistingInput.output_spec()
   end
+
+  # test "using the call macro defines the call callback" do
+  #   assert Reflection.load_function_exported?(OpOneInexistingInput, :call, 3)
+
+  #   {args, return} = Reflection.function_spec(OpOneInexistingInput, :output_spec, 0)
+  #   assert 0 = tuple_size(args)
+  #   assert {:remote_type, Tonka.Core.Operation.OutputSpec, :t} = return
+
+  #   assert %Operation.OutputSpec{type: X.Y.Z} = OpOneInexistingInput.output_spec()
+  # end
 end

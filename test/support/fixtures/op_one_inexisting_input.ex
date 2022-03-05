@@ -6,5 +6,5 @@ defmodule Tonka.Test.Fixtures.OpOneInexistingInput do
 
   input myvar in A.B.C
 
-  output(X.Y.Z)
+  output X.Y.Z
 end

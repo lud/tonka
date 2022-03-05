@@ -4,6 +4,8 @@ defmodule Tonka.Core.Operation do
   in a `Tonka.Core.Grid`.
   """
 
+  alias Tonka.Core.Operation.{InputSpec, OutputSpec}
+
   @type params :: map
   @type op_in :: map
   @type op_out :: {:ok, term} | {:error, term} | {:async, Task.t()}
@@ -82,7 +84,8 @@ defmodule Tonka.Core.Operation do
     quote do
       alias unquote(__MODULE__), as: Operation
 
-      if nil == @tonka_output_type and not Module.defines?(__MODULE__, {:output_spec, 0}, :def) do
+      if nil == Module.get_attribute(__MODULE__, :tonka_output_type) and
+           not Module.defines?(__MODULE__, {:output_spec, 0}, :def) do
         raise """
         #{inspect(__MODULE__)} must define an output
 

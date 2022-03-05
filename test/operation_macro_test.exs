@@ -26,6 +26,16 @@ defmodule Tonka.OperationMacroTest do
     assert 0 = tuple_size(args)
     assert {:list, {:remote_type, Tonka.Core.Operation.InputSpec, :t}} = return
 
-    assert [%Operation.InputSpec{}] = OpOneInexistingInput.input_specs()
+    assert [%Operation.InputSpec{type: A.B.C, key: :myvar}] = OpOneInexistingInput.input_specs()
+  end
+
+  test "the __using__ macro exports the output spec with typespec" do
+    assert Reflection.load_function_exported?(OpOneInexistingInput, :output_spec, 0)
+
+    {args, return} = Reflection.function_spec(OpOneInexistingInput, :output_spec, 0)
+    assert 0 = tuple_size(args)
+    assert {:remote_type, Tonka.Core.Operation.OutputSpec, :t} = return
+
+    assert %Operation.OutputSpec{type: X.Y.Z} = OpOneInexistingInput.output_spec()
   end
 end

@@ -14,5 +14,20 @@ defmodule Tonka.Core.Operation do
   @callback call(op_in, injects :: map) :: op_out
 
   defmacro __using__(_) do
+    quote do
+      alias unquote(__MODULE__), as: Operation
+      @behaviour Operation
+      @before_compile Operation
+      import Operation, only: :macros
+    end
+  end
+
+  defmacro input(definition) do
+    definition |> IO.inspect(label: "definition")
+    nil
+  end
+
+  defmacro __before_compile__(env) do
+    nil
   end
 end

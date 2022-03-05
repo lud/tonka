@@ -1,5 +1,7 @@
 defmodule Tonka.Core.Grid do
-  alias Tonka.Core.Operation
+  @moduledoc """
+  A grid is an execution context for multiple operations.
+  """
 
   alias Tonka.Core.Grid.{
     InvalidInputTypeError,
@@ -9,10 +11,6 @@ defmodule Tonka.Core.Grid do
 
   alias Tonka.Core.InputCaster
   alias __MODULE__
-
-  @moduledoc """
-  A grid is an execution context for multiple operations.
-  """
 
   @type input_caster_opt :: {:params, map}
   @type input_caster_opts :: [input_caster_opt]

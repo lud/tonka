@@ -15,6 +15,10 @@ defmodule Tonka.GridTest do
       %Operation.OutputSpec{type: type}
     end
 
+    def output_spec() do
+      raise "#{inspect(__MODULE__)}.output_spec/0 cannot be called directly"
+    end
+
     def call(term, _, _) do
       term
     end
@@ -254,7 +258,6 @@ defmodule Tonka.GridTest do
     # But rather raise an exception regarding the control of inputs
 
     input = "some raw string"
-    input_type = {:native, String}
 
     assert match?(
              {:error, {:invalid_inputs, [%InvalidInputTypeError{}]}},

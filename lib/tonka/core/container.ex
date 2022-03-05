@@ -15,5 +15,6 @@ defmodule Tonka.Core.Container do
           | {typespec, typespec, typespec, typespec, typespec, typespec, typespec}
           | {typespec, typespec, typespec, typespec, typespec, typespec, typespec, typespec}
 
-  @type typespec :: typealias | {f_params, typespec} | {:struct, module}
+  @type function_spec :: {f_params, typespec}
+  @type typespec :: typealias | function_spec | {:struct, module}
 end

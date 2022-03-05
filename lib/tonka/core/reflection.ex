@@ -26,12 +26,15 @@ defmodule Tonka.Core.Reflection do
     spec = find_function_spec(dbgi_attribues, module, function, arity)
     {:attribute, _, :spec, {{_, _}, funspec}} = spec
     [{:type, _, :fun, arg_ret_spec}] = funspec
-
     [{:type, _, :product, args}, return] = arg_ret_spec
-
     args = args |> Enum.map(&shrink_type/1) |> :erlang.list_to_tuple()
     return = shrink_type(return)
     {args, return}
+  end
+
+  def load_function_exported?(module, function, arity) do
+    Code.ensure_loaded!(module)
+    function_exported?(module, function, arity)
   end
 
   defp shrink_type({:type, _, t, []}),
@@ -92,9 +95,5 @@ defmodule Tonka.Core.Reflection do
             data
         end
     end
-  end
-
-  defp struct_type(x, y) do
-    {x, y}
   end
 end

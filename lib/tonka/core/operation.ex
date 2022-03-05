@@ -16,7 +16,7 @@ defmodule Tonka.Core.Operation do
   @callback call(op_in, params, injects :: map) :: op_out
 
   defmacro __using__(_) do
-    quote do
+    quote location: :keep do
       alias unquote(__MODULE__), as: Operation
 
       @behaviour Operation
@@ -24,24 +24,47 @@ defmodule Tonka.Core.Operation do
 
       import Operation, only: :macros
 
-      Module.register_attribute(__MODULE__, :tonka_input_specs, accumulate: true)
+      @tonka_input_called false
+      @tonka_call_called false
+      @tonka_output_called false
     end
   end
 
   defmacro input(definition) do
-    escaped = normalize_input(definition)
+    definition = normalize_input(definition)
+
+    module = __CALLER__.module
+
+    IO.puts("register #{inspect(definition)} in #{inspect(module)}")
+
+    Module.put_attribute(module, :tonka_input_specs, [
+      definition | Module.get_attribute(module, :tonka_input_specs, [])
+    ])
 
     quote location: :keep do
-      @tonka_input_specs unquote(escaped)
+      if @tonka_call_called, do: raise("cannot declare input after call")
+      @tonka_input_called true
     end
-    |> tap(&IO.puts(Macro.to_string(&1)))
+
+    # |> tap(&IO.puts(Macro.to_string(&1)))
   end
 
   defmacro output(typedef) do
     typedef = normalize_type(typedef)
 
-    quote do
+    quote location: :keep do
+      if @tonka_call_called, do: raise("cannot declare output after call")
+      if @tonka_output_called, do: raise("cannot declare output twice")
       @tonka_output_type unquote(typedef)
+    end
+  end
+
+  defmacro call(do: block) do
+    Module.put_attribute(__CALLER__.module, :tonka_call_block, block)
+
+    quote location: :keep do
+      if @tonka_call_called, do: raise("cannot declare call twice")
+      @tonka_call_called true
     end
   end
 
@@ -57,18 +80,21 @@ defmodule Tonka.Core.Operation do
     mod_type
   end
 
-  defmacro __before_compile__(_env) do
+  defmacro __before_compile__(env) do
     [
-      def_inputs(),
-      def_output()
+      def_inputs(env),
+      def_output(),
+      def_call(env)
     ]
   end
 
-  defp def_inputs do
-    quote do
+  defp def_inputs(env) do
+    specs = Module.get_attribute(env.module, :tonka_input_specs, [])
+
+    quote location: :keep do
       alias unquote(__MODULE__), as: Operation
 
-      @__built_input_specs for {varname, type} <- @tonka_input_specs,
+      @__built_input_specs for {varname, type} <- unquote(specs),
                                do: %Operation.InputSpec{key: varname, type: type}
 
       @impl unquote(__MODULE__)
@@ -81,7 +107,7 @@ defmodule Tonka.Core.Operation do
   end
 
   defp def_output do
-    quote do
+    quote location: :keep do
       alias unquote(__MODULE__), as: Operation
 
       if nil == Module.get_attribute(__MODULE__, :tonka_output_type) and
@@ -104,5 +130,47 @@ defmodule Tonka.Core.Operation do
         @__built_output_spec
       end
     end
+  end
+
+  defp def_call(env) do
+    input_specs = Module.get_attribute(env.module, :tonka_input_specs, [])
+    input_specs |> IO.inspect(label: "input_specs")
+    input_keys = Keyword.keys(input_specs)
+    input_keys |> IO.inspect(label: "input_keys")
+    input_vars = Enum.map(input_keys, fn k -> {k, Macro.var(k, nil)} end)
+    input_vars |> IO.inspect(label: "input_vars")
+
+    input =
+      quote do
+        %{unquote_splicing(input_vars)}
+      end
+      |> tap(&IO.puts(Macro.to_string(&1)))
+
+    block = Module.get_attribute(env.module, :tonka_call_block)
+
+    quote location: :keep do
+      if not @tonka_call_called and not Module.defines?(__MODULE__, {:call, 3}, :def) do
+        raise """
+        #{inspect(__MODULE__)} must define the call function
+
+        For instance, with the output/1 macro:
+
+            use #{inspect(unquote(__MODULE__))}
+            input myinput Some.In.Type
+
+            call do
+              myinput + 1
+            end
+        """
+      end
+
+      @tonka_call_block |> IO.inspect(label: "@tonka_call_block")
+
+      @impl unquote(__MODULE__)
+      def call(unquote(input), _, _) do
+        unquote(block)
+      end
+    end
+    |> tap(&IO.puts(Macro.to_string(&1)))
   end
 end

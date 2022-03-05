@@ -16,7 +16,7 @@ defmodule Tonka.Test.Fixtures.OpOneInput do
 
   output MyOutput
 
-  # call do
-  #   myvar |> IO.inspect(label: "myvar")
-  # end
+  call do
+    myvar |> IO.inspect(label: "myvar")
+  end
 end

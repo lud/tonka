@@ -41,16 +41,16 @@ defmodule Tonka.OperationMacroTest do
              OpOneInput.output_spec()
   end
 
-  # test "using the call macro defines the call callback" do
-  #   assert Reflection.load_function_exported?(OpOneInput, :call, 3)
+  test "using the call macro defines the call callback" do
+    assert Reflection.load_function_exported?(OpOneInput, :call, 3)
 
-  #   {args, return} = Reflection.function_spec(OpOneInput, :call, 3)
-  #   assert 3 = tuple_size(args)
-  #   {input_types, param_type, inject_type} = args
-  #   assert []
-  #   assert {:remote_type, Tonka.Core.Operation.OutputSpec, :t} = return
+    {args, return} = Reflection.function_spec(OpOneInput, :call, 3)
+    assert 3 = tuple_size(args)
+    {input_types, param_type, inject_type} = args
+    assert []
+    assert {:remote_type, Tonka.Core.Operation.OutputSpec, :t} = return
 
-  #   assert %Operation.OutputSpec{type: Tonka.Test.Fixtures.OpOneInput.MyOutput} =
-  #            OpOneInput.output_spec()
-  # end
+    assert %Operation.OutputSpec{type: Tonka.Test.Fixtures.OpOneInput.MyOutput} =
+             OpOneInput.output_spec()
+  end
 end

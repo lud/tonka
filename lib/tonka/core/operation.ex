@@ -36,8 +36,6 @@ defmodule Tonka.Core.Operation do
 
     module = __CALLER__.module
 
-    IO.puts("register #{inspect(definition)} in #{inspect(module)}")
-
     Module.put_attribute(module, :tonka_input_specs, [
       definition | Module.get_attribute(module, :tonka_input_specs, [])
     ])
@@ -46,8 +44,6 @@ defmodule Tonka.Core.Operation do
       if @tonka_call_called, do: raise("cannot declare input after call")
       @tonka_input_called true
     end
-
-    # |> tap(&IO.puts(Macro.to_string(&1)))
   end
 
   defmacro output(typedef) do
@@ -148,7 +144,6 @@ defmodule Tonka.Core.Operation do
       quote do
         %{unquote_splicing(input_vars)}
       end
-      |> tap(&IO.puts(Macro.to_string(&1)))
 
     block = Module.get_attribute(env.module, :tonka_call_block)
 
@@ -174,7 +169,6 @@ defmodule Tonka.Core.Operation do
 
       Operation.input_typespec(input_types)
       Operation.output_typespec(output_type)
-      # @type output :: term
 
       @doc """
       Executes the operation.
@@ -196,14 +190,12 @@ defmodule Tonka.Core.Operation do
     quote bind_quoted: [x: x] do
       @type input_map :: unquote(x)
     end
-    |> tap(&IO.puts(Macro.to_string(&1)))
   end
 
-  defmacro output_typespec(x) do
-    quote bind_quoted: [x: x] do
-      @type output :: unquote(x)
+  defmacro output_typespec(t) do
+    quote bind_quoted: [t: t] do
+      @type output :: unquote(t)
     end
-    |> tap(&IO.puts(Macro.to_string(&1)))
   end
 
   def __raise_no_call(module) do

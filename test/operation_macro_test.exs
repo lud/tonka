@@ -48,7 +48,9 @@ defmodule Tonka.OperationMacroTest do
     assert 3 = tuple_size(args)
     {input_types, param_type, inject_type} = args
 
-    raise "todo check input types"
-    assert :"todo_type_returned_by_Tonka.Test.Fixtures.OpOneInput.MyInput" = return
+    assert {:user_type, :input_map} = input_types
+    assert :map = param_type
+    assert :map = inject_type
+    assert {:user_type, :output} = return
   end
 end

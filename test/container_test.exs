@@ -12,12 +12,17 @@ defmodule Tonka.ContainerTest do
 
   defmodule SomeStructService do
     @behaviour Container.Service
+
+    defstruct []
   end
 
-  test "a service module can be registered" do
-    # When a single atom is registered, it is considered as a utype (a
-    # userland abstract type)
-    container = Container.new()
-    assert %Container{} = container = Container.register(container, SomeStructService)
+  test "a service module can be registered and pulled" do
+    # When a single atom is registered, it is considered as a utype (a userland
+    # abstract type). Given we do not provide an implementation, the container
+    # expects that it is not only a Tonka.Core.Container.Type but also a
+    assert %Container{} = container = Container.register(Container.new(), SomeStructService)
+
+    # assert {:ok, %SomeStructService{}, %Container{} = new_container} =
+    #          Container.pull(container, SomeStructService)
   end
 end

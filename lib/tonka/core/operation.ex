@@ -5,6 +5,7 @@ defmodule Tonka.Core.Operation do
   """
 
   alias Tonka.Core.Operation.{InputSpec, OutputSpec}
+  alias Tonka.Core.Injector
 
   @type params :: map
   @type op_in :: map
@@ -32,13 +33,7 @@ defmodule Tonka.Core.Operation do
   end
 
   defmacro input(definition) do
-    definition = normalize_input(definition)
-
-    module = __CALLER__.module
-
-    Module.put_attribute(module, :tonka_input_specs, [
-      definition | Module.get_attribute(module, :tonka_input_specs, [])
-    ])
+    Injector.register_inject(__CALLER__.module, :tonka_input_specs, definition, :varname)
 
     quote location: :keep do
       if @tonka_call_called, do: raise("cannot declare input after call")
@@ -47,7 +42,7 @@ defmodule Tonka.Core.Operation do
   end
 
   defmacro output(typedef) do
-    typedef = normalize_type(typedef)
+    typedef = Injector.normalize_ctype(typedef)
 
     quote location: :keep do
       if @tonka_call_called, do: raise("cannot declare output after call")
@@ -66,22 +61,6 @@ defmodule Tonka.Core.Operation do
     end
   end
 
-  defp normalize_input({:in, _, [var, type]}) do
-    {normalize_vardef(var), normalize_type(type)}
-  end
-
-  defp normalize_vardef({varname, meta, nil}) when is_atom(varname) when is_list(meta) do
-    varname
-  end
-
-  # defp normalize_type({:__aliases__, _, _} = mod_type) do
-  #   mod_type
-  # end
-
-  defp normalize_type(any) do
-    any
-  end
-
   defmacro __before_compile__(env) do
     [
       def_inputs(env),
@@ -91,13 +70,13 @@ defmodule Tonka.Core.Operation do
   end
 
   defp def_inputs(env) do
-    specs = Module.get_attribute(env.module, :tonka_input_specs, [])
+    specs = Injector.registered_injects(env.module, :tonka_input_specs)
 
     quote location: :keep do
       alias unquote(__MODULE__), as: Operation
 
-      @__built_input_specs for {varname, type} <- unquote(specs),
-                               do: %Operation.InputSpec{key: varname, type: type}
+      @__built_input_specs for {key, defn} <- unquote(specs),
+                               do: %Operation.InputSpec{key: key, type: defn[:ctype]}
 
       @impl unquote(__MODULE__)
       @spec input_specs :: [Operation.InputSpec.t()]
@@ -135,16 +114,8 @@ defmodule Tonka.Core.Operation do
   end
 
   defp def_call(env) do
-    input_specs = Module.get_attribute(env.module, :tonka_input_specs, [])
     output_spec = Module.get_attribute(env.module, :tonka_output_type, nil)
-    input_keys = Keyword.keys(input_specs)
-    input_vars = Enum.map(input_keys, fn k -> {k, Macro.var(k, nil)} end)
-
-    input =
-      quote do
-        %{unquote_splicing(input_vars)}
-      end
-
+    input_injects = Injector.quoted_injects_map(env.module, :tonka_input_specs)
     block = Module.get_attribute(env.module, :tonka_call_block)
 
     quote location: :keep do
@@ -158,32 +129,22 @@ defmodule Tonka.Core.Operation do
         Operation.__raise_no_output(__MODULE__)
       end
 
-      input_types =
-        unquote(input_specs)
-        |> Enum.map(fn {key, type} -> {key, Operation.expand_input_type_quoted(type)} end)
-        |> then(&{:%{}, [], &1})
-
-      output_type = Operation.expand_input_type_quoted(unquote(output_spec))
+      output_type = Injector.expand_input_type_to_quoted(unquote(output_spec))
 
       @impl unquote(__MODULE__)
 
-      Operation.input_typespec(input_types)
+      unquote(Injector.quoted_injects_map_typedef(env.module, :tonka_input_specs, :input_map))
+
       Operation.output_typespec(output_type)
 
       @doc """
       Executes the operation.
       """
       @spec call(input_map, map, map) :: Operation.op_out(output)
-      def call(unquote(input), _, _) do
+      def call(unquote(input_injects), _, _) do
         unquote(block)
       end
     end
-  end
-
-  def expand_input_type_quoted(userland_type) do
-    userland_type
-    |> Tonka.Core.Container.expand_type()
-    |> Tonka.Core.Container.to_quoted_type()
   end
 
   defmacro input_typespec(x) do

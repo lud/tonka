@@ -55,6 +55,7 @@ defmodule Tonka.OperationMacroTest do
 
     assert :binary = Reflection.type(OpOneInput, :output)
 
-    assert :map = Reflection.type(OpOneInput, :input_map)
+    assert {:map, [myvar: {:remote_type, Tonka.Test.Fixtures.OpOneInput.MyInput, :t}]} =
+             Reflection.type(OpOneInput, :input_map)
   end
 end

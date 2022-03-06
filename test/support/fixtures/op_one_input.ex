@@ -28,7 +28,7 @@ defmodule Tonka.Test.Fixtures.OpOneInput do
   output MyOutput
 
   call do
-    myvar |> IO.inspect(label: "myvar in call")
+    IO.puts("myvar is #{inspect(myvar)}")
     "hello"
   end
 end

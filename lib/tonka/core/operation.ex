@@ -141,8 +141,6 @@ defmodule Tonka.Core.Operation do
   defp def_call(env) do
     input_specs = Module.get_attribute(env.module, :tonka_input_specs, [])
     output_spec = Module.get_attribute(env.module, :tonka_output_type, nil)
-
-    output_spec |> IO.inspect(label: "output_spec")
     input_keys = Keyword.keys(input_specs)
     input_vars = Enum.map(input_keys, fn k -> {k, Macro.var(k, nil)} end)
 
@@ -161,8 +159,6 @@ defmodule Tonka.Core.Operation do
         Operation.__raise_no_call(__MODULE__)
       end
 
-      @tonka_output_called |> IO.inspect(label: "@tonka_output_called")
-
       if not @tonka_output_called do
         Operation.__raise_no_output(__MODULE__)
       end
@@ -172,10 +168,7 @@ defmodule Tonka.Core.Operation do
         |> Enum.map(fn {key, type} -> {key, Operation.expand_input_type_quoted(type)} end)
         |> then(&{:%{}, [], &1})
 
-      output_type =
-        unquote(output_spec)
-        |> Operation.expand_input_type_quoted()
-        |> IO.inspect(label: "output_type")
+      output_type = Operation.expand_input_type_quoted(unquote(output_spec))
 
       @impl unquote(__MODULE__)
 

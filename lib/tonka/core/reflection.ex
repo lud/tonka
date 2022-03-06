@@ -154,8 +154,7 @@ defmodule Tonka.Core.Reflection do
       file ->
         case :beam_lib.chunks(file, [chunk]) do
           {:error, :beam_lib, reason} ->
-            reason |> IO.inspect(label: "reason")
-            raise "could not retrieve chunk #{inspect(chunk)} for #{module}"
+            raise "could not retrieve chunk #{inspect(chunk)} for #{module}: #{inspect(reason)}"
 
           {:ok, {^module, [{^chunk, data}]}} ->
             data

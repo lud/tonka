@@ -1,26 +1,28 @@
+defmodule Tonka.Test.Fixtures.OpOneInput.MyInput do
+  @behaviour Tonka.Core.Container.Type
+
+  defstruct dummy: true
+
+  @type t :: %__MODULE__{}
+
+  def expand_type do
+    {:remote_type, __MODULE__, :t}
+  end
+end
+
+defmodule Tonka.Test.Fixtures.OpOneInput.MyOutput do
+  @behaviour Tonka.Core.Container.Type
+
+  def expand_type do
+    {:type, :binary}
+  end
+end
+
 defmodule Tonka.Test.Fixtures.OpOneInput do
   alias Tonka.Core.Operation
+  alias Tonka.Test.Fixtures.OpOneInput.MyInput
+  alias Tonka.Test.Fixtures.OpOneInput.MyOutput
   use Operation
-
-  defmodule MyInput do
-    @behaviour Tonka.Core.Container.Type
-
-    defstruct dummy: true
-
-    @type t :: %__MODULE__{}
-
-    def expand_type do
-      {:remote_type, __MODULE__, :t}
-    end
-  end
-
-  defmodule MyOutput do
-    @behaviour Tonka.Core.Container.Type
-
-    def expand_type do
-      {:type, :binary}
-    end
-  end
 
   def __mix_recompile__?, do: true
 
@@ -29,6 +31,6 @@ defmodule Tonka.Test.Fixtures.OpOneInput do
 
   call do
     IO.puts("myvar is #{inspect(myvar)}")
-    "hello"
+    {:ok, "hello"}
   end
 end

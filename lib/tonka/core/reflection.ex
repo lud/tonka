@@ -65,11 +65,14 @@ defmodule Tonka.Core.Reflection do
   defp shrink_type({:type, _, :list, [param]}),
     do: {:list, shrink_type(param)}
 
-  defp shrink_type({:remote_type, _, [{:atom, _, :elixir}, {:atom, 0, elixir_type}, []]}),
+  defp shrink_type({:remote_type, _, [{:atom, _, :elixir}, {:atom, _, elixir_type}, []]}),
     do: elixir_type_to_erlang_type(elixir_type)
 
   defp shrink_type({:remote_type, _, [{:atom, _, module}, {:atom, _, type}, []]}),
     do: {:remote_type, module, type}
+
+  defp shrink_type({:remote_type, _, [{:atom, _, module}, {:atom, _, type}, args]}),
+    do: {:remote_type, module, type, Enum.map(args, &shrink_type/1)}
 
   defp shrink_type({:type, _, :fun, [{:type, _, :product, args}, ret]}),
     do: {fun_args(args), shrink_type(ret)}

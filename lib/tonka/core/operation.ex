@@ -9,7 +9,7 @@ defmodule Tonka.Core.Operation do
   @type params :: map
   @type op_in :: map
   @type op_out :: op_out(term)
-  @type op_out(value) :: {:ok, value} | {:error, term} | {:async, Task.t()}
+  @type op_out(output) :: {:ok, output} | {:error, term} | {:async, Task.t()}
 
   @callback input_specs() :: [InputSpec.t()]
   @callback output_spec() :: OutputSpec.t()
@@ -173,7 +173,7 @@ defmodule Tonka.Core.Operation do
       @doc """
       Executes the operation.
       """
-      @spec call(input_map, map, map) :: output
+      @spec call(input_map, map, map) :: Operation.op_out(output)
       def call(unquote(input), _, _) do
         unquote(block)
       end

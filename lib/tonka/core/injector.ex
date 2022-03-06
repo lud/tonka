@@ -5,19 +5,19 @@ defmodule Tonka.Core.Injector do
 
   defp empty_bucket, do: []
 
-  def register_inject(module, bucket, definition, key_from) when key_from in [:varname, :ctype] do
-    {bound_var, ctype} = normalize_defintion(definition)
+  def register_inject(module, bucket, definition, key_from) when key_from in [:varname, :utype] do
+    {bound_var, utype} = normalize_defintion(definition)
 
     key =
       case key_from do
         :varname -> varname(bound_var)
-        :ctype -> ctype
+        :utype -> utype
       end
 
-    register_inject(module, bucket, key, bound_var, ctype)
+    register_inject(module, bucket, key, bound_var, utype)
   end
 
-  def register_inject(module, bucket, key, bound_var, ctype)
+  def register_inject(module, bucket, key, bound_var, utype)
       when is_atom(bucket) and is_atom(key) do
     inject_list = registered_injects(module, bucket)
 
@@ -28,25 +28,25 @@ defmodule Tonka.Core.Injector do
       end
     end)
 
-    inject = [bound_var: bound_var, ctype: ctype]
+    inject = [bound_var: bound_var, utype: utype]
     inject_list = [{key, inject} | inject_list]
     Module.put_attribute(module, bucket, inject_list)
     :ok
   end
 
   defp normalize_defintion({:in, _, [var, type]}) do
-    {normalize_vardef(var), normalize_ctype(type)}
+    {normalize_vardef(var), normalize_utype(type)}
   end
 
   defp normalize_vardef({varname, meta, nil}) when is_atom(varname) when is_list(meta) do
     varname
   end
 
-  def normalize_ctype({:__aliases__, _, _} = mod_type) do
+  def normalize_utype({:__aliases__, _, _} = mod_type) do
     mod_type
   end
 
-  def normalize_ctype({:type, t} = native_type) when is_atom(t) do
+  def normalize_utype({:type, t} = native_type) when is_atom(t) do
     native_type
   end
 
@@ -67,7 +67,7 @@ defmodule Tonka.Core.Injector do
   end
 
   def quoted_injects_map_typedef(module, bucket, type_name) do
-    # The container type (ctype) is an AST fragment, but
+    # The container type (utype) is an AST fragment, but
     # expand_input_type_to_quoted/1 must be called with an actual value, not a
     # quoted form. So the call must take place in the generated code (the quote
     # block).
@@ -78,12 +78,12 @@ defmodule Tonka.Core.Injector do
       inject_types =
         inject_specs
         |> Enum.map(fn {key, injected} ->
-          ctype =
+          utype =
             injected
-            |> Keyword.fetch!(:ctype)
+            |> Keyword.fetch!(:utype)
             |> Tonka.Core.Injector.expand_input_type_to_quoted()
 
-          {key, ctype}
+          {key, utype}
         end)
         |> then(&{:%{}, [], &1})
 

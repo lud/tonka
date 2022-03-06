@@ -42,7 +42,7 @@ defmodule Tonka.Core.Operation do
   end
 
   defmacro output(typedef) do
-    typedef = Injector.normalize_ctype(typedef)
+    typedef = Injector.normalize_utype(typedef)
 
     quote location: :keep do
       if @tonka_call_called, do: raise("cannot declare output after call")
@@ -76,7 +76,7 @@ defmodule Tonka.Core.Operation do
       alias unquote(__MODULE__), as: Operation
 
       @__built_input_specs for {key, defn} <- unquote(specs),
-                               do: %Operation.InputSpec{key: key, type: defn[:ctype]}
+                               do: %Operation.InputSpec{key: key, type: defn[:utype]}
 
       @impl unquote(__MODULE__)
       @spec input_specs :: [Operation.InputSpec.t()]

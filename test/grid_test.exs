@@ -1,6 +1,7 @@
 defmodule Tonka.GridTest do
   alias Tonka.Core.Grid
   alias Tonka.Core.Operation
+  alias Tonka.Core.Container
   alias Tonka.Core.Grid.InvalidInputTypeError
   use ExUnit.Case, async: true
 
@@ -58,7 +59,7 @@ defmodule Tonka.GridTest do
   defmodule MessageParamSender do
     def input_specs() do
       [
-        %Operation.InputSpec{
+        %Container.InjectSpec{
           key: :parent,
           type: {:raw, :pid}
         }
@@ -96,7 +97,7 @@ defmodule Tonka.GridTest do
   defmodule Upcaser do
     def input_specs() do
       [
-        %Operation.InputSpec{
+        %Container.InjectSpec{
           key: :text,
           type: {:raw, :binary}
         }
@@ -117,7 +118,7 @@ defmodule Tonka.GridTest do
   defmodule InputMessageSender do
     def input_specs() do
       [
-        %Operation.InputSpec{
+        %Container.InjectSpec{
           key: :message,
           type: {:raw, :term}
         }
@@ -162,7 +163,7 @@ defmodule Tonka.GridTest do
 
     def input_specs() do
       [
-        %Operation.InputSpec{
+        %Container.InjectSpec{
           key: :mytext,
           type: {:raw, :binary}
         }

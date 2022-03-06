@@ -1,4 +1,4 @@
-defmodule Tonka.Core.Operation.InputSpec do
+defmodule Tonka.Core.Container.InjectSpec do
   @moduledoc """
   Defines the specification of one input argument of a `Tonka.Core.Operation`.
   """

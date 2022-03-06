@@ -4,7 +4,8 @@ defmodule Tonka.Core.Operation do
   in a `Tonka.Core.Grid`.
   """
 
-  alias Tonka.Core.Operation.{InputSpec, OutputSpec}
+  alias Tonka.Core.Container.InjectSpec
+  alias Tonka.Core.Operation.OutputSpec
   alias Tonka.Core.Injector
 
   @type params :: map
@@ -12,7 +13,7 @@ defmodule Tonka.Core.Operation do
   @type op_out :: op_out(term)
   @type op_out(output) :: {:ok, output} | {:error, term} | {:async, Task.t()}
 
-  @callback input_specs() :: [InputSpec.t()]
+  @callback input_specs() :: [InjectSpec.t()]
   @callback output_spec() :: OutputSpec.t()
 
   @callback call(op_in, params, injects :: map) :: op_out
@@ -76,10 +77,10 @@ defmodule Tonka.Core.Operation do
       alias unquote(__MODULE__), as: Operation
 
       @__built_input_specs for {key, defn} <- unquote(specs),
-                               do: %Operation.InputSpec{key: key, type: defn[:utype]}
+                               do: %Tonka.Core.Container.InjectSpec{key: key, type: defn[:utype]}
 
       @impl unquote(__MODULE__)
-      @spec input_specs :: [Operation.InputSpec.t()]
+      @spec input_specs :: [Tonka.Core.Container.InjectSpec.t()]
 
       def input_specs do
         @__built_input_specs

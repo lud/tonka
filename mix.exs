@@ -47,7 +47,7 @@ defmodule Tonka.MixProject do
       # dev, test, tools
       {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
-      {:ex_doc, "~> 0.28.0", only: :dev, runtime: false},
+      {:ex_doc, "~> 0.28.0", only: [:dev, :test], runtime: false},
       {:mix_version, "~> 1.3", runtime: false},
       {:modkit, path: "~/src/modkit"},
       {:todo, "~> 1.6", runtime: false}

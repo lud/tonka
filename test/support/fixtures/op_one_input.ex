@@ -4,19 +4,31 @@ defmodule Tonka.Test.Fixtures.OpOneInput do
 
   defmodule MyInput do
     @behaviour Tonka.Core.Container.Type
+
+    defstruct dummy: true
+
+    @type t :: %__MODULE__{}
+
+    def expand_type do
+      {:remote_type, __MODULE__, :t}
+    end
   end
 
   defmodule MyOutput do
     @behaviour Tonka.Core.Container.Type
+
+    def expand_type do
+      {:type, :binary}
+    end
   end
 
   def __mix_recompile__?, do: true
 
   input myvar in MyInput
-
   output MyOutput
 
   call do
-    myvar |> IO.inspect(label: "myvar")
+    myvar |> IO.inspect(label: "myvar in call")
+    "hello"
   end
 end

@@ -1,3 +1,3 @@
 defmodule Tonka.Core.Container.Type do
-  @callback expand :: Tonka.Core.Container.typespec()
+  @callback expand_type :: Tonka.Core.Container.typespec()
 end

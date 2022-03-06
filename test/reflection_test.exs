@@ -44,4 +44,14 @@ defmodule Tonka.ReflectionTest do
 
     assert :atom = return
   end
+
+  test "extract fun argument" do
+    module = Tonka.Test.Fixtures.BunchOfFunctions
+    spec = Reflection.function_spec(module, :accepts_fun_and_arg, 2)
+    assert {args, return} = spec
+
+    assert {{{:integer}, :binary}, :integer} = args
+
+    assert :binary = return
+  end
 end

@@ -8,7 +8,8 @@ defmodule Tonka.Core.Operation do
 
   @type params :: map
   @type op_in :: map
-  @type op_out :: {:ok, term} | {:error, term} | {:async, Task.t()}
+  @type op_out :: op_out(term)
+  @type op_out(value) :: {:ok, value} | {:error, term} | {:async, Task.t()}
 
   @callback input_specs() :: [InputSpec.t()]
   @callback output_spec() :: OutputSpec.t()
@@ -55,6 +56,7 @@ defmodule Tonka.Core.Operation do
     quote location: :keep do
       if @tonka_call_called, do: raise("cannot declare output after call")
       if @tonka_output_called, do: raise("cannot declare output twice")
+      @tonka_output_called true
       @tonka_output_type unquote(typedef)
     end
   end
@@ -76,8 +78,12 @@ defmodule Tonka.Core.Operation do
     varname
   end
 
-  defp normalize_type({:__aliases__, _, _} = mod_type) do
-    mod_type
+  # defp normalize_type({:__aliases__, _, _} = mod_type) do
+  #   mod_type
+  # end
+
+  defp normalize_type(any) do
+    any
   end
 
   defmacro __before_compile__(env) do
@@ -134,11 +140,11 @@ defmodule Tonka.Core.Operation do
 
   defp def_call(env) do
     input_specs = Module.get_attribute(env.module, :tonka_input_specs, [])
-    input_specs |> IO.inspect(label: "input_specs")
+    output_spec = Module.get_attribute(env.module, :tonka_output_type, nil)
+
+    output_spec |> IO.inspect(label: "output_spec")
     input_keys = Keyword.keys(input_specs)
-    input_keys |> IO.inspect(label: "input_keys")
     input_vars = Enum.map(input_keys, fn k -> {k, Macro.var(k, nil)} end)
-    input_vars |> IO.inspect(label: "input_vars")
 
     input =
       quote do
@@ -149,28 +155,87 @@ defmodule Tonka.Core.Operation do
     block = Module.get_attribute(env.module, :tonka_call_block)
 
     quote location: :keep do
+      alias unquote(__MODULE__), as: Operation
+
       if not @tonka_call_called and not Module.defines?(__MODULE__, {:call, 3}, :def) do
-        raise """
-        #{inspect(__MODULE__)} must define the call function
-
-        For instance, with the output/1 macro:
-
-            use #{inspect(unquote(__MODULE__))}
-            input myinput Some.In.Type
-
-            call do
-              myinput + 1
-            end
-        """
+        Operation.__raise_no_call(__MODULE__)
       end
 
-      @tonka_call_block |> IO.inspect(label: "@tonka_call_block")
+      @tonka_output_called |> IO.inspect(label: "@tonka_output_called")
+
+      if not @tonka_output_called do
+        Operation.__raise_no_output(__MODULE__)
+      end
+
+      input_types =
+        unquote(input_specs)
+        |> Enum.map(fn {key, type} -> {key, Operation.expand_input_type_quoted(type)} end)
+        |> then(&{:%{}, [], &1})
+
+      output_type =
+        unquote(output_spec)
+        |> Operation.expand_input_type_quoted()
+        |> IO.inspect(label: "output_type")
 
       @impl unquote(__MODULE__)
+
+      Operation.input_typespec(input_types)
+      Operation.output_typespec(output_type)
+      # @type output :: term
+
+      @doc """
+      Executes the operation.
+      """
+      @spec call(input_map, map, map) :: output
       def call(unquote(input), _, _) do
         unquote(block)
       end
     end
+  end
+
+  def expand_input_type_quoted(userland_type) do
+    userland_type
+    |> Tonka.Core.Container.expand_type()
+    |> Tonka.Core.Container.to_quoted_type()
+  end
+
+  defmacro input_typespec(x) do
+    quote bind_quoted: [x: x] do
+      @type input_map :: unquote(x)
+    end
     |> tap(&IO.puts(Macro.to_string(&1)))
+  end
+
+  defmacro output_typespec(x) do
+    quote bind_quoted: [x: x] do
+      @type output :: unquote(x)
+    end
+    |> tap(&IO.puts(Macro.to_string(&1)))
+  end
+
+  def __raise_no_call(module) do
+    raise """
+    #{inspect(module)} must define the call function
+
+    For instance, with the output/1 macro:
+
+        use #{inspect(__MODULE__)}
+        input myinput Some.In.Type
+
+        call do
+          myinput + 1
+        end
+    """
+  end
+
+  def __raise_no_output(module) do
+    raise """
+    #{inspect(module)} must define an output type
+
+    For instance, with the output/1 macro:
+
+        use #{inspect(__MODULE__)}
+        output Some.Out.Type
+    """
   end
 end

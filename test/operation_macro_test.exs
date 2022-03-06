@@ -47,10 +47,8 @@ defmodule Tonka.OperationMacroTest do
     {args, return} = Reflection.function_spec(OpOneInput, :call, 3)
     assert 3 = tuple_size(args)
     {input_types, param_type, inject_type} = args
-    assert []
-    assert {:remote_type, Tonka.Core.Operation.OutputSpec, :t} = return
 
-    assert %Operation.OutputSpec{type: Tonka.Test.Fixtures.OpOneInput.MyOutput} =
-             OpOneInput.output_spec()
+    raise "todo check input types"
+    assert :"todo_type_returned_by_Tonka.Test.Fixtures.OpOneInput.MyInput" = return
   end
 end

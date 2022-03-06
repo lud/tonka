@@ -46,6 +46,9 @@ defmodule Tonka.Core.Reflection do
   defp shrink_type({:type, _, :tuple, ts}),
     do: {:tuple, Enum.map(ts, &shrink_type/1)}
 
+  defp shrink_type({:type, _, :map, :any}),
+    do: :map
+
   defp shrink_type({:atom, _, value}),
     do: {:atom, value}
 
@@ -58,8 +61,17 @@ defmodule Tonka.Core.Reflection do
   defp shrink_type({:remote_type, _, [{:atom, _, module}, {:atom, _, type}, []]}),
     do: {:remote_type, module, type}
 
+  defp shrink_type({:type, _, :fun, [{:type, _, :product, args}, ret]}),
+    do: {fun_args(args), shrink_type(ret)}
+
+  defp shrink_type({:user_type, _, t, []}) when is_atom(t),
+    do: {:user_type, t}
+
   defp elixir_type_to_erlang_type(:charlist),
     do: {:list, :char}
+
+  def fun_args(args),
+    do: args |> Enum.map(&shrink_type/1) |> List.to_tuple()
 
   defp find_function_spec(dbgi_attributes, module, function, arity) do
     found =

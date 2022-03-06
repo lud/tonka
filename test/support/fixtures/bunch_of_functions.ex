@@ -10,4 +10,9 @@ defmodule Tonka.Test.Fixtures.BunchOfFunctions do
   def two_args(text, num) do
     String.to_existing_atom(to_string(text) <> Integer.to_string(num))
   end
+
+  @spec accepts_fun_and_arg((integer -> binary), integer) :: binary
+  def accepts_fun_and_arg(f, arg) do
+    f.(arg)
+  end
 end

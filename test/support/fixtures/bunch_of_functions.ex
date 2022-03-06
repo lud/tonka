@@ -1,4 +1,9 @@
 defmodule Tonka.Test.Fixtures.BunchOfFunctions do
+  @type some_map :: %{
+          :a_key => binary,
+          :other_key => integer
+        }
+
   @spec validate_integer(term) :: {:ok, integer} | {:error, :not_an_int}
   def validate_integer(term) do
     if is_integer(term),

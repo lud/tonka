@@ -56,6 +56,9 @@ defmodule Tonka.Core.Reflection do
   defp shrink_type({:type, _, :map, :any}),
     do: :map
 
+  defp shrink_type({:type, _, :map, map_fields}),
+    do: {:map, shrink_map_fields(map_fields)}
+
   defp shrink_type({:atom, _, value}),
     do: {:atom, value}
 
@@ -77,8 +80,35 @@ defmodule Tonka.Core.Reflection do
   defp elixir_type_to_erlang_type(:charlist),
     do: {:list, :char}
 
-  def fun_args(args),
+  defp fun_args(args),
     do: args |> Enum.map(&shrink_type/1) |> List.to_tuple()
+
+  defp shrink_map_fields([
+         {:atom, 0, :myvar},
+         {:remote_type, 0,
+          [{:atom, 0, Tonka.Test.Fixtures.OpOneInput.MyInput}, {:atom, 0, :t}, []]}
+       ]) do
+  end
+
+  defp shrink_map_fields(list) do
+    list |> Enum.map(&shrink_map_field/1)
+  end
+
+  defp shrink_map_field({:type, _, :map_field_exact, [key_type, val_type]}) do
+    key =
+      case shrink_type(key_type) do
+        {:atom, key} -> key
+      end
+
+    {key, shrink_type(val_type)}
+
+    # value =
+    #   case shrink_type(val_type) do
+    #     {:atom, t} -> t
+    #   end
+
+    # {key, value}
+  end
 
   defp find_function_spec(dbgi_attributes, module, function, arity) do
     found =
@@ -99,7 +129,8 @@ defmodule Tonka.Core.Reflection do
     found =
       Enum.find_value(dbgi_attributes, fn
         {:attribute, _, :type, {^type, t, []}} -> t
-        {:attribute, _, :type, _} -> raise "unhandled type"
+        {:attribute, _, :type, {_other, _t, []}} -> nil
+        {:attribute, _, :type, t} -> raise "unhandled type #{inspect(t)}"
         _ -> nil
       end)
 

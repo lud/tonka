@@ -52,5 +52,9 @@ defmodule Tonka.OperationMacroTest do
     assert :map = param_type
     assert :map = inject_type
     assert {:user_type, :output} = return
+
+    assert :binary = Reflection.type(OpOneInput, :output)
+
+    assert :map = Reflection.type(OpOneInput, :input_map)
   end
 end

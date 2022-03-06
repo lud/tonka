@@ -59,4 +59,10 @@ defmodule Tonka.ReflectionTest do
     type = Reflection.type(Tonka.Test.Fixtures.OpOneInput, :output)
     assert :binary = type
   end
+
+  test "extract module type when it is a map with know keys" do
+    module = Tonka.Test.Fixtures.BunchOfFunctions
+    spec = Reflection.type(module, :some_map)
+    assert {:map, a_key: :binary, other_key: :integer} = spec
+  end
 end

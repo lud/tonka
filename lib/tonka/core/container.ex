@@ -4,6 +4,8 @@ defmodule Tonka.Core.Container do
   functionality to any `Tonka.Core.Operation`.
   """
 
+  alias __MODULE__, as: C
+
   @type typealias :: module
 
   @type f_params ::
@@ -17,6 +19,21 @@ defmodule Tonka.Core.Container do
 
   @type function_spec :: {f_params, typespec}
   @type typespec :: typealias | function_spec | {:remote_type, module, atom} | {:type, atom}
+
+  defstruct []
+  @type t :: %__MODULE__{}
+
+  def new do
+    struct!(__MODULE__, [])
+  end
+
+  def register(%C{} = c, abstract_type) when is_atom(abstract_type) do
+    c
+  end
+
+  # ---------------------------------------------------------------------------
+  #  Container Types to Elixir Types expansion
+  # ---------------------------------------------------------------------------
 
   @spec expand_type(typespec) :: {:type, atom} | {:remote_type, atom, atom}
   def expand_type(module) when is_atom(module) do

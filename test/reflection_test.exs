@@ -54,4 +54,9 @@ defmodule Tonka.ReflectionTest do
 
     assert :binary = return
   end
+
+  test "extract module type" do
+    type = Reflection.type(Tonka.Test.Fixtures.OpOneInput, :output)
+    assert :binary = type
+  end
 end

@@ -32,6 +32,13 @@ defmodule Tonka.Core.Reflection do
     {args, return}
   end
 
+  def type(module, type) when is_atom(module) and is_atom(type) do
+    debug_info = find_chunk(module, :debug_info)
+    dbgi_attribues = debug_info_attributes(debug_info)
+    t = find_type_spec(dbgi_attribues, type, module)
+    shrink_type(t)
+  end
+
   def load_function_exported?(module, function, arity) do
     Code.ensure_loaded!(module)
     function_exported?(module, function, arity)
@@ -85,6 +92,22 @@ defmodule Tonka.Core.Reflection do
     else
       raise ArgumentError,
             "function spec for #{inspect(module)}.#{function}/#{arity} could not be found"
+    end
+  end
+
+  defp find_type_spec(dbgi_attributes, type, module) do
+    found =
+      Enum.find_value(dbgi_attributes, fn
+        {:attribute, _, :type, {^type, t, []}} -> t
+        {:attribute, _, :type, _} -> raise "unhandled type"
+        _ -> nil
+      end)
+
+    if found do
+      found
+    else
+      raise ArgumentError,
+            "type #{type} in module #{inspect(module)} could not be found"
     end
   end
 

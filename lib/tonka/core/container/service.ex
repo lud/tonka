@@ -37,12 +37,24 @@ defmodule Tonka.Core.Container.Service do
   end
 
   defp build_inject_map(container, build_specs) do
-    Enum.reduce_while(build_specs, {:ok, %{}, container}, fn %InjectSpec{type: utype}, {map, c} ->
-      case Container.pull(c, utype) do
-        {:ok, impl, c2} -> {:cont, {:ok, {Map.put(map, utype, impl)}, c2}}
-        {:error, _} = err -> {:halt, err}
-      end
+    Enum.reduce_while(build_specs, {:ok, %{}, container}, fn
+      %InjectSpec{type: utype}, {:ok, map, container} ->
+        case pull_inject(container, utype, map) do
+          {:ok, _map, _container} = fine -> {:cont, fine}
+          {:error, _} = err -> {:halt, err}
+        end
     end)
+  end
+
+  defp pull_inject(container, utype, map) do
+    case Container.pull(container, utype) do
+      {:ok, impl, new_container} ->
+        new_map = Map.put(map, utype, impl)
+        {:ok, new_map, new_container}
+
+      {:error, _} = err ->
+        err
+    end
   end
 
   defp build_specs(module) when is_atom(module) do

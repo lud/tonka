@@ -4,7 +4,12 @@ defmodule Tonka.Core.Container do
   functionality to any `Tonka.Core.Operation`.
   """
 
+  defmodule UnknownServiceError do
+    defexception [:utype]
+  end
+
   alias __MODULE__, as: C
+  alias Tonka.Core.Container.Service
 
   @type typealias :: module
 
@@ -20,15 +25,54 @@ defmodule Tonka.Core.Container do
   @type function_spec :: {f_params, typespec}
   @type typespec :: typealias | function_spec | {:remote_type, module, atom} | {:type, atom}
 
-  defstruct []
+  defstruct [:services]
   @type t :: %__MODULE__{}
 
   def new do
-    struct!(__MODULE__, [])
+    struct!(__MODULE__, services: %{})
   end
 
-  def register(%C{} = c, abstract_type) when is_atom(abstract_type) do
-    c
+  def register(%C{} = c, utype) when is_atom(utype) do
+    service = Service.new(utype)
+    put_in(c.services[utype], service)
+  end
+
+  def pull(%C{} = c, utype) when is_atom(utype) do
+    case ensure_built(c, utype) do
+      {:ok, c} -> {:ok, fetch_impl!(c, utype), c}
+      {:error, _} = err -> err
+    end
+  end
+
+  def ensure_built(c, utype) do
+    case fetch_type(c, utype) do
+      {:ok, %Service{built: true}} -> {:ok, c}
+      {:ok, %Service{built: false} = service} -> build_service(c, utype, service)
+      :error -> {:error, %UnknownServiceError{utype: utype}}
+    end
+  end
+
+  defp fetch_type(%{services: services}, utype) do
+    Map.fetch(services, utype)
+  end
+
+  defp fetch_impl!(c, utype) do
+    {:ok, %Service{built: true, impl: impl}} = fetch_type(c, utype)
+    impl
+  end
+
+  defp build_service(c, utype, %{built: false} = service) do
+    case Service.build(service, c) do
+      {:ok, built_service, c} -> replace_service(c, utype, service, built_service)
+      {:error, _} = err -> err
+    end
+  end
+
+  defp replace_service(%{services: services} = c, utype, service, built_service) do
+    ^service = Map.fetch!(services, utype)
+    services = Map.put(services, utype, built_service)
+
+    {:ok, %C{c | services: services}}
   end
 
   # ---------------------------------------------------------------------------

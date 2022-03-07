@@ -14,6 +14,12 @@ defmodule Tonka.ContainerTest do
     @behaviour Container.Service
 
     defstruct []
+
+    def build_specs, do: []
+
+    def init(_) do
+      {:ok, %__MODULE__{}}
+    end
   end
 
   test "a service module can be registered and pulled" do
@@ -22,7 +28,7 @@ defmodule Tonka.ContainerTest do
     # expects that it is not only a Tonka.Core.Container.Type but also a
     assert %Container{} = container = Container.register(Container.new(), SomeStructService)
 
-    # assert {:ok, %SomeStructService{}, %Container{} = new_container} =
-    #          Container.pull(container, SomeStructService)
+    assert {:ok, %SomeStructService{}, %Container{} = new_container} =
+             Container.pull(container, SomeStructService)
   end
 end

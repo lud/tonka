@@ -38,18 +38,18 @@ defmodule Tonka.Core.Container.Service do
 
   defp build_inject_map(container, build_specs) do
     Enum.reduce_while(build_specs, {:ok, %{}, container}, fn
-      %InjectSpec{type: utype}, {:ok, map, container} ->
-        case pull_inject(container, utype, map) do
+      inject_spec, {:ok, map, container} ->
+        case pull_inject(container, inject_spec, map) do
           {:ok, _map, _container} = fine -> {:cont, fine}
           {:error, _} = err -> {:halt, err}
         end
     end)
   end
 
-  defp pull_inject(container, utype, map) do
+  defp pull_inject(container, %InjectSpec{type: utype, key: key}, map) do
     case Container.pull(container, utype) do
       {:ok, impl, new_container} ->
-        new_map = Map.put(map, utype, impl)
+        new_map = Map.put(map, key, impl)
         {:ok, new_map, new_container}
 
       {:error, _} = err ->

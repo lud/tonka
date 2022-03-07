@@ -3,6 +3,9 @@ defmodule Tonka.Core.Injector do
     Module.get_attribute(module, bucket, empty_bucket())
   end
 
+  def unquote_injects(module, bucket) do
+  end
+
   defp empty_bucket, do: []
 
   def register_inject(module, bucket, definition, key_from) when key_from in [:varname, :utype] do
@@ -52,11 +55,9 @@ defmodule Tonka.Core.Injector do
 
   defp varname(varname) when is_atom(varname), do: varname
 
-  def quoted_injects_map(module, bucket) do
-    inject_list = registered_injects(module, bucket)
-
+  def quoted_injects_map(injects) do
     input_vars =
-      Enum.map(inject_list, fn {key, injected} ->
+      Enum.map(injects, fn {key, injected} ->
         bound_var = Keyword.fetch!(injected, :bound_var)
         {key, Macro.var(bound_var, nil)}
       end)
@@ -68,7 +69,7 @@ defmodule Tonka.Core.Injector do
 
   def quoted_injects_map_typedef(module, bucket, type_name) do
     # The container type (utype) is an AST fragment, but
-    # expand_input_type_to_quoted/1 must be called with an actual value, not a
+    # expand_type_to_quoted/1 must be called with an actual value, not a
     # quoted form. So the call must take place in the generated code (the quote
     # block).
 
@@ -81,7 +82,7 @@ defmodule Tonka.Core.Injector do
           utype =
             injected
             |> Keyword.fetch!(:utype)
-            |> Tonka.Core.Injector.expand_input_type_to_quoted()
+            |> Tonka.Core.Injector.expand_type_to_quoted()
 
           {key, utype}
         end)
@@ -91,7 +92,22 @@ defmodule Tonka.Core.Injector do
     end
   end
 
-  def expand_input_type_to_quoted(userland_type) do
+  def expand_injects_to_quoted_map_typespec(inject_specs) do
+    inject_specs |> IO.inspect(label: "inject_specs")
+
+    inject_specs
+    |> Enum.map(fn {key, injected} ->
+      utype =
+        injected
+        |> Keyword.fetch!(:utype)
+        |> Tonka.Core.Injector.expand_type_to_quoted()
+
+      {key, utype}
+    end)
+    |> then(&{:%{}, [], &1})
+  end
+
+  def expand_type_to_quoted(userland_type) do
     userland_type
     |> Tonka.Core.Container.expand_type()
     |> Tonka.Core.Container.to_quoted_type()

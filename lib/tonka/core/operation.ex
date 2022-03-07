@@ -54,11 +54,12 @@ defmodule Tonka.Core.Operation do
   end
 
   defmacro call(do: block) do
-    Module.put_attribute(__CALLER__.module, :tonka_call_block, block)
-
     quote location: :keep do
       if @tonka_call_called, do: raise("cannot declare call twice")
       @tonka_call_called true
+      # We use an attribute to store the code block so unquote() from the user
+      # are already expanded when stored
+      @tonka_call_bbb unquote(Macro.escape(block, unquote: true))
     end
   end
 
@@ -116,11 +117,30 @@ defmodule Tonka.Core.Operation do
 
   defp def_call(env) do
     output_spec = Module.get_attribute(env.module, :tonka_output_type, nil)
-    input_injects = Injector.quoted_injects_map(env.module, :tonka_input_specs)
+    input_specs = Injector.registered_injects(env.module, :tonka_input_specs)
+    input_injects = Injector.quoted_injects_map(input_specs)
     block = Module.get_attribute(env.module, :tonka_call_block)
+    bbb = Module.get_attribute(env.module, :tonka_call_bbb)
 
-    quote location: :keep do
-      alias unquote(__MODULE__), as: Operation
+    bbb |> IO.inspect(label: "bbb")
+
+    escaped_block =
+      block
+      # |> Macro.expand(env)
+      |> Macro.escape(unquote: true)
+
+    # |> IO.inspect(label: "expanded block")
+
+    quote location: :keep,
+          bind_quoted: [
+            input_specs: input_specs,
+            output_spec: output_spec,
+            input_injects: Macro.escape(input_injects)
+            # escaped_block: escaped_block
+            # block: block,
+            # expanded_block: Macro.escape(expanded_block, unquote: true)
+          ] do
+      alias Tonka.Core.Operation
 
       if not @tonka_call_called and not Module.defines?(__MODULE__, {:call, 3}, :def) do
         Operation.__raise_no_call(__MODULE__)
@@ -130,34 +150,74 @@ defmodule Tonka.Core.Operation do
         Operation.__raise_no_output(__MODULE__)
       end
 
-      output_type = Injector.expand_input_type_to_quoted(unquote(output_spec))
+      # input_type = Injector.
 
-      @impl unquote(__MODULE__)
+      #   Injector.quoted_injects_map_typespec(__MODULE__, :tonka_input_specs)
 
-      unquote(Injector.quoted_injects_map_typedef(env.module, :tonka_input_specs, :input_map))
+      # @impl unquote(__MODULE__)
 
-      Operation.output_typespec(output_type)
+      # unquote(Injector.quoted_injects_map_typedef(env.module, :tonka_input_specs, :input_map))
+
+      input_type = Injector.expand_injects_to_quoted_map_typespec(input_specs)
+      @type input_map :: unquote(input_type)
+
+      output_type = Injector.expand_type_to_quoted(output_spec)
+      @type output :: unquote(output_type)
 
       @doc """
       Executes the operation.
       """
+
+      @tonka_call_bbb |> IO.inspect(label: "@tonka_call_bbb")
+      # escaped_block |> IO.inspect(label: "escaped_block")
+
+      @tonka_call_bbb |> IO.inspect(label: "@tonka_call_bbb")
       @spec call(input_map, map, map) :: Operation.op_out(output)
       def call(unquote(input_injects), _, _) do
-        unquote(block)
+        # @tonka_call_bbb |> IO.inspect(label: "@tonka_call_bbb")
+        unquote(@tonka_call_bbb)
+        # def call(map, _, _) do
+        # unquote(quote do: unquote(Macro.escape(escaped_block, unquote: true)))
+        # unquote(escaped_block)
+        # unquote(
+        #   Macro.expand(
+        #     Macro.escape(
+        #       Module.get_attribute(__MODULE__, :tonka_call_block),
+        #       unquote: true
+        #     ),
+        #     __ENV__
+        #   )
+        # )
+
+        # Operation.trick(unquote(expanded_block))
+        # |> tap(&IO.puts("xxxxxxxxxxxxxxxxxx\n" <> Macro.to_string(&1)))
       end
+    end
+    |> tap(
+      &(&1
+        |> Macro.expand(env)
+        |> Macro.to_string()
+        |> then(fn x -> [IO.ANSI.yellow(), x, IO.ANSI.reset()] end)
+        |> IO.puts())
+    )
+  end
+
+  defmacro trick(quoted) do
+    quote bind_quoted: binding() do
+      unquote(Macro.escape(quoted, unquote: true))
     end
   end
 
-  defmacro input_typespec(x) do
-    quote bind_quoted: [x: x] do
-      @type input_map :: unquote(x)
+  defmacro input_typespec(t) do
+    quote bind_quoted: [t: t] do
+      @type input_map :: unquote(t)
     end
   end
 
   defmacro output_typespec(t) do
-    quote bind_quoted: [t: t] do
-      @type output :: unquote(t)
-    end
+    # quote bind_quoted: [t: t] do
+    t
+    # end
   end
 
   def __raise_no_call(module) do

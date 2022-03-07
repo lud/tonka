@@ -50,12 +50,10 @@ defmodule Tonka.OperationMacroTest do
     assert Reflection.load_function_exported?(OpOneInput, :call, 3)
 
     {args, return} = Reflection.function_spec(OpOneInput, :call, 3)
-    assert 3 = tuple_size(args)
-    {input_types, param_type, inject_type} = args
 
-    assert {:user_type, :input_map} = input_types
-    assert :map = param_type
-    assert :map = inject_type
+    # check the output
+
+    assert :binary = Reflection.type(OpOneInput, :output)
 
     assert {
              :remote_type,
@@ -64,9 +62,18 @@ defmodule Tonka.OperationMacroTest do
              [user_type: :output]
            } = return
 
-    assert :binary = Reflection.type(OpOneInput, :output)
+    # check the input
+
+    assert 3 = tuple_size(args)
+    {input_types, param_type, inject_type} = args
+
+    assert {:user_type, :input_map} = input_types
+    assert :map = param_type
+    assert :map = inject_type
 
     assert {:map, [myvar: {:remote_type, Tonka.Test.Fixtures.OpOneInput.MyInput, :t}]} =
              Reflection.type(OpOneInput, :input_map)
+
+    assert {:ok, "HELLO_SUF"} == OpOneInput.call(%{myvar: "hello"}, %{}, %{})
   end
 end

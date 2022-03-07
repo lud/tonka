@@ -24,6 +24,9 @@ defmodule Tonka.Test.Fixtures.OpOneInput do
   alias Tonka.Test.Fixtures.OpOneInput.MyOutput
   use Operation
 
+  @suffix "_ATTR"
+  suffix = "_SUF"
+
   def __mix_recompile__?, do: true
 
   input myvar in MyInput
@@ -31,6 +34,9 @@ defmodule Tonka.Test.Fixtures.OpOneInput do
 
   call do
     IO.puts("myvar is #{inspect(myvar)}")
-    {:ok, "hello"}
+    {:ok, String.upcase(myvar) <> unquote(suffix)}
+    # {:ok, String.upcase(myvar)}
   end
+
+  def has_unquote(x), do: x <> unquote(suffix)
 end

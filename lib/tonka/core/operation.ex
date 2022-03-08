@@ -102,18 +102,6 @@ defmodule Tonka.Core.Operation do
     quote location: :keep do
       alias unquote(__MODULE__), as: Operation
 
-      if nil == Module.get_attribute(__MODULE__, :tonka_output_type) and
-           not Module.defines?(__MODULE__, {:output_spec, 0}, :def) do
-        raise """
-        #{inspect(__MODULE__)} must define an output
-
-        For instance, with the output/1 macro:
-
-            use #{inspect(unquote(__MODULE__))}
-            output Some.Out.Type
-        """
-      end
-
       @__built_output_spec %Operation.OutputSpec{type: @tonka_output_type}
       @impl unquote(__MODULE__)
       @spec output_spec :: Operation.OutputSpec.t()
@@ -136,10 +124,6 @@ defmodule Tonka.Core.Operation do
             output_spec: output_spec,
             input_injects: Macro.escape(input_injects)
           ] do
-      if not @tonka_output_called do
-        Operation.__raise_no_output(__MODULE__)
-      end
-
       input_type = Injector.expand_injects_to_quoted_map_typespec(input_specs)
       @type input_map :: unquote(input_type)
 
@@ -154,12 +138,6 @@ defmodule Tonka.Core.Operation do
       def call(unquote(input_injects), _, _) do
         unquote(@__tonka_call_block)
       end
-    end
-  end
-
-  defmacro trick(quoted) do
-    quote bind_quoted: binding() do
-      unquote(Macro.escape(quoted, unquote: true))
     end
   end
 

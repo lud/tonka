@@ -21,6 +21,10 @@ defmodule Tonka.Core.Container.Service do
         }
 
   defmacro __using__(_) do
+    quote location: :keep do
+      import Tonka.Core.Container.Service.ServiceMacros
+      Tonka.Core.Container.Service.ServiceMacros.init_module()
+    end
   end
 
   def new(module) when is_atom(module) do

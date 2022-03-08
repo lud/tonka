@@ -20,6 +20,9 @@ defmodule Tonka.Core.Container.Service do
           impl: term
         }
 
+  defmacro __using__(_) do
+  end
+
   def new(module) when is_atom(module) do
     %__MODULE__{built: false, builder: module, impl: nil}
   end

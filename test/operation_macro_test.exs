@@ -20,7 +20,7 @@ defmodule Tonka.OperationMacroTest do
     assert [] = OpNoInputs.input_specs()
   end
 
-  test "using exports the actual input specs with typespec" do
+  test "using macro exports the actual input specs with typespec" do
     assert Reflection.load_function_exported?(OpOneInput, :input_specs, 0)
 
     {args, return} = Reflection.function_spec(OpOneInput, :input_specs, 0)
@@ -35,7 +35,7 @@ defmodule Tonka.OperationMacroTest do
            ] = OpOneInput.input_specs()
   end
 
-  test "using exports the output spec with typespec" do
+  test "using macro exports the output spec with typespec" do
     assert Reflection.load_function_exported?(OpOneInput, :output_spec, 0)
 
     {args, return} = Reflection.function_spec(OpOneInput, :output_spec, 0)

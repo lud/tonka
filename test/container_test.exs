@@ -31,7 +31,6 @@ defmodule Tonka.ContainerTest do
     def build_specs, do: [%Container.InjectSpec{key: :mykey, type: SomeStructService}]
 
     def init(%{mykey: %Tonka.ContainerTest.SomeStructService{} = dependency}) do
-      dependency |> IO.inspect(label: "dependency")
       {:ok, %__MODULE__{}}
     end
   end

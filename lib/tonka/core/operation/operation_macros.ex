@@ -73,7 +73,7 @@ defmodule Tonka.Core.Operation.OperationMacros do
       @__built_input_specs for {key, defn} <- unquote(specs),
                                do: %InjectSpec{key: key, type: defn[:utype]}
 
-      @impl unquote(__MODULE__)
+      @impl Operation
       @spec input_specs :: [InjectSpec.t()]
 
       def input_specs do
@@ -84,12 +84,10 @@ defmodule Tonka.Core.Operation.OperationMacros do
 
   defp def_output do
     quote location: :keep do
-      alias unquote(__MODULE__), as: Operation
-
       @__built_output_spec %OutputSpec{type: @tonka_output_type}
-      @impl unquote(__MODULE__)
-      @spec output_spec :: OutputSpec.t()
 
+      @impl Operation
+      @spec output_spec :: OutputSpec.t()
       def output_spec do
         @__built_output_spec
       end

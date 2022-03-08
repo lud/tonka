@@ -1,6 +1,5 @@
 defmodule Tonka.OperationMacroTest do
   alias Tonka.Core.Operation
-  alias Tonka.Core.Container
   alias Tonka.Core.Reflection
   alias Tonka.Test.Fixtures.OpNoInputs
   alias Tonka.Test.Fixtures.OpOneInput

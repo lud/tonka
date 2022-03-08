@@ -67,34 +67,7 @@ defmodule Tonka.Core.Injector do
     end
   end
 
-  def quoted_injects_map_typedef(module, bucket, type_name) do
-    # The container type (utype) is an AST fragment, but
-    # expand_type_to_quoted/1 must be called with an actual value, not a
-    # quoted form. So the call must take place in the generated code (the quote
-    # block).
-
-    inject_specs = registered_injects(module, bucket)
-
-    quote bind_quoted: binding() do
-      inject_types =
-        inject_specs
-        |> Enum.map(fn {key, injected} ->
-          utype =
-            injected
-            |> Keyword.fetch!(:utype)
-            |> Tonka.Core.Injector.expand_type_to_quoted()
-
-          {key, utype}
-        end)
-        |> then(&{:%{}, [], &1})
-
-      @type unquote(type_name)() :: unquote(inject_types)
-    end
-  end
-
   def expand_injects_to_quoted_map_typespec(inject_specs) do
-    inject_specs |> IO.inspect(label: "inject_specs")
-
     inject_specs
     |> Enum.map(fn {key, injected} ->
       utype =

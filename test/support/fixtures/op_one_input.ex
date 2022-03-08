@@ -18,13 +18,22 @@ defmodule Tonka.Test.Fixtures.OpOneInput.MyOutput do
   end
 end
 
+defmodule Tonka.Test.UserlandMacros do
+  defmacro squared(expr) do
+    quote do
+      value = unquote(expr)
+      value * value
+    end
+  end
+end
+
 defmodule Tonka.Test.Fixtures.OpOneInput do
   alias Tonka.Core.Operation
   alias Tonka.Test.Fixtures.OpOneInput.MyInput
   alias Tonka.Test.Fixtures.OpOneInput.MyOutput
+  require alias Tonka.Test.UserlandMacros
   use Operation
 
-  @suffix "_ATTR"
   suffix = "_SUF"
 
   def __mix_recompile__?, do: true
@@ -34,9 +43,12 @@ defmodule Tonka.Test.Fixtures.OpOneInput do
 
   call do
     IO.puts("myvar is #{inspect(myvar)}")
-    {:ok, String.upcase(myvar) <> unquote(suffix)}
-    # {:ok, String.upcase(myvar)}
-  end
 
-  def has_unquote(x), do: x <> unquote(suffix)
+    two = fn -> 2 end
+    square_of_two = UserlandMacros.squared(two.())
+    4 = square_of_two
+    IO.puts("suare of two = #{inspect(square_of_two)}")
+
+    {:ok, String.upcase(myvar) <> unquote(suffix)}
+  end
 end

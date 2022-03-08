@@ -44,7 +44,7 @@ defmodule Tonka.ContainerTest do
 
     refute_receive {:building, SomeStructService}
 
-    assert {:ok, %SomeStructService{}, %Container{} = new_container} =
+    assert {:ok, %SomeStructService{}, %Container{}} =
              Container.pull(container, SomeStructService)
 
     assert_receive {:building, SomeStructService}

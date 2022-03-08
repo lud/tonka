@@ -1,9 +1,9 @@
 defmodule Tonka.Test.Fixtures.OpOneInput.MyInput do
   @behaviour Tonka.Core.Container.Type
 
-  defstruct dummy: true
+  defstruct text: nil
 
-  @type t :: %__MODULE__{}
+  @type t :: %__MODULE__{text: binary}
 
   def expand_type do
     {:remote_type, __MODULE__, :t}
@@ -42,6 +42,7 @@ defmodule Tonka.Test.Fixtures.OpOneInput do
   output MyOutput
 
   call do
+    %MyInput{text: text} = myvar
     IO.puts("myvar is #{inspect(myvar)}")
 
     two = fn -> 2 end
@@ -49,6 +50,6 @@ defmodule Tonka.Test.Fixtures.OpOneInput do
     4 = square_of_two
     IO.puts("suare of two = #{inspect(square_of_two)}")
 
-    {:ok, String.upcase(myvar) <> unquote(suffix)}
+    {:ok, String.upcase(text) <> unquote(suffix)}
   end
 end

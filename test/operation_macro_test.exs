@@ -3,6 +3,7 @@ defmodule Tonka.OperationMacroTest do
   alias Tonka.Core.Reflection
   alias Tonka.Test.Fixtures.OpNoInputs
   alias Tonka.Test.Fixtures.OpOneInput
+  alias Tonka.Test.Fixtures.OpOneInput.MyInput
   use ExUnit.Case, async: true
 
   test "using defines operation behaviour" do
@@ -70,9 +71,8 @@ defmodule Tonka.OperationMacroTest do
     assert :map = param_type
     assert :map = inject_type
 
-    assert {:map, [myvar: {:remote_type, Tonka.Test.Fixtures.OpOneInput.MyInput, :t}]} =
-             Reflection.type(OpOneInput, :input_map)
+    assert {:map, [myvar: {:remote_type, MyInput, :t}]} = Reflection.type(OpOneInput, :input_map)
 
-    assert {:ok, "HELLO_SUF"} == OpOneInput.call(%{myvar: "hello"}, %{}, %{})
+    assert {:ok, "HELLO_SUF"} == OpOneInput.call(%{myvar: %MyInput{text: "hello"}}, %{}, %{})
   end
 end

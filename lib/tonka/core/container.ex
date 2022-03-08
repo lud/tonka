@@ -1,11 +1,26 @@
 defmodule Tonka.Core.Container do
+  use TODO
+
   @moduledoc """
   Implements a container for data structures or functions providing
   functionality to any `Tonka.Core.Operation`.
   """
 
+  @todo """
+  Currently there is no typecheck at all on what an implementation returns.
+  We could use TypeCheck to verifiy that implementations passed through
+  bind_impl/3 or returned by Service.build/2 match the declared userland type.
+
+  Although types are cool for generating typespecs but they are more aliases
+  to available services provided by the tool than actual types.
+  """
+
   defmodule UnknownServiceError do
     defexception [:utype]
+
+    def message(%{utype: utype}) do
+      "unknown service #{inspect(utype)} in container"
+    end
   end
 
   alias __MODULE__, as: C

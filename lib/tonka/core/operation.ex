@@ -134,7 +134,7 @@ defmodule Tonka.Core.Operation do
       Executes the operation.
       """
       @impl Operation
-      @spec call(input_map, map, map) :: Operation.op_out(output)
+      @spec call(input_map, map, map) :: Tonka.Core.Operation.op_out(output)
       def call(unquote(input_injects), _, _) do
         unquote(@__tonka_call_block)
       end

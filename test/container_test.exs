@@ -40,7 +40,7 @@ defmodule Tonka.ContainerTest do
     # When a single atom is registered, it is considered as a utype (a userland
     # abstract type). Given we do not provide an implementation, the container
     # expects that it is not only a Tonka.Core.Container.Type but also a
-    assert %Container{} = container = Container.register(Container.new(), SomeStructService)
+    assert %Container{} = container = Container.bind(Container.new(), SomeStructService)
 
     refute_receive {:building, SomeStructService}
 
@@ -56,8 +56,8 @@ defmodule Tonka.ContainerTest do
     # expects that it is not only a Tonka.Core.Container.Type but also a
     container =
       Container.new()
-      |> Container.register(SomeStructService)
-      |> Container.register(SomeDependentStruct)
+      |> Container.bind(SomeStructService)
+      |> Container.bind(SomeDependentStruct)
 
     refute_receive {:building, SomeStructService}
 
@@ -70,8 +70,8 @@ defmodule Tonka.ContainerTest do
   test "a service value can be immediately set" do
     container =
       Container.new()
-      |> Container.register_impl(SomeStructService, %SomeStructService{})
-      |> Container.register(SomeDependentStruct)
+      |> Container.bind_impl(SomeStructService, %SomeStructService{})
+      |> Container.bind(SomeDependentStruct)
 
     assert {:ok, %SomeDependentStruct{}, %Container{} = new_container} =
              Container.pull(container, SomeDependentStruct)

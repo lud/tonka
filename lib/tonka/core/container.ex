@@ -36,23 +36,23 @@ defmodule Tonka.Core.Container do
   end
 
   # on register/1 we accept only a module
-  def register(%C{} = c, utype) when is_atom(utype) do
-    register(c, utype, utype)
+  def bind(%C{} = c, utype) when is_atom(utype) do
+    bind(c, utype, utype)
     service = Service.new(utype)
     put_in(c.services[utype], service)
   end
 
-  def register(%C{} = c, utype, builder) when is_utype(utype) and is_builder(builder) do
+  def bind(%C{} = c, utype, builder) when is_utype(utype) and is_builder(builder) do
     service = Service.new(builder)
     put_in(c.services[utype], service)
   end
 
-  def register_impl(%C{} = c, utype, value) when is_utype(utype) do
+  def bind_impl(%C{} = c, utype, value) when is_utype(utype) do
     service = Service.as_built(value)
     put_in(c.services[utype], service)
   end
 
-  # def register(%C{} = c, utype, builder) when is_utype(utype) and is_builder(builder) or do
+  # def bind(%C{} = c, utype, builder) when is_utype(utype) and is_builder(builder) or do
   #   service = Service.new(utype)
   #   put_in(c.services[utype], service)
   # end

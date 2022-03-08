@@ -24,10 +24,14 @@ defmodule Tonka.Core.Container.Service do
     %__MODULE__{built: false, builder: module, impl: nil}
   end
 
+  def as_built(value) do
+    %__MODULE__{built: true, builder: nil, impl: value}
+  end
+
   def build(%Service{built: false, builder: builder} = service, container) do
     build_specs = build_specs(builder)
 
-    with {:ok, injects, container} <- build_inject_map(container, build_specs),
+    with {:ok, injects, container} <- pull_inject_map(container, build_specs),
          {:ok, impl} <- init_builder(builder, injects) do
       service = %Service{service | impl: impl, built: true}
       {:ok, service, container}
@@ -36,7 +40,7 @@ defmodule Tonka.Core.Container.Service do
     end
   end
 
-  defp build_inject_map(container, build_specs) do
+  defp pull_inject_map(container, build_specs) do
     Enum.reduce_while(build_specs, {:ok, %{}, container}, fn
       inject_spec, {:ok, map, container} ->
         case pull_inject(container, inject_spec, map) do

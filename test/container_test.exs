@@ -18,6 +18,7 @@ defmodule Tonka.ContainerTest do
     def build_specs, do: []
 
     def init(_) do
+      send(self(), {:building, __MODULE__})
       {:ok, %__MODULE__{}}
     end
   end
@@ -41,8 +42,12 @@ defmodule Tonka.ContainerTest do
     # expects that it is not only a Tonka.Core.Container.Type but also a
     assert %Container{} = container = Container.register(Container.new(), SomeStructService)
 
+    refute_receive {:building, SomeStructService}
+
     assert {:ok, %SomeStructService{}, %Container{} = new_container} =
              Container.pull(container, SomeStructService)
+
+    assert_receive {:building, SomeStructService}
   end
 
   test "a struct service can depdend on another" do
@@ -54,7 +59,23 @@ defmodule Tonka.ContainerTest do
       |> Container.register(SomeStructService)
       |> Container.register(SomeDependentStruct)
 
+    refute_receive {:building, SomeStructService}
+
     assert {:ok, %SomeDependentStruct{}, %Container{} = new_container} =
              Container.pull(container, SomeDependentStruct)
+
+    assert_receive {:building, SomeStructService}
+  end
+
+  test "a service value can be immediately set" do
+    container =
+      Container.new()
+      |> Container.register_impl(SomeStructService, %SomeStructService{})
+      |> Container.register(SomeDependentStruct)
+
+    assert {:ok, %SomeDependentStruct{}, %Container{} = new_container} =
+             Container.pull(container, SomeDependentStruct)
+
+    refute_receive {:building, SomeStructService}
   end
 end

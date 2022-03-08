@@ -25,6 +25,9 @@ defmodule Tonka.Core.Container do
   @type function_spec :: {f_params, typespec}
   @type typespec :: typealias | function_spec | {:remote_type, module, atom} | {:type, atom}
 
+  defguard is_builder(builder) when is_atom(builder) or is_function(builder, 1)
+  defguard is_utype(utype) when is_atom(utype)
+
   defstruct [:services]
   @type t :: %__MODULE__{}
 
@@ -32,10 +35,27 @@ defmodule Tonka.Core.Container do
     struct!(__MODULE__, services: %{})
   end
 
+  # on register/1 we accept only a module
   def register(%C{} = c, utype) when is_atom(utype) do
+    register(c, utype, utype)
     service = Service.new(utype)
     put_in(c.services[utype], service)
   end
+
+  def register(%C{} = c, utype, builder) when is_utype(utype) and is_builder(builder) do
+    service = Service.new(builder)
+    put_in(c.services[utype], service)
+  end
+
+  def register_impl(%C{} = c, utype, value) when is_utype(utype) do
+    service = Service.as_built(value)
+    put_in(c.services[utype], service)
+  end
+
+  # def register(%C{} = c, utype, builder) when is_utype(utype) and is_builder(builder) or do
+  #   service = Service.new(utype)
+  #   put_in(c.services[utype], service)
+  # end
 
   def pull(%C{} = c, utype) when is_atom(utype) do
     case ensure_built(c, utype) do

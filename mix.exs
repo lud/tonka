@@ -43,6 +43,7 @@ defmodule Tonka.MixProject do
       # App
 
       {:ark, "~> 0.6.1", runtime: false},
+      # {:type_check, "~> 0.10.0"},
 
       # dev, test, tools
       {:credo, "~> 1.6", only: [:dev, :test], runtime: false},

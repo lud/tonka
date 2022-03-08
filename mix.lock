@@ -40,4 +40,5 @@
   "telemetry_metrics": {:hex, :telemetry_metrics, "0.6.1", "315d9163a1d4660aedc3fee73f33f1d355dcc76c5c3ab3d59e76e3edf80eef1f", [:mix], [{:telemetry, "~> 0.4 or ~> 1.0", [hex: :telemetry, repo: "hexpm", optional: false]}], "hexpm", "7be9e0871c41732c233be71e4be11b96e56177bf15dde64a8ac9ce72ac9834c6"},
   "telemetry_poller": {:hex, :telemetry_poller, "1.0.0", "db91bb424e07f2bb6e73926fcafbfcbcb295f0193e0a00e825e589a0a47e8453", [:rebar3], [{:telemetry, "~> 1.0", [hex: :telemetry, repo: "hexpm", optional: false]}], "hexpm", "b3a24eafd66c3f42da30fc3ca7dda1e9d546c12250a2d60d7b81d264fbec4f6e"},
   "todo": {:hex, :todo, "1.6.0", "d115e10d0f5e6405b2329fd4a9354f0e072c95e5953498cca7b4c41a28c3f0ed", [:mix], [], "hexpm", "88872a112816d4710452ca0d9cf9eacac1f310d07db6ad9ad03ac2977ac35233"},
+  "type_check": {:hex, :type_check, "0.10.7", "38ea953d20837d8d61744af238691b5e3cbb4dc92efc98191c3837fc8f158273", [:mix], [{:stream_data, "~> 0.5.0", [hex: :stream_data, repo: "hexpm", optional: true]}], "hexpm", "d468f0452116f44368cce161008516696bf7d28e37859a2ffaaef3843fe5dbb9"},
 }

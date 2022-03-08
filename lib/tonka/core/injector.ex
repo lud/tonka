@@ -3,9 +3,6 @@ defmodule Tonka.Core.Injector do
     Module.get_attribute(module, bucket, empty_bucket())
   end
 
-  def unquote_injects(module, bucket) do
-  end
-
   defp empty_bucket, do: []
 
   def register_inject(module, bucket, definition, key_from) when key_from in [:varname, :utype] do
@@ -24,17 +21,16 @@ defmodule Tonka.Core.Injector do
       when is_atom(bucket) and is_atom(key) do
     inject_list = registered_injects(module, bucket)
 
-    Enum.each(inject_list, fn sofar ->
-      case Keyword.get(sofar, :key) do
-        ^key -> raise ArgumentError, "injected key #{inspect(key)} is already defined"
-        _ -> :ok
-      end
-    end)
+    case List.keyfind(inject_list, key, 0) do
+      {_, _} ->
+        {:error, %ArgumentError{message: "injected key #{inspect(key)} is already defined"}}
 
-    inject = [bound_var: bound_var, utype: utype]
-    inject_list = [{key, inject} | inject_list]
-    Module.put_attribute(module, bucket, inject_list)
-    :ok
+      nil ->
+        inject = [bound_var: bound_var, utype: utype]
+        inject_list = [{key, inject} | inject_list]
+        Module.put_attribute(module, bucket, inject_list)
+        :ok
+    end
   end
 
   defp normalize_defintion({:in, _, [var, type]}) do

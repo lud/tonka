@@ -51,6 +51,31 @@ A small spec for ETS:
   storage.
 
 
+## Multiple inputs concurrency
+
+To prevent multiples inputs for the same grid instance to be run at the same
+time, a Project process should manage a registry of concurrent running jobs.
+
+* On application start, all projects are started as processes. They will build
+  the base container and services.
+* A cool feature would be to add a scope to projects services config, for
+  instance `project` meaning they are built in that initialization phase, and
+  `grid` meaning they are built for each grid run (actually for each input). Of
+  course, `project` services cannot depend on `grid` services.
+* The project has a supervisor for process-based services and holds two
+  registries. One registry for those services and one for the input jobs.
+* When an input job runs, it tries to register on the input jobs registry and
+  checks out a full context from the project process: the initialized container
+  and the targetted grid configuration. Checking that data involves a lot of
+  copying but project configurations are actually small YAML files.
+* The registered name is simply the grid instance ID.
+* If the name registration succeeds, the job will run.
+* If the name registration fails, it means that the project is not fully
+  initialized yet (the job registry must be the last child to be set up) or that
+  another input job is running for this instance. In both case we can snooze the
+  job.
+* Jobs may unregister eagerly on termination.
+
 ## Data
 
 * Project configuration

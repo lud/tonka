@@ -1,4 +1,4 @@
-defmodule Tonka.Core.Operation.OutputSpec do
+defmodule Tonka.Core.Container.ReturnSpec do
   @moduledoc """
   Defines the specification of the ouput value of a `Tonka.Core.Operation`.
   """

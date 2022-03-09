@@ -2,7 +2,7 @@ defmodule Tonka.Core.Operation.OperationMacros do
   alias Tonka.Core.Operation
   alias Tonka.Core.Injector
   alias Tonka.Core.Container.InjectSpec
-  alias Tonka.Core.Operation.OutputSpec
+  alias Tonka.Core.Container.ReturnSpec
 
   defmacro init_module do
     Module.put_attribute(__CALLER__.module, :__op_call_called, false)
@@ -102,9 +102,9 @@ defmodule Tonka.Core.Operation.OperationMacros do
 
     quote location: :keep do
       @impl Operation
-      @spec output_spec :: OutputSpec.t()
+      @spec output_spec :: ReturnSpec.t()
       def output_spec do
-        %OutputSpec{type: unquote(output_type)}
+        %ReturnSpec{type: unquote(output_type)}
       end
     end
   end

@@ -50,6 +50,8 @@ defmodule Tonka.ContainerTest do
     assert_receive {:building, SomeStructService}
   end
 
+  test "using a single argument to bind should call provides/0 on the module"
+
   test "a struct service can depdend on another" do
     # When a single atom is registered, it is considered as a utype (a userland
     # abstract type). Given we do not provide an implementation, the container

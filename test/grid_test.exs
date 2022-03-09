@@ -13,7 +13,7 @@ defmodule Tonka.GridTest do
     end
 
     def _output_spec(type) do
-      %Operation.OutputSpec{type: type}
+      %Container.ReturnSpec{type: type}
     end
 
     def output_spec() do
@@ -67,7 +67,7 @@ defmodule Tonka.GridTest do
     end
 
     def output_spec() do
-      %Operation.OutputSpec{
+      %Container.ReturnSpec{
         type: {:raw, :atom}
       }
     end
@@ -105,7 +105,7 @@ defmodule Tonka.GridTest do
     end
 
     def output_spec() do
-      %Operation.OutputSpec{
+      %Container.ReturnSpec{
         type: {:raw, :term}
       }
     end
@@ -126,7 +126,7 @@ defmodule Tonka.GridTest do
     end
 
     def output_spec() do
-      %Operation.OutputSpec{
+      %Container.ReturnSpec{
         type: {:raw, :atom}
       }
     end
@@ -171,7 +171,7 @@ defmodule Tonka.GridTest do
     end
 
     def output_spec() do
-      %Operation.OutputSpec{
+      %Container.ReturnSpec{
         type: {:raw, :atom}
       }
     end
@@ -192,7 +192,7 @@ defmodule Tonka.GridTest do
     end
 
     def output_spec() do
-      %Operation.OutputSpec{
+      %Container.ReturnSpec{
         type: {:raw, :binary}
       }
     end
@@ -210,7 +210,7 @@ defmodule Tonka.GridTest do
     end
 
     def output_spec() do
-      %Operation.OutputSpec{
+      %Container.ReturnSpec{
         type: {:raw, :integer}
       }
     end

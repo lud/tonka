@@ -5,7 +5,7 @@ defmodule Tonka.Core.Operation do
   """
 
   alias Tonka.Core.Container.InjectSpec
-  alias Tonka.Core.Operation.OutputSpec
+  alias Tonka.Core.Container.ReturnSpec
 
   @type params :: map
   @type op_in :: map
@@ -13,7 +13,7 @@ defmodule Tonka.Core.Operation do
   @type op_out(output) :: {:ok, output} | {:error, term} | {:async, Task.t()}
 
   @callback input_specs() :: [InjectSpec.t()]
-  @callback output_spec() :: OutputSpec.t()
+  @callback output_spec() :: ReturnSpec.t()
 
   @callback call(op_in, params, injects :: map) :: op_out
 

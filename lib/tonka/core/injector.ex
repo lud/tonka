@@ -45,6 +45,10 @@ defmodule Tonka.Core.Injector do
     mod_type
   end
 
+  def normalize_utype({:__MODULE__, _, _} = self_type) do
+    self_type
+  end
+
   def normalize_utype({:type, t} = native_type) when is_atom(t) do
     native_type
   end

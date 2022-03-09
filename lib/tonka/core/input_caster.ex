@@ -17,14 +17,14 @@ defmodule Tonka.Core.InputCaster do
 
   @type t :: %__MODULE__{
           module: module,
-          output_spec: Operation.OutputSpec.t()
+          output_spec: Container.ReturnSpec.t()
         }
 
   @type buildable :: t | module
-  @type new_opt :: {:module, module} | {:output_spec, Operation.OutputSpec.t()}
+  @type new_opt :: {:module, module} | {:output_spec, Container.ReturnSpec.t()}
   @type new_opts :: [new_opt]
 
-  @callback output_spec() :: Operation.OutputSpec.t()
+  @callback output_spec() :: Container.ReturnSpec.t()
   @callback call(term, Operation.params(), injects :: map) :: Operation.op_out()
 
   @spec new(new_opts) :: t

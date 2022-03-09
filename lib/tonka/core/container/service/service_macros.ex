@@ -1,6 +1,7 @@
 defmodule Tonka.Core.Container.Service.ServiceMacros do
   alias Tonka.Core.Injector
   alias Tonka.Core.Container.InjectSpec
+  alias Tonka.Core.Container.ReturnSpec
   alias Tonka.Core.Container.Service
 
   defmacro init_module do
@@ -33,9 +34,27 @@ defmodule Tonka.Core.Container.Service.ServiceMacros do
     nil
   end
 
+  defmacro provides(typedef) do
+    typedef = Injector.normalize_utype(typedef)
+
+    if Module.get_attribute(__CALLER__.module, :__service_init_called) do
+      raise("cannot declare input after call")
+    end
+
+    if Module.get_attribute(__CALLER__.module, :__service_provides_called) do
+      raise("cannot declare output twice")
+    end
+
+    Module.put_attribute(__CALLER__.module, :__service_provides_called, true)
+    Module.put_attribute(__CALLER__.module, :__service_provides_type, typedef)
+
+    nil
+  end
+
   defmacro __before_compile__(env) do
     [
-      def_injects(env)
+      def_injects(env),
+      def_provides(env)
     ]
   end
 
@@ -67,6 +86,18 @@ defmodule Tonka.Core.Container.Service.ServiceMacros do
       """
       def inject_specs(:init, 1, 0) do
         @__built_inject_specs
+      end
+    end
+  end
+
+  defp def_provides(env) do
+    provides_type = Module.get_attribute(env.module, :__service_provides_type)
+
+    quote location: :keep do
+      @impl Service
+      @spec provides_spec :: ReturnSpec.t()
+      def provides_spec do
+        %ReturnSpec{type: unquote(provides_type)}
       end
     end
   end

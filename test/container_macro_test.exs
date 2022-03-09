@@ -1,6 +1,8 @@
 defmodule Tonka.ContainerMacroTest do
   alias Tonka.Core.Container
   alias Tonka.Core.Container.Service
+  alias Tonka.Core.Container.InjectSpec
+  alias Tonka.Core.Container.ReturnSpec
   alias Tonka.Core.Operation
   alias Tonka.Core.Reflection
   alias Tonka.Test.Fixtures.SampleService
@@ -16,7 +18,7 @@ defmodule Tonka.ContainerMacroTest do
 
     {args, return} = Reflection.function_spec(SampleServiceNoInjects, :inject_specs, 3)
     assert 3 = tuple_size(args)
-    assert {:list, {:remote_type, Tonka.Core.Container.InjectSpec, :t}} = return
+    assert {:list, {:remote_type, InjectSpec, :t}} = return
 
     assert {:atom, :non_neg_integer, :non_neg_integer} = args
 
@@ -28,28 +30,27 @@ defmodule Tonka.ContainerMacroTest do
 
     {args, return} = Reflection.function_spec(SampleService, :inject_specs, 3)
     assert 3 = tuple_size(args)
-    assert {:list, {:remote_type, Tonka.Core.Container.InjectSpec, :t}} = return
+    assert {:list, {:remote_type, InjectSpec, :t}} = return
 
     assert {:atom, :non_neg_integer, :non_neg_integer} = args
 
     assert [
-             %Tonka.Core.Container.InjectSpec{
+             %InjectSpec{
                type: Tonka.Test.Fixtures.SampleService.Dependency,
                key: :dep
              }
            ] = Service.inject_specs(SampleService)
   end
 
-  # test "using macro exports the output spec with typespec" do
-  #   assert Reflection.load_function_exported?(SampleService, :output_spec, 0)
+  test "using macro exports the provides spec with typespec" do
+    assert Reflection.load_function_exported?(SampleService, :provides_spec, 0)
 
-  #   {args, return} = Reflection.function_spec(SampleService, :output_spec, 0)
-  #   assert 0 = tuple_size(args)
-  #   assert {:remote_type, Tonka.Core.Operation.OutputSpec, :t} = return
+    {args, return} = Reflection.function_spec(SampleService, :provides_spec, 0)
+    assert 0 = tuple_size(args)
+    assert {:remote_type, ReturnSpec, :t} = return
 
-  #   assert %Operation.OutputSpec{type: Tonka.Test.Fixtures.SampleService.MyOutput} =
-  #            SampleService.output_spec()
-  # end
+    assert %ReturnSpec{type: Tonka.Test.Fixtures.SampleService} = SampleService.provides_spec()
+  end
 
   # test "using the call macro defines the call callback" do
   #   assert Reflection.load_function_exported?(SampleService, :call, 3)

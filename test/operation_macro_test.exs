@@ -1,4 +1,6 @@
 defmodule Tonka.OperationMacroTest do
+  alias Tonka.Core.Container.InjectSpec
+  alias Tonka.Core.Container.ReturnSpec
   alias Tonka.Core.Operation
   alias Tonka.Core.Reflection
   alias Tonka.Test.Fixtures.OpNoInputs
@@ -15,7 +17,7 @@ defmodule Tonka.OperationMacroTest do
 
     {args, return} = Reflection.function_spec(OpNoInputs, :input_specs, 0)
     assert 0 = tuple_size(args)
-    assert {:list, {:remote_type, Tonka.Core.Container.InjectSpec, :t}} = return
+    assert {:list, {:remote_type, InjectSpec, :t}} = return
 
     assert [] = OpNoInputs.input_specs()
   end
@@ -25,10 +27,10 @@ defmodule Tonka.OperationMacroTest do
 
     {args, return} = Reflection.function_spec(OpOneInput, :input_specs, 0)
     assert 0 = tuple_size(args)
-    assert {:list, {:remote_type, Tonka.Core.Container.InjectSpec, :t}} = return
+    assert {:list, {:remote_type, InjectSpec, :t}} = return
 
     assert [
-             %Tonka.Core.Container.InjectSpec{
+             %InjectSpec{
                type: Tonka.Test.Fixtures.OpOneInput.MyInput,
                key: :myvar
              }
@@ -40,10 +42,9 @@ defmodule Tonka.OperationMacroTest do
 
     {args, return} = Reflection.function_spec(OpOneInput, :output_spec, 0)
     assert 0 = tuple_size(args)
-    assert {:remote_type, Tonka.Core.Operation.OutputSpec, :t} = return
+    assert {:remote_type, ReturnSpec, :t} = return
 
-    assert %Operation.OutputSpec{type: Tonka.Test.Fixtures.OpOneInput.MyOutput} =
-             OpOneInput.output_spec()
+    assert %ReturnSpec{type: Tonka.Test.Fixtures.OpOneInput.MyOutput} = OpOneInput.output_spec()
   end
 
   test "using the call macro defines the call callback" do

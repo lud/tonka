@@ -7,4 +7,5 @@ defmodule Tonka.Test.Fixtures.SampleService do
   use Service
 
   inject dep in Tonka.Test.Fixtures.SampleService.Dependency
+  provides __MODULE__
 end

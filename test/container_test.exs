@@ -15,7 +15,7 @@ defmodule Tonka.ContainerTest do
 
     defstruct []
 
-    def build_specs, do: []
+    def inject_specs(:init, 1, 0), do: []
 
     def init(_) do
       send(self(), {:building, __MODULE__})
@@ -28,7 +28,8 @@ defmodule Tonka.ContainerTest do
 
     defstruct []
 
-    def build_specs, do: [%Container.InjectSpec{key: :mykey, type: SomeStructService}]
+    def inject_specs(:init, 1, 0),
+      do: [%Container.InjectSpec{key: :mykey, type: SomeStructService}]
 
     def init(%{mykey: %Tonka.ContainerTest.SomeStructService{} = dependency}) do
       {:ok, %__MODULE__{}}

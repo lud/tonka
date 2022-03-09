@@ -8,7 +8,11 @@ defmodule Tonka.Core.Container.Service do
   @type service(impl) :: {:ok, impl} | {:error, term}
 
   @callback service_type :: Tonka.Core.Container.typespec()
-  @callback build_specs() :: [InjectSpec.t()]
+  @callback inject_specs(
+              function :: atom,
+              arity :: non_neg_integer,
+              arg_0n :: non_neg_integer
+            ) :: [InjectSpec.t()]
   @callback build(map) :: {:ok, impl} | {:error, term}
 
   @enforce_keys [:built, :builder, :impl]
@@ -36,9 +40,9 @@ defmodule Tonka.Core.Container.Service do
   end
 
   def build(%Service{built: false, builder: builder} = service, container) do
-    build_specs = build_specs(builder)
+    inject_specs = inject_specs(builder)
 
-    with {:ok, injects, container} <- pull_inject_map(container, build_specs),
+    with {:ok, injects, container} <- pull_inject_map(container, inject_specs),
          {:ok, impl} <- init_builder(builder, injects) do
       service = %Service{service | impl: impl, built: true}
       {:ok, service, container}
@@ -47,8 +51,8 @@ defmodule Tonka.Core.Container.Service do
     end
   end
 
-  defp pull_inject_map(container, build_specs) do
-    Enum.reduce_while(build_specs, {:ok, %{}, container}, fn
+  defp pull_inject_map(container, inject_specs) do
+    Enum.reduce_while(inject_specs, {:ok, %{}, container}, fn
       inject_spec, {:ok, map, container} ->
         case pull_inject(container, inject_spec, map) do
           {:ok, _map, _container} = fine -> {:cont, fine}
@@ -68,8 +72,8 @@ defmodule Tonka.Core.Container.Service do
     end
   end
 
-  defp build_specs(module) when is_atom(module) do
-    module.build_specs()
+  def inject_specs(module) when is_atom(module) do
+    module.inject_specs(:init, 1, 0)
   end
 
   defp init_builder(module, injects) when is_atom(module) do

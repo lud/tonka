@@ -25,6 +25,8 @@ defmodule Tonka.Core.Container.Service do
           impl: term
         }
 
+  @type builder :: module | (Container.t() -> {:ok, term, Container.t()} | {:error, term})
+
   defmacro __using__(_) do
     quote location: :keep do
       import Tonka.Core.Container.Service.ServiceMacros
@@ -40,7 +42,8 @@ defmodule Tonka.Core.Container.Service do
     %__MODULE__{built: true, builder: nil, impl: value}
   end
 
-  def build(%Service{built: false, builder: builder} = service, container) do
+  def build(%Service{built: false, builder: builder} = service, container)
+      when is_atom(builder) do
     inject_specs = inject_specs(builder)
 
     with {:ok, injects, container} <- pull_inject_map(container, inject_specs),

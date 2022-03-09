@@ -7,3 +7,4 @@
 # post = encode_slack_rich(report)
 # transport = slack(target)
 # post(transport, post)
+Tonka.Demo.run()

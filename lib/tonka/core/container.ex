@@ -44,13 +44,17 @@ defmodule Tonka.Core.Container do
   defguard is_utype(utype) when is_atom(utype)
 
   defstruct [:services]
-  @type t :: %__MODULE__{}
+
+  @type t :: %__MODULE__{
+          services: %{typespec => Service.builder()}
+        }
 
   def new do
     struct!(__MODULE__, services: %{})
   end
 
   # on register/1 we accept only a module
+  @spec bind(t, module) :: t
   def bind(%C{} = c, utype) when is_atom(utype) do
     bind(c, utype, utype)
     service = Service.new(utype)

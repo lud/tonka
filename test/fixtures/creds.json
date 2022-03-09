@@ -1,0 +1,12 @@
+{
+  "simple_path": "simple_path_value",
+  "nested": {
+    "path": "nested_path_value"
+  },
+  "deep": {
+    "nested": {
+      "path": "deep_nested_path_value",
+      "sibling": "deep_nested_sibling_value"
+    }
+  }
+}

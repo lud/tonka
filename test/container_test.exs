@@ -52,7 +52,7 @@ defmodule Tonka.ContainerTest do
 
   test "using a single argument to bind should call provides/0 on the module", ctx do
     require Logger
-    Logger.warn(ctx.test)
+    Logger.warn(to_string(ctx.test))
   end
 
   test "a struct service can depdend on another" do

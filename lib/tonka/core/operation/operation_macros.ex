@@ -5,8 +5,8 @@ defmodule Tonka.Core.Operation.OperationMacros do
   alias Tonka.Core.Operation.OutputSpec
 
   defmacro init_module do
-    Module.put_attribute(__CALLER__.module, :tonka_call_called, false)
-    Module.put_attribute(__CALLER__.module, :tonka_output_called, false)
+    Module.put_attribute(__CALLER__.module, :__op_call_called, false)
+    Module.put_attribute(__CALLER__.module, :__op_output_called, false)
 
     quote location: :keep do
       import unquote(__MODULE__), only: :macros
@@ -17,11 +17,11 @@ defmodule Tonka.Core.Operation.OperationMacros do
   end
 
   defmacro input(definition) do
-    if Module.get_attribute(__CALLER__.module, :tonka_call_called) do
+    if Module.get_attribute(__CALLER__.module, :__op_call_called) do
       raise("cannot declare input after call")
     end
 
-    case Injector.register_inject(__CALLER__.module, :tonka_input_specs, definition, :varname) do
+    case Injector.register_inject(__CALLER__.module, :__op_input_specs, definition, :varname) do
       :ok -> nil
       {:error, badarg} -> raise badarg
     end
@@ -32,26 +32,26 @@ defmodule Tonka.Core.Operation.OperationMacros do
   defmacro output(typedef) do
     typedef = Injector.normalize_utype(typedef)
 
-    if Module.get_attribute(__CALLER__.module, :tonka_call_called) do
+    if Module.get_attribute(__CALLER__.module, :__op_call_called) do
       raise("cannot declare input after call")
     end
 
-    if Module.get_attribute(__CALLER__.module, :tonka_output_called) do
+    if Module.get_attribute(__CALLER__.module, :__op_output_called) do
       raise("cannot declare output twice")
     end
 
-    Module.put_attribute(__CALLER__.module, :tonka_output_called, true)
-    Module.put_attribute(__CALLER__.module, :tonka_output_type, typedef)
+    Module.put_attribute(__CALLER__.module, :__op_output_called, true)
+    Module.put_attribute(__CALLER__.module, :__op_output_type, typedef)
 
     nil
   end
 
   defmacro call(do: block) do
-    if Module.get_attribute(__CALLER__.module, :tonka_call_called) do
+    if Module.get_attribute(__CALLER__.module, :__op_call_called) do
       raise("cannot declare call twice")
     end
 
-    Module.put_attribute(__CALLER__.module, :tonka_call_called, true)
+    Module.put_attribute(__CALLER__.module, :__op_call_called, true)
 
     quote location: :keep, generated: true do
       # We use an attribute to store the code block so unquote() from the user
@@ -61,9 +61,9 @@ defmodule Tonka.Core.Operation.OperationMacros do
   end
 
   defmacro __before_compile__(env) do
-    call_called = Module.get_attribute(env.module, :tonka_call_called)
+    call_called = Module.get_attribute(env.module, :__op_call_called)
     custom_call = Module.defines?(env.module, {:call, 3}, :def)
-    output_called = Module.get_attribute(env.module, :tonka_output_called)
+    output_called = Module.get_attribute(env.module, :__op_output_called)
 
     if not output_called do
       raise_no_output(env.module)
@@ -78,12 +78,12 @@ defmodule Tonka.Core.Operation.OperationMacros do
       end,
       def_inputs(env),
       def_output(env),
-      if(Module.get_attribute(env.module, :tonka_call_called), do: def_call(env))
+      if(Module.get_attribute(env.module, :__op_call_called), do: def_call(env))
     ]
   end
 
   defp def_inputs(env) do
-    specs = Injector.registered_injects(env.module, :tonka_input_specs)
+    specs = Injector.registered_injects(env.module, :__op_input_specs)
 
     quote location: :keep do
       alias unquote(__MODULE__), as: Operation
@@ -101,7 +101,7 @@ defmodule Tonka.Core.Operation.OperationMacros do
   end
 
   defp def_output(env) do
-    output_type = Module.get_attribute(env.module, :tonka_output_type)
+    output_type = Module.get_attribute(env.module, :__op_output_type)
 
     quote location: :keep do
       @impl Operation
@@ -113,8 +113,8 @@ defmodule Tonka.Core.Operation.OperationMacros do
   end
 
   defp def_call(env) do
-    output_spec = Module.get_attribute(env.module, :tonka_output_type, nil)
-    input_specs = Injector.registered_injects(env.module, :tonka_input_specs)
+    output_spec = Module.get_attribute(env.module, :__op_output_type, nil)
+    input_specs = Injector.registered_injects(env.module, :__op_input_specs)
     input_injects = Injector.quoted_injects_map(input_specs)
 
     quote location: :keep,

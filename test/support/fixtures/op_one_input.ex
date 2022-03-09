@@ -36,7 +36,7 @@ defmodule Tonka.Test.Fixtures.OpOneInput do
 
   suffix = "_SUF"
 
-  def __mix_recompile__?, do: true
+  # def __mix_recompile__?, do: true
 
   input myvar in MyInput
   output MyOutput

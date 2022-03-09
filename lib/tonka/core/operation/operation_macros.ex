@@ -64,8 +64,9 @@ defmodule Tonka.Core.Operation.OperationMacros do
     call_called = Module.get_attribute(env.module, :__op_call_called)
     custom_call = Module.defines?(env.module, {:call, 3}, :def)
     output_called = Module.get_attribute(env.module, :__op_output_called)
+    custom_output = Module.defines?(env.module, {:output_spec, 0}, :def)
 
-    if not output_called do
+    if not (output_called or custom_output) do
       raise_no_output(env.module)
     end
 
@@ -74,8 +75,6 @@ defmodule Tonka.Core.Operation.OperationMacros do
     end
 
     [
-      quote do
-      end,
       def_inputs(env),
       def_output(env),
       if(Module.get_attribute(env.module, :__op_call_called), do: def_call(env))
@@ -86,8 +85,6 @@ defmodule Tonka.Core.Operation.OperationMacros do
     specs = Injector.registered_injects(env.module, :__op_input_specs)
 
     quote location: :keep do
-      alias unquote(__MODULE__), as: Operation
-
       @__built_input_specs for {key, defn} <- unquote(specs),
                                do: %InjectSpec{key: key, type: defn[:utype]}
 

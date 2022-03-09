@@ -1,28 +1,24 @@
 defmodule Tonka.ContainerMacroTest do
   alias Tonka.Core.Container
-  alias Tonka.Core.Reflection
-  alias Tonka.Test.Fixtures.OpNoInputs
-  alias Tonka.Test.Fixtures.OpOneInput
+  alias Tonka.Core.Container.Service
   alias Tonka.Core.Operation
   alias Tonka.Core.Reflection
-  alias Tonka.Test.Fixtures.OpNoInputs
-  alias Tonka.Test.Fixtures.OpOneInput
-  alias Tonka.Test.Fixtures.OpOneInput.MyInput
+  alias Tonka.Test.Fixtures.SampleService
   use ExUnit.Case, async: true
 
   test "using defines service behaviour" do
-    assert Reflection.implements_behaviour?(OpNoInputs, Operation)
+    assert Reflection.implements_behaviour?(SampleService, Service)
   end
 
-  # test "using exports input_specs/0 when no input is declared" do
-  #   assert Reflection.load_function_exported?(OpNoInputs, :input_specs, 0)
+  test "using macro exports inject_specs/0 when no inject is declared" do
+    assert Reflection.load_function_exported?(SampleService, :inject_specs, 3)
 
-  #   {args, return} = Reflection.function_spec(OpNoInputs, :input_specs, 0)
-  #   assert 0 = tuple_size(args)
-  #   assert {:list, {:remote_type, Tonka.Core.Container.InjectSpec, :t}} = return
+    # {args, return} = Reflection.function_spec(OpNoInputs, :input_specs, 0)
+    # assert 0 = tuple_size(args)
+    # assert {:list, {:remote_type, Tonka.Core.Container.InjectSpec, :t}} = return
 
-  #   assert [] = OpNoInputs.input_specs()
-  # end
+    # assert [] = OpNoInputs.input_specs()
+  end
 
   # test "using macro exports the actual input specs with typespec" do
   #   assert Reflection.load_function_exported?(OpOneInput, :input_specs, 0)

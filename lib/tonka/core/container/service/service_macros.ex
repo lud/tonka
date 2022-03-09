@@ -1,5 +1,6 @@
 defmodule Tonka.Core.Container.Service.ServiceMacros do
   alias Tonka.Core.Container
+  alias Tonka.Core.Injector
   alias Tonka.Core.Container.InjectSpec
   alias Tonka.Core.Container.Service
 
@@ -14,18 +15,31 @@ defmodule Tonka.Core.Container.Service.ServiceMacros do
 
   defmacro __before_compile__(env) do
     [
-      # quote do
-      #   if not (@tonka_call_called or Module.defines?(__MODULE__, {:call, 3}, :def)) do
-      #     Tonka.Core.Operation.__raise_no_call(__MODULE__)
-      #   end
-
-      #   if not @tonka_output_called do
-      #     Tonka.Core.Operation.__raise_no_output(__MODULE__)
-      #   end
-      # end,
-      # def_inputs(env),
-      # def_output(),
-      # if(Module.get_attribute(env.module, :tonka_call_called), do: def_call(env))
+      def_injects(env)
     ]
+  end
+
+  defp def_injects(env) do
+    specs = Injector.registered_injects(env.module, :__service_inject_specs)
+
+    quote location: :keep, generated: true do
+      @__built_inject_specs for {key, defn} <- unquote(specs),
+                                do: %InjectSpec{key: key, type: defn[:utype]}
+
+      @impl Service
+
+      # the arguments to the inject_specs function define for which function +
+      # arity the inject is made for.  the arg_0n parameter tells for to
+      # argument of this function the injects should be passed on. This value is
+      # the zero-based argument index.
+
+      @spec inject_specs(function :: atom, arity :: integer, arg_0n :: integer) :: [
+              InjectSpec.t()
+            ]
+
+      def inject_specs(:init, 3, 0) do
+        @__built_inject_specs
+      end
+    end
   end
 end

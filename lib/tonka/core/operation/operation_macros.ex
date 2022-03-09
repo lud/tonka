@@ -47,6 +47,7 @@ defmodule Tonka.Core.Operation.OperationMacros do
     end
 
     Module.put_attribute(__CALLER__.module, @out_called, true)
+    typedef |> IO.inspect(label: "typedef")
     Module.put_attribute(__CALLER__.module, @output_type, typedef)
 
     nil
@@ -116,7 +117,8 @@ defmodule Tonka.Core.Operation.OperationMacros do
   end
 
   defp def_call(env) do
-    output_spec = Module.get_attribute(env.module, @output_type, nil)
+    output_spec = Module.get_attribute(env.module, @output_type)
+    output_spec |> IO.inspect(label: "output_spec")
     input_specs = Injector.registered_injects(env.module, @input_specs)
     input_injects = Injector.quoted_injects_map(input_specs)
 
@@ -130,6 +132,7 @@ defmodule Tonka.Core.Operation.OperationMacros do
       input_type = Injector.expand_injects_to_quoted_map_typespec(input_specs)
       @type input_map :: unquote(input_type)
 
+      output_spec |> IO.inspect(label: "output_spec")
       output_type = Injector.expand_type_to_quoted(output_spec)
       @type output :: unquote(output_type)
 

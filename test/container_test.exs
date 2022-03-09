@@ -38,8 +38,7 @@ defmodule Tonka.ContainerTest do
 
   test "a struct service module can be registered and pulled" do
     # When a single atom is registered, it is considered as a utype (a userland
-    # abstract type). Given we do not provide an implementation, the container
-    # expects that it is not only a Tonka.Core.Container.Type but also a
+    # abstract type).
     assert %Container{} = container = Container.bind(Container.new(), SomeStructService)
 
     refute_receive {:building, SomeStructService}
@@ -50,9 +49,13 @@ defmodule Tonka.ContainerTest do
     assert_receive {:building, SomeStructService}
   end
 
-  test "using a single argument to bind should call provides/0 on the module", ctx do
+  test "using a single argument to bind/1", ctx do
     require Logger
-    Logger.warn(to_string(ctx.test))
+
+    Logger.warn("""
+    # Given we do not provide an implementation, the container should expect
+    # that the utype name is also a module that produces this utype.
+    """)
   end
 
   test "a struct service can depdend on another" do

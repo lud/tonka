@@ -13,7 +13,8 @@ defmodule Tonka.Core.Container.Service do
               arity :: non_neg_integer,
               arg_0n :: non_neg_integer
             ) :: [InjectSpec.t()]
-  @callback build(map) :: {:ok, impl} | {:error, term}
+
+  @callback init(map) :: service(term)
 
   @enforce_keys [:built, :builder, :impl]
   defstruct @enforce_keys

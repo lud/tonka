@@ -8,6 +8,7 @@ defmodule Tonka.Core.Container.Service.ServiceMacros do
   @inject_specs :__tonka_service_inject_specs
   @provides_called :__tonka_service_provides_called
   @provides_type :__tonka_service_provides_type
+  @forced_provides :__tonka_service_forced_typedef_typespec
 
   @doc false
   defmacro init_module do
@@ -42,17 +43,25 @@ defmodule Tonka.Core.Container.Service.ServiceMacros do
 
   defmacro provides(typedef) do
     typedef = Injector.normalize_utype(typedef)
+    _provides(__CALLER__, typedef)
+  end
 
-    if Module.get_attribute(__CALLER__.module, @init_called) do
+  defmacro provides(typedef, forced_typespec) do
+    typedef = Injector.normalize_utype(typedef)
+    _provides(__CALLER__, {@forced_provides, typedef, forced_typespec})
+  end
+
+  def _provides(caller, typedef) do
+    if Module.get_attribute(caller.module, @init_called) do
       raise("cannot declare inject after call")
     end
 
-    if Module.get_attribute(__CALLER__.module, @provides_called) do
+    if Module.get_attribute(caller.module, @provides_called) do
       raise("cannot declare provides twice")
     end
 
-    Module.put_attribute(__CALLER__.module, @provides_called, true)
-    Module.put_attribute(__CALLER__.module, @provides_type, typedef)
+    Module.put_attribute(caller.module, @provides_called, true)
+    Module.put_attribute(caller.module, @provides_type, typedef)
 
     nil
   end
@@ -125,7 +134,11 @@ defmodule Tonka.Core.Container.Service.ServiceMacros do
   end
 
   defp def_provides(env) do
-    provides_type = Module.get_attribute(env.module, @provides_type)
+    provides_type =
+      case Module.get_attribute(env.module, @provides_type) do
+        {@forced_provides, typedef, _} -> typedef
+        typedef -> typedef
+      end
 
     quote location: :keep do
       @impl Service
@@ -137,9 +150,15 @@ defmodule Tonka.Core.Container.Service.ServiceMacros do
   end
 
   defp def_init(env) do
-    provides_spec = Module.get_attribute(env.module, @provides_type, nil)
+    provides_spec = Module.get_attribute(env.module, @provides_type)
     inject_specs = Injector.registered_injects(env.module, @inject_specs)
     inject_injects = Injector.quoted_injects_map(inject_specs)
+
+    provides_spec =
+      case provides_spec do
+        {@forced_provides, a, b} -> {:{}, [], [:escaped_forced, a, Macro.escape(b)]}
+        other -> other
+      end
 
     quote location: :keep,
           generated: true,
@@ -151,43 +170,87 @@ defmodule Tonka.Core.Container.Service.ServiceMacros do
       inject_type = Injector.expand_injects_to_quoted_map_typespec(inject_specs)
       @type inject_map :: unquote(inject_type)
 
-      provides_type = Injector.expand_type_to_quoted(provides_spec)
-      @type provides :: unquote(provides_type)
+      case provides_spec do
+        {:escaped_forced, _, provides_type} ->
+          @spec init(inject_map) :: Service.service(unquote(provides_type))
+
+        _ ->
+          provides_type =
+            Service.ServiceMacros.maybe_expand_type_to_quoted(__MODULE__, provides_spec)
+
+          @type provides :: unquote(provides_type)
+          @spec init(inject_map) :: Service.service(provides)
+      end
 
       @doc """
       Initializes the service.
       """
       @impl Service
-      @spec call(inject_map, map, map) :: Service.op_out(provides)
-      def call(unquote(inject_injects), _, _) do
-        unquote(@__op_call_block)
+      def init(unquote(inject_injects)) do
+        unquote(@__service_call_block)
       end
     end
+    |> tap(&IO.puts(Macro.to_string(&1)))
+  end
+
+  @doc false
+  def maybe_expand_type_to_quoted(module, provides_spec) do
+    provides_spec |> IO.inspect(label: "provides_spec")
+
+    Injector.expand_type_to_quoted(provides_spec)
+    |> IO.inspect(label: "NOT forced")
+  rescue
+    e in ArgumentError ->
+      case e.message do
+        "could not load module" <> _ -> raise_circular_self(module, provides_spec)
+        _ -> reraise e, __STACKTRACE__
+      end
   end
 
   def raise_no_init(module) do
     raise """
     #{inspect(module)} must define the init/1 function
 
-    For instance, with the call/1 macro:
+    For instance, with the init/1 macro:
 
-    use Tonka.Core.Container.Service
-    inject mydependency Some.In.Type
+        use Tonka.Core.Container.Service
+        inject mydependency Some.In.Type
 
-    init do
-      mydependency + 1
-    end
+        init do
+          mydependency + 1
+        end
     """
   end
 
   def raise_no_provides(module) do
     raise """
-        #{inspect(module)} must define a provided type
+    #{inspect(module)} must define a provided type
 
-        For instance, with the provides/1 macro:
+    For instance, with the provides/1 macro:
 
         use Tonka.Core.Container.Service
         provides Some.Out.Type
+    """
+  end
+
+  def raise_circular_self(module, provides_spec) do
+    code = Macro.to_string(provides_spec)
+
+    raise """
+    could not expand type #{code} provided by module #{inspect(module)}
+
+    If a services provides its own module as a type alias, use the
+    provides/2 macro instead of provides/1.
+
+
+        use Tonka.Core.Container.Service
+        inject mydependency Some.In.Type
+
+        # define a custom type
+        @type t :: %__MODULE__{}
+
+        # add that custom type to the call to the provides macro
+        provides __MODULE__, t
     """
   end
 end

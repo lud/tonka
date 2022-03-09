@@ -11,6 +11,7 @@
     # service macros
     inject: 1,
     provides: 1,
+    provides: 2,
     init: 1
   ]
 ]

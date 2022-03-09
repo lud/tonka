@@ -116,13 +116,9 @@ defmodule Tonka.Core.Container do
 
   @spec expand_type(typespec) :: {:type, atom} | {:remote_type, atom, atom}
   def expand_type(module) when is_atom(module) do
-    expanded =
-      try do
-        module.expand_type()
-      rescue
-        e in UndefinedFunctionError -> raise_invalid_type(module)
-      end
-      |> expand_type()
+    IO.puts("expanding type: #{inspect(module)}")
+    Code.ensure_loaded!(module)
+    expand_type(module.expand_type())
   end
 
   def expand_type({:remote_type, module, type} = terminal)
@@ -135,15 +131,16 @@ defmodule Tonka.Core.Container do
   end
 
   defp raise_invalid_type(module) do
-    implements? = Tonka.Core.Reflection.implements_behaviour?(module, Tonka.Core.Container.Type)
+    # implements? = Tonka.Core.Reflection.implements_behaviour?(module, Tonka.Core.Container.Type)
 
-    raise """
-    module #{inspect(module)} does not define expand_type/0
+    raise "module #{inspect(module)} does not define expand_type/0"
+    # raise """
+    # module #{inspect(module)} does not define expand_type/0
 
-    #{if not implements? do
-      "#{inspect(module)} does not implement the #{inspect(Tonka.Core.Container.Type)} behaviour"
-    end}
-    """
+    # #{if not implements? do
+    #   "#{inspect(module)} does not implement the #{inspect(Tonka.Core.Container.Type)} behaviour"
+    # end}
+    # """
   end
 
   def to_quoted_type({:remote_type, module, type})

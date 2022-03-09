@@ -4,6 +4,7 @@ defmodule Tonka.Core.Container.Service.ServiceMacros do
   alias Tonka.Core.Container.ReturnSpec
   alias Tonka.Core.Container.Service
 
+  @doc false
   defmacro init_module do
     Module.put_attribute(__CALLER__.module, :__service_init_called, false)
     Module.put_attribute(__CALLER__.module, :__service_provides_called, false)
@@ -49,6 +50,20 @@ defmodule Tonka.Core.Container.Service.ServiceMacros do
     Module.put_attribute(__CALLER__.module, :__service_provides_type, typedef)
 
     nil
+  end
+
+  defmacro init(do: block) do
+    if Module.get_attribute(__CALLER__.module, :__service_init_called) do
+      raise("cannot declare call twice")
+    end
+
+    Module.put_attribute(__CALLER__.module, :__service_init_called, true)
+
+    quote location: :keep, generated: true do
+      # We use an attribute to store the code block so unquote() from the user
+      # are already expanded when stored
+      @__service_call_block unquote(Macro.escape(block, unquote: true))
+    end
   end
 
   defmacro __before_compile__(env) do

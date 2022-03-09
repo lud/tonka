@@ -8,4 +8,8 @@ defmodule Tonka.Test.Fixtures.SampleService do
 
   inject dep in Tonka.Test.Fixtures.SampleService.Dependency
   provides __MODULE__
+
+  init do
+    Hello
+  end
 end

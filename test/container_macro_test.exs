@@ -52,33 +52,33 @@ defmodule Tonka.ContainerMacroTest do
     assert %ReturnSpec{type: Tonka.Test.Fixtures.SampleService} = SampleService.provides_spec()
   end
 
-  # test "using the call macro defines the call callback" do
-  #   assert Reflection.load_function_exported?(SampleService, :call, 3)
+  test "using the init macro defines the call callback" do
+    #   assert Reflection.load_function_exported?(SampleService, :call, 3)
 
-  #   {args, return} = Reflection.function_spec(SampleService, :call, 3)
+    #   {args, return} = Reflection.function_spec(SampleService, :call, 3)
 
-  #   # check the output
+    #   # check the output
 
-  #   assert :binary = Reflection.type(SampleService, :output)
+    #   assert :binary = Reflection.type(SampleService, :output)
 
-  #   assert {
-  #            :remote_type,
-  #            Tonka.Core.Operation,
-  #            :op_out,
-  #            [user_type: :output]
-  #          } = return
+    #   assert {
+    #            :remote_type,
+    #            Tonka.Core.Operation,
+    #            :op_out,
+    #            [user_type: :output]
+    #          } = return
 
-  #   # check the inject
+    #   # check the inject
 
-  #   assert 3 = tuple_size(args)
-  #   {inject_types, param_type, inject_type} = args
+    #   assert 3 = tuple_size(args)
+    #   {inject_types, param_type, inject_type} = args
 
-  #   assert {:user_type, :inject_map} = inject_types
-  #   assert :map = param_type
-  #   assert :map = inject_type
+    #   assert {:user_type, :inject_map} = inject_types
+    #   assert :map = param_type
+    #   assert :map = inject_type
 
-  #   assert {:map, [myvar: {:remote_type, Myinject, :t}]} = Reflection.type(SampleService, :inject_map)
+    #   assert {:map, [myvar: {:remote_type, Myinject, :t}]} = Reflection.type(SampleService, :inject_map)
 
-  #   assert {:ok, "HELLO_SUF"} == SampleService.call(%{myvar: %Myinject{text: "hello"}}, %{}, %{})
-  # end
+    #   assert {:ok, "HELLO_SUF"} == SampleService.call(%{myvar: %Myinject{text: "hello"}}, %{}, %{})
+  end
 end

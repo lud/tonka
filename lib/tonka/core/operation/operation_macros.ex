@@ -4,6 +4,7 @@ defmodule Tonka.Core.Operation.OperationMacros do
   alias Tonka.Core.Container.InjectSpec
   alias Tonka.Core.Container.ReturnSpec
 
+  @doc false
   defmacro init_module do
     Module.put_attribute(__CALLER__.module, :__op_call_called, false)
     Module.put_attribute(__CALLER__.module, :__op_output_called, false)
@@ -56,7 +57,7 @@ defmodule Tonka.Core.Operation.OperationMacros do
     quote location: :keep, generated: true do
       # We use an attribute to store the code block so unquote() from the user
       # are already expanded when stored
-      @__tonka_call_block unquote(Macro.escape(block, unquote: true))
+      @__op_call_block unquote(Macro.escape(block, unquote: true))
     end
   end
 
@@ -133,7 +134,7 @@ defmodule Tonka.Core.Operation.OperationMacros do
       @impl Operation
       @spec call(input_map, map, map) :: Operation.op_out(output)
       def call(unquote(input_injects), _, _) do
-        unquote(@__tonka_call_block)
+        unquote(@__op_call_block)
       end
     end
   end

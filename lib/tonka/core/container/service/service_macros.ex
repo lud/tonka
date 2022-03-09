@@ -67,9 +67,23 @@ defmodule Tonka.Core.Container.Service.ServiceMacros do
   end
 
   defmacro __before_compile__(env) do
+    init_called = Module.get_attribute(env.module, :__service_init_called)
+    custom_init = Module.defines?(env.module, {:init, 1}, :def)
+    provides_called = Module.get_attribute(env.module, :__service_provides_called)
+    custom_provides = Module.defines?(env.module, {:provides_spec, 0}, :def)
+
+    if not (provides_called or custom_provides) do
+      raise_no_provides(env.module)
+    end
+
+    if not (init_called or custom_init) do
+      raise_no_init(env.module)
+    end
+
     [
       def_injects(env),
       def_provides(env)
+      # if(Module.get_attribute(env.module, :__service_init_called), do: def_call(env))
     ]
   end
 
@@ -115,5 +129,31 @@ defmodule Tonka.Core.Container.Service.ServiceMacros do
         %ReturnSpec{type: unquote(provides_type)}
       end
     end
+  end
+
+  def raise_no_init(module) do
+    raise """
+    #{inspect(module)} must define the init/1 function
+
+    For instance, with the call/1 macro:
+
+    use Tonka.Core.Container.Service
+    inject mydependency Some.In.Type
+
+    init do
+      mydependency + 1
+    end
+    """
+  end
+
+  def raise_no_provides(module) do
+    raise """
+        #{inspect(module)} must define a provided type
+
+        For instance, with the provides/1 macro:
+
+        use Tonka.Core.Container.Service
+        provides Some.Out.Type
+    """
   end
 end

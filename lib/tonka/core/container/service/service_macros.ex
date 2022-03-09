@@ -4,10 +4,15 @@ defmodule Tonka.Core.Container.Service.ServiceMacros do
   alias Tonka.Core.Container.ReturnSpec
   alias Tonka.Core.Container.Service
 
+  @init_called :__tonka_service_init_called
+  @inject_specs :__tonka_service_inject_specs
+  @provides_called :__tonka_service_provides_called
+  @provides_type :__tonka_service_provides_type
+
   @doc false
   defmacro init_module do
-    Module.put_attribute(__CALLER__.module, :__service_init_called, false)
-    Module.put_attribute(__CALLER__.module, :__service_provides_called, false)
+    Module.put_attribute(__CALLER__.module, @init_called, false)
+    Module.put_attribute(__CALLER__.module, @provides_called, false)
 
     quote location: :keep do
       import unquote(__MODULE__), only: :macros
@@ -18,13 +23,13 @@ defmodule Tonka.Core.Container.Service.ServiceMacros do
   end
 
   defmacro inject(definition) do
-    if Module.get_attribute(__CALLER__.module, :__service_init_called) do
+    if Module.get_attribute(__CALLER__.module, @init_called) do
       raise("cannot declare inject after init")
     end
 
     case Injector.register_inject(
            __CALLER__.module,
-           :__service_inject_specs,
+           @inject_specs,
            definition,
            :varname
          ) do
@@ -38,26 +43,26 @@ defmodule Tonka.Core.Container.Service.ServiceMacros do
   defmacro provides(typedef) do
     typedef = Injector.normalize_utype(typedef)
 
-    if Module.get_attribute(__CALLER__.module, :__service_init_called) do
+    if Module.get_attribute(__CALLER__.module, @init_called) do
       raise("cannot declare input after call")
     end
 
-    if Module.get_attribute(__CALLER__.module, :__service_provides_called) do
+    if Module.get_attribute(__CALLER__.module, @provides_called) do
       raise("cannot declare output twice")
     end
 
-    Module.put_attribute(__CALLER__.module, :__service_provides_called, true)
-    Module.put_attribute(__CALLER__.module, :__service_provides_type, typedef)
+    Module.put_attribute(__CALLER__.module, @provides_called, true)
+    Module.put_attribute(__CALLER__.module, @provides_type, typedef)
 
     nil
   end
 
   defmacro init(do: block) do
-    if Module.get_attribute(__CALLER__.module, :__service_init_called) do
+    if Module.get_attribute(__CALLER__.module, @init_called) do
       raise("cannot declare call twice")
     end
 
-    Module.put_attribute(__CALLER__.module, :__service_init_called, true)
+    Module.put_attribute(__CALLER__.module, @init_called, true)
 
     quote location: :keep, generated: true do
       # We use an attribute to store the code block so unquote() from the user
@@ -67,9 +72,9 @@ defmodule Tonka.Core.Container.Service.ServiceMacros do
   end
 
   defmacro __before_compile__(env) do
-    init_called = Module.get_attribute(env.module, :__service_init_called)
+    init_called = Module.get_attribute(env.module, @init_called)
     custom_init = Module.defines?(env.module, {:init, 1}, :def)
-    provides_called = Module.get_attribute(env.module, :__service_provides_called)
+    provides_called = Module.get_attribute(env.module, @provides_called)
     custom_provides = Module.defines?(env.module, {:provides_spec, 0}, :def)
 
     if not (provides_called or custom_provides) do
@@ -83,12 +88,12 @@ defmodule Tonka.Core.Container.Service.ServiceMacros do
     [
       def_injects(env),
       def_provides(env)
-      # if(Module.get_attribute(env.module, :__service_init_called), do: def_call(env))
+      # if(Module.get_attribute(env.module, @init_called), do: def_call(env))
     ]
   end
 
   defp def_injects(env) do
-    specs = Injector.registered_injects(env.module, :__service_inject_specs)
+    specs = Injector.registered_injects(env.module, @inject_specs)
     specs |> IO.inspect(label: "specs")
 
     quote location: :keep, generated: true do
@@ -120,7 +125,7 @@ defmodule Tonka.Core.Container.Service.ServiceMacros do
   end
 
   defp def_provides(env) do
-    provides_type = Module.get_attribute(env.module, :__service_provides_type)
+    provides_type = Module.get_attribute(env.module, @provides_type)
 
     quote location: :keep do
       @impl Service

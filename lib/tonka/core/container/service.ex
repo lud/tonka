@@ -7,7 +7,7 @@ defmodule Tonka.Core.Container.Service do
   @type service :: service(term)
   @type service(impl) :: {:ok, impl} | {:error, term}
 
-  @callback service_type :: Tonka.Core.Container.typespec()
+  @callback provides_spec :: Tonka.Core.Container.ReturnSpec.t()
   @callback inject_specs(
               function :: atom,
               arity :: non_neg_integer,

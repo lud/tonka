@@ -44,11 +44,11 @@ defmodule Tonka.Core.Container.Service.ServiceMacros do
     typedef = Injector.normalize_utype(typedef)
 
     if Module.get_attribute(__CALLER__.module, @init_called) do
-      raise("cannot declare input after call")
+      raise("cannot declare inject after call")
     end
 
     if Module.get_attribute(__CALLER__.module, @provides_called) do
-      raise("cannot declare output twice")
+      raise("cannot declare provides twice")
     end
 
     Module.put_attribute(__CALLER__.module, @provides_called, true)
@@ -87,8 +87,8 @@ defmodule Tonka.Core.Container.Service.ServiceMacros do
 
     [
       def_injects(env),
-      def_provides(env)
-      # if(Module.get_attribute(env.module, @init_called), do: def_call(env))
+      def_provides(env),
+      if(Module.get_attribute(env.module, @init_called), do: def_init(env))
     ]
   end
 
@@ -132,6 +132,35 @@ defmodule Tonka.Core.Container.Service.ServiceMacros do
       @spec provides_spec :: ReturnSpec.t()
       def provides_spec do
         %ReturnSpec{type: unquote(provides_type)}
+      end
+    end
+  end
+
+  defp def_init(env) do
+    provides_spec = Module.get_attribute(env.module, @provides_type, nil)
+    inject_specs = Injector.registered_injects(env.module, @inject_specs)
+    inject_injects = Injector.quoted_injects_map(inject_specs)
+
+    quote location: :keep,
+          generated: true,
+          bind_quoted: [
+            inject_specs: inject_specs,
+            provides_spec: provides_spec,
+            inject_injects: Macro.escape(inject_injects)
+          ] do
+      inject_type = Injector.expand_injects_to_quoted_map_typespec(inject_specs)
+      @type inject_map :: unquote(inject_type)
+
+      provides_type = Injector.expand_type_to_quoted(provides_spec)
+      @type provides :: unquote(provides_type)
+
+      @doc """
+      Initializes the service.
+      """
+      @impl Service
+      @spec call(inject_map, map, map) :: Service.op_out(provides)
+      def call(unquote(inject_injects), _, _) do
+        unquote(@__op_call_block)
       end
     end
   end

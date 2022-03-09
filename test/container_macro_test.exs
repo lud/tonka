@@ -53,7 +53,7 @@ defmodule Tonka.ContainerMacroTest do
   end
 
   test "using the init macro defines the call callback" do
-    #   assert Reflection.load_function_exported?(SampleService, :call, 3)
+    assert Reflection.load_function_exported?(SampleService, :init, 1)
 
     #   {args, return} = Reflection.function_spec(SampleService, :call, 3)
 

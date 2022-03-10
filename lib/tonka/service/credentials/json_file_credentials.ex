@@ -46,7 +46,7 @@ defmodule Tonka.Service.Credentials.JsonFileCredentials do
     end
   end
 
-  @spec get_string(t, binary) :: binary
+  @spec get_string(t, binary) :: {:ok, binary} | {:error, :not_a_string | :not_found | term}
   def get_string(%__MODULE__{data: data}, path) do
     path = expand_path(path)
 

@@ -4,6 +4,16 @@ defmodule Tonka.Demo do
     #  Simulate a grid run from a job
     # -----------------------------------------------------------------------------
 
+    # gitlab = issues_repository(params)
+    # issues_source = issues_fetch_all(gitlab)
+    # queries = map(params_groups, compile_mql)
+    # issues = filter_issues(issues_source, query)
+    # report = generate_report(issues, params)
+    # target = team_member(name)
+    # post = encode_slack_rich(report)
+    # transport = slack(target)
+    # post(transport, post)
+
     # TODO check the rate-limiter
     # TODO fake fetching the build container
 

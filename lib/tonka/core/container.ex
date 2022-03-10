@@ -40,6 +40,8 @@ defmodule Tonka.Core.Container do
   @type function_spec :: {f_params, typespec}
   @type typespec :: typealias | function_spec | {:remote_type, module, atom} | {:type, atom}
 
+  @type builder :: module | (t -> {:ok, term, t} | {:error, term})
+
   defguard is_builder(builder) when is_atom(builder) or is_function(builder, 1)
   defguard is_utype(utype) when is_atom(utype)
 
@@ -61,6 +63,7 @@ defmodule Tonka.Core.Container do
     put_in(c.services[utype], service)
   end
 
+  @spec bind(t, typespec, builder) :: t
   def bind(%C{} = c, utype, builder) when is_utype(utype) and is_builder(builder) do
     service = Service.new(builder)
     put_in(c.services[utype], service)

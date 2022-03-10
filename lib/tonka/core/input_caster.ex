@@ -1,5 +1,6 @@
 defmodule Tonka.Core.InputCaster do
   alias Tonka.Core.Operation
+  alias Tonka.Core.Container
   alias __MODULE__
 
   @moduledoc """

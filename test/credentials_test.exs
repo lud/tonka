@@ -10,14 +10,6 @@ defmodule Tonka.CredentialsTest do
   defp fixture_json, do: File.read!(fixture_path)
   defp fixture_data, do: Jason.decode!(fixture_json())
 
-  test "can load fixtures" do
-    data = fixture_data()
-    assert data["simple_path"] == "simple_path_value"
-    assert data["nested"]["path"] == "nested_path_value"
-    assert data["deep"]["nested"]["path"] == "deep_nested_path_value"
-    assert data["deep"]["nested"]["sibling"] == "deep_nested_sibling_value"
-  end
-
   test "assert Tonka.Service.Credentials is a protocol" do
     case Credentials.__protocol__(:impls) do
       {:consolidated, _} -> assert true
@@ -53,5 +45,20 @@ defmodule Tonka.CredentialsTest do
   test "JsonFileCredentials implements Credentials" do
     {:consolidated, impls} = Credentials.__protocol__(:impls)
     assert JsonFileCredentials in impls
+    store = JsonFileCredentials.new(%{"k" => "v"})
+    assert JsonFileCredentials.get_string(store, "k") == Credentials.get_string(store, "k")
+  end
+
+  test "can load fixtures" do
+    data = fixture_data()
+    assert data["simple_path"] == "simple_path_value"
+    assert data["nested"]["path"] == "nested_path_value"
+    assert data["deep"]["nested"]["path"] == "deep_nested_path_value"
+    assert data["deep"]["nested"]["sibling"] == "deep_nested_sibling_value"
+  end
+
+  test "reading a value" do
+    store = JsonFileCredentials.from_path!(fixture_path())
+    assert {:ok, "simple_path_value"} = Credentials.get_string(store, "simple_path")
   end
 end

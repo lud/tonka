@@ -1,9 +1,7 @@
 defmodule Tonka.ContainerMacroTest do
-  alias Tonka.Core.Container
   alias Tonka.Core.Container.Service
   alias Tonka.Core.Container.InjectSpec
   alias Tonka.Core.Container.ReturnSpec
-  alias Tonka.Core.Operation
   alias Tonka.Core.Reflection
   alias Tonka.Test.Fixtures.SampleService
   alias Tonka.Test.Fixtures.SampleServiceNoInjects

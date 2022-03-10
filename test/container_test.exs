@@ -1,9 +1,6 @@
 defmodule Tonka.ContainerTest do
   alias Tonka.Core.Container
   alias Tonka.Core.Injector
-  alias Tonka.Core.Reflection
-  alias Tonka.Test.Fixtures.OpNoInputs
-  alias Tonka.Test.Fixtures.OpOneInput
   use ExUnit.Case, async: true
 
   test "a new container can be created" do
@@ -50,7 +47,7 @@ defmodule Tonka.ContainerTest do
     assert_receive {:building, SomeStructService}
   end
 
-  test "using a single argument to bind/1", ctx do
+  test "using a single argument to bind/1" do
     require Logger
 
     Logger.warn("""
@@ -70,7 +67,7 @@ defmodule Tonka.ContainerTest do
 
     refute_receive {:building, SomeStructService}
 
-    assert {:ok, %SomeDependentStruct{}, %Container{} = new_container} =
+    assert {:ok, %SomeDependentStruct{}, %Container{}} =
              Container.pull(container, SomeDependentStruct)
 
     assert_receive {:building, SomeStructService}
@@ -82,7 +79,7 @@ defmodule Tonka.ContainerTest do
       |> Container.bind_impl(SomeStructService, %SomeStructService{})
       |> Container.bind(SomeDependentStruct)
 
-    assert {:ok, %SomeDependentStruct{}, %Container{} = new_container} =
+    assert {:ok, %SomeDependentStruct{}, %Container{}} =
              Container.pull(container, SomeDependentStruct)
 
     refute_receive {:building, SomeStructService}
@@ -101,6 +98,10 @@ defmodule Tonka.ContainerTest do
       Container.new()
       |> Container.bind(SomeStructService)
       |> Container.bind(SomeDependentStruct, fn c ->
+        # This is not a refenrece implementation of a builder function. This is
+        # basically what the container and service do when using macros.  An
+        # actual builder function would create the service not by calling init/1
+        # but using another API.
         with {:ok, deps, c} <-
                Injector.build_injects(c, SomeDependentStruct.inject_specs(:init, 1, 0)),
              {:ok, impl} <- SomeDependentStruct.init(deps) do
@@ -111,7 +112,6 @@ defmodule Tonka.ContainerTest do
       end)
 
     assert {:ok, service, %Container{}} = Container.pull(container, SomeDependentStruct)
-    service |> IO.inspect(label: "service")
 
     assert is_struct(service, SomeDependentStruct)
   end

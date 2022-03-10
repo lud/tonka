@@ -103,7 +103,6 @@ defmodule Tonka.Core.Container.Service.ServiceMacros do
 
   defp def_injects(env) do
     specs = Injector.registered_injects(env.module, @inject_specs)
-    specs |> IO.inspect(label: "specs")
 
     quote location: :keep, generated: true do
       @__built_inject_specs for {key, defn} <- unquote(specs),
@@ -190,15 +189,11 @@ defmodule Tonka.Core.Container.Service.ServiceMacros do
         unquote(@__service_call_block)
       end
     end
-    |> tap(&IO.puts(Macro.to_string(&1)))
   end
 
   @doc false
   def maybe_expand_type_to_quoted(module, provides_spec) do
-    provides_spec |> IO.inspect(label: "provides_spec")
-
     Injector.expand_type_to_quoted(provides_spec)
-    |> IO.inspect(label: "NOT forced")
   rescue
     e in ArgumentError ->
       case e.message do

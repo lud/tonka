@@ -1,5 +1,6 @@
 defmodule Tonka.ContainerTest do
   alias Tonka.Core.Container
+  alias Tonka.Core.Injector
   alias Tonka.Core.Reflection
   alias Tonka.Test.Fixtures.OpNoInputs
   alias Tonka.Test.Fixtures.OpOneInput
@@ -85,5 +86,33 @@ defmodule Tonka.ContainerTest do
              Container.pull(container, SomeDependentStruct)
 
     refute_receive {:building, SomeStructService}
+  end
+
+  test "the container can tell if it has a service" do
+    container = Container.bind(Container.new(), SomeStructService)
+    assert Container.has?(container, SomeStructService)
+    refute Container.has?(container, SomeDependentStruct)
+
+    refute_receive {:building, SomeStructService}
+  end
+
+  test "a service can be built with a builder function" do
+    container =
+      Container.new()
+      |> Container.bind(SomeStructService)
+      |> Container.bind(SomeDependentStruct, fn c ->
+        with {:ok, deps, c} <-
+               Injector.build_injects(c, SomeDependentStruct.inject_specs(:init, 1, 0)),
+             {:ok, impl} <- SomeDependentStruct.init(deps) do
+          {:ok, impl, c}
+        else
+          {:error, _} = err -> err
+        end
+      end)
+
+    assert {:ok, service, %Container{}} = Container.pull(container, SomeDependentStruct)
+    service |> IO.inspect(label: "service")
+
+    assert is_struct(service, SomeDependentStruct)
   end
 end

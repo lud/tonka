@@ -1,4 +1,7 @@
 defmodule Tonka.Core.Injector do
+  alias Tonka.Core.Container
+  alias Tonka.Core.Container.InjectSpec
+
   def registered_injects(module, bucket) do
     Module.get_attribute(module, bucket, empty_bucket())
   end
@@ -84,5 +87,26 @@ defmodule Tonka.Core.Injector do
     userland_type
     |> Tonka.Core.Container.expand_type()
     |> Tonka.Core.Container.to_quoted_type()
+  end
+
+  def build_injects(container, inject_specs) do
+    Enum.reduce_while(inject_specs, {:ok, %{}, container}, fn
+      inject_spec, {:ok, map, container} ->
+        case pull_inject(container, inject_spec, map) do
+          {:ok, _map, _container} = fine -> {:cont, fine}
+          {:error, _} = err -> {:halt, err}
+        end
+    end)
+  end
+
+  defp pull_inject(container, %InjectSpec{type: utype, key: key}, map) do
+    case Container.pull(container, utype) do
+      {:ok, impl, new_container} ->
+        new_map = Map.put(map, key, impl)
+        {:ok, new_map, new_container}
+
+      {:error, _} = err ->
+        err
+    end
   end
 end

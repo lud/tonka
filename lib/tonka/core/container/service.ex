@@ -1,5 +1,6 @@
 defmodule Tonka.Core.Container.Service do
   alias __MODULE__
+  alias Tonka.Core.Injector
   alias Tonka.Core.Container.InjectSpec
   alias Tonka.Core.Container
 
@@ -38,6 +39,10 @@ defmodule Tonka.Core.Container.Service do
     %__MODULE__{built: false, builder: module, impl: nil}
   end
 
+  def new(builder) when is_function(builder, 1) do
+    %__MODULE__{built: false, builder: builder, impl: nil}
+  end
+
   def as_built(value) do
     %__MODULE__{built: true, builder: nil, impl: value}
   end
@@ -46,7 +51,7 @@ defmodule Tonka.Core.Container.Service do
       when is_atom(builder) do
     inject_specs = inject_specs(builder)
 
-    with {:ok, injects, container} <- pull_inject_map(container, inject_specs),
+    with {:ok, injects, container} <- Injector.build_injects(container, inject_specs),
          {:ok, impl} <- init_builder(builder, injects) do
       service = %Service{service | impl: impl, built: true}
       {:ok, service, container}
@@ -55,24 +60,18 @@ defmodule Tonka.Core.Container.Service do
     end
   end
 
-  defp pull_inject_map(container, inject_specs) do
-    Enum.reduce_while(inject_specs, {:ok, %{}, container}, fn
-      inject_spec, {:ok, map, container} ->
-        case pull_inject(container, inject_spec, map) do
-          {:ok, _map, _container} = fine -> {:cont, fine}
-          {:error, _} = err -> {:halt, err}
-        end
-    end)
-  end
-
-  defp pull_inject(container, %InjectSpec{type: utype, key: key}, map) do
-    case Container.pull(container, utype) do
-      {:ok, impl, new_container} ->
-        new_map = Map.put(map, key, impl)
-        {:ok, new_map, new_container}
+  def build(%Service{built: false, builder: builder} = service, container)
+      when is_function(builder, 1) do
+    case builder.(container) do
+      {:ok, impl, %Container{} = new_container} ->
+        service = %Service{service | impl: impl, built: true}
+        {:ok, service, new_container}
 
       {:error, _} = err ->
         err
+
+      _ ->
+        {:error, {:bad_return, builder, [container]}}
     end
   end
 

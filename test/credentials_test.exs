@@ -34,4 +34,24 @@ defmodule Tonka.CredentialsTest do
     assert from_path == from_json
     assert from_path == from_data
   end
+
+  test "loading JsonFileCredentials from path with result tuple" do
+    from_path = JsonFileCredentials.from_path!(fixture_path())
+    assert {:ok, ^from_path} = JsonFileCredentials.from_path(fixture_path())
+    from_json = JsonFileCredentials.from_json!(fixture_json())
+    from_data = JsonFileCredentials.new(fixture_data())
+
+    assert from_path == from_json
+    assert from_path == from_data
+  end
+
+  test "loading JsonFileCredentials returns a struct" do
+    store = JsonFileCredentials.from_path!(fixture_path())
+    assert match?(%JsonFileCredentials{}, store)
+  end
+
+  test "JsonFileCredentials implements Credentials" do
+    {:consolidated, impls} = Credentials.__protocol__(:impls)
+    assert JsonFileCredentials in impls
+  end
 end

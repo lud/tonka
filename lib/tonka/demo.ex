@@ -17,7 +17,7 @@ defmodule Tonka.Demo do
       |> Container.bind(Tonka.Service.Credentials, fn ->
         File.cwd!()
         |> Path.join("var/projects/dev/credentials.json")
-        |> Tonka.Service.Credentials.JsonFileCredentials.new()
+        |> Tonka.Service.Credentials.JsonFileCredentials.from_path!()
       end)
   end
 end

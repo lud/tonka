@@ -43,7 +43,8 @@ defmodule Tonka.MixProject do
 
       # App
 
-      {:ark, "~> 0.6.1", runtime: false},
+      {:ark, "~> 0.7.0", runtime: false},
+      # {:ark, path: "~/src/ark", runtime: false},
       # {:type_check, "~> 0.10.0"},
 
       # dev, test, tools

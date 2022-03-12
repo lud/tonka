@@ -1,4 +1,8 @@
 defmodule Tonka.Core.Container do
+  alias Tonka.Core.Injector
+  alias Tonka.Core.Container.InjectSpec
+  alias Tonka.Core.Container
+  alias Tonka.Core.Container.Service
   use TODO
 
   @moduledoc """
@@ -23,9 +27,6 @@ defmodule Tonka.Core.Container do
     end
   end
 
-  alias __MODULE__, as: C
-  alias Tonka.Core.Container.Service
-
   @type typealias :: module
 
   @type f_params ::
@@ -45,17 +46,17 @@ defmodule Tonka.Core.Container do
 
   defstruct [:services]
 
-  @type t :: %__MODULE__{
+  @type t :: %Container{
           services: %{typespec => Service.builder()}
         }
 
   def new do
-    struct!(__MODULE__, services: %{})
+    struct!(Container, services: %{})
   end
 
   # on register/1 we accept only a module
   @spec bind(t, module) :: t
-  def bind(%C{} = c, utype) when is_atom(utype) do
+  def bind(%Container{} = c, utype) when is_atom(utype) do
     bind(c, utype, utype)
     service = Service.new(utype)
     put_in(c.services[utype], service)
@@ -67,21 +68,21 @@ defmodule Tonka.Core.Container do
   @spec bind(t, typespec, Service.builder(), bind_opts) :: t
   def bind(container, utype, builder, opts \\ [])
 
-  def bind(%C{} = c, utype, builder, opts) when is_utype(utype) and is_builder(builder) do
+  def bind(%Container{} = c, utype, builder, opts) when is_utype(utype) and is_builder(builder) do
     service = Service.new(builder)
     put_in(c.services[utype], service)
   end
 
-  def bind_impl(%C{} = c, utype, value) when is_utype(utype) do
+  def bind_impl(%Container{} = c, utype, value) when is_utype(utype) do
     service = Service.as_built(value)
     put_in(c.services[utype], service)
   end
 
-  def has?(%C{} = c, utype) when is_utype(utype) do
+  def has?(%Container{} = c, utype) when is_utype(utype) do
     Map.has_key?(c.services, utype)
   end
 
-  def pull(%C{} = c, utype) when is_atom(utype) do
+  def pull(%Container{} = c, utype) when is_atom(utype) do
     case ensure_built(c, utype) do
       {:ok, c} -> {:ok, fetch_impl!(c, utype), c}
       {:error, _} = err -> err
@@ -105,18 +106,46 @@ defmodule Tonka.Core.Container do
     impl
   end
 
-  defp build_service(c, utype, %{built: false} = service) do
-    case Service.build(service, c) do
-      {:ok, built_service, c} -> replace_service(c, utype, service, built_service)
+  # defp build_service(c, utype, %{built: false} = service) do
+  #   case Service.build(service, c) do
+  #     {:ok, built_service, c} -> replace_service(c, utype, service, built_service)
+  #     {:error, _} = err -> err
+  #   end
+  # end
+
+  defp build_service(c, utype, %Service{built: false, builder: builder} = service)
+       when is_atom(builder) do
+    inject_specs = Service.inject_specs(builder)
+
+    with {:ok, injects, new_c} <- Injector.build_injects(c, inject_specs),
+         {:ok, impl} <- Service.init_builder(builder, injects) do
+      new_service = %Service{service | impl: impl, built: true}
+      replace_service(new_c, utype, service, new_service)
+    else
       {:error, _} = err -> err
     end
   end
 
-  defp replace_service(%{services: services} = c, utype, service, built_service) do
+  defp build_service(c, utype, %Service{built: false, builder: builder} = service)
+       when is_function(builder, 1) do
+    case builder.(c) do
+      {:ok, impl, %Container{} = new_c} ->
+        new_service = %Service{service | impl: impl, built: true}
+        replace_service(new_c, utype, service, new_service)
+
+      {:error, _} = err ->
+        err
+
+      _ ->
+        {:error, {:bad_return, builder, [c]}}
+    end
+  end
+
+  defp replace_service(%{services: services} = c, utype, service, %{built: true} = built_service) do
     ^service = Map.fetch!(services, utype)
     services = Map.put(services, utype, built_service)
 
-    {:ok, %C{c | services: services}}
+    {:ok, %Container{c | services: services}}
   end
 
   # ---------------------------------------------------------------------------

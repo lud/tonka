@@ -7,8 +7,6 @@ defmodule Tonka.Core.Container.Service do
   @type impl :: term
   @type service :: service(term)
   @type service(impl) :: {:ok, impl} | {:error, term}
-  @type container :: Container.t()
-  @type builder :: module | (container -> {:ok, term, container} | {:error, term})
 
   @callback provides_spec :: Tonka.Core.Container.ReturnSpec.t()
   @callback inject_specs(

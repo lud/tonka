@@ -106,29 +106,8 @@ defmodule Tonka.Core.Container do
     impl
   end
 
-  # defp build_service(c, utype, %{built: false} = service) do
-  #   case Service.build(service, c) do
-  #     {:ok, built_service, c} -> replace_service(c, utype, service, built_service)
-  #     {:error, _} = err -> err
-  #   end
-  # end
-
-  defp build_service(c, utype, %Service{built: false, builder: builder} = service)
-       when is_atom(builder) do
-    inject_specs = Service.inject_specs(builder)
-
-    with {:ok, injects, new_c} <- Injector.build_injects(c, inject_specs),
-         {:ok, impl} <- Service.init_builder(builder, injects) do
-      new_service = %Service{service | impl: impl, built: true}
-      replace_service(new_c, utype, service, new_service)
-    else
-      {:error, _} = err -> err
-    end
-  end
-
-  defp build_service(c, utype, %Service{built: false, builder: builder} = service)
-       when is_function(builder, 1) do
-    case builder.(c) do
+  defp build_service(c, utype, %Service{built: false, builder: builder} = service) do
+    case Service.call_builder(builder, c) do
       {:ok, impl, %Container{} = new_c} ->
         new_service = %Service{service | impl: impl, built: true}
         replace_service(new_c, utype, service, new_service)

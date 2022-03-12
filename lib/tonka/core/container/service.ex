@@ -48,12 +48,31 @@ defmodule Tonka.Core.Container.Service do
   end
 
   @doc false
+  def call_builder(module, container) when is_atom(module) do
+    inject_specs = inject_specs(module)
+
+    with {:ok, injects, new_container} <- Injector.build_injects(container, inject_specs),
+         {:ok, impl} <- init_module(module, injects) do
+      {:ok, impl, new_container}
+    else
+      {:error, _} = err -> err
+    end
+  end
+
+  def call_builder(function, container) when is_function(function, 1) do
+    case function.(container) do
+      {:ok, impl, %Container{} = new_container} -> {:ok, impl, new_container}
+      {:error, _} = err -> err
+    end
+  end
+
+  @doc false
   def inject_specs(module) when is_atom(module) do
     module.inject_specs(:init, 1, 0)
   end
 
   @doc false
-  def init_builder(module, injects) when is_atom(module) do
+  def init_module(module, injects) when is_atom(module) do
     module.init(injects)
   end
 end

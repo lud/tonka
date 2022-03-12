@@ -115,4 +115,30 @@ defmodule Tonka.ContainerTest do
 
     assert is_struct(service, SomeDependentStruct)
   end
+
+  test "a type is overridable for a service and only that service" do
+    container =
+      Container.new()
+      |> Container.bind(UsesParams, UsesParams,
+        overrides: %{
+          Tonka.Params => fn c ->
+            case UsesParams.cast_params(%{"some" => "params"}) do
+              {:ok, params} -> {:ok, params, c}
+              {:error, _} = err -> err
+            end
+          end
+        }
+      )
+
+    # |> Container.bind(AlsoUsesParams, AlsoUsesParams,
+    #   overrides: %{
+    #     Tonka.Params => fn c ->
+    #       case AlsoUsesParams.cast_params(%{"other" => "value"}) do
+    #         {:ok, params} -> {:ok, params, c}
+    #         {:error, _} = err -> err
+    #       end
+    #     end
+    #   }
+    # )
+  end
 end

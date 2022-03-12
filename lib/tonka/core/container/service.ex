@@ -7,6 +7,8 @@ defmodule Tonka.Core.Container.Service do
   @type impl :: term
   @type service :: service(term)
   @type service(impl) :: {:ok, impl} | {:error, term}
+  @type container :: Container.t()
+  @type builder :: module | (container -> {:ok, term, container} | {:error, term})
 
   @callback provides_spec :: Tonka.Core.Container.ReturnSpec.t()
   @callback inject_specs(
@@ -25,8 +27,6 @@ defmodule Tonka.Core.Container.Service do
           builder: module,
           impl: term
         }
-
-  @type builder :: module | (Container.t() -> {:ok, term, Container.t()} | {:error, term})
 
   defmacro __using__(_) do
     quote location: :keep do

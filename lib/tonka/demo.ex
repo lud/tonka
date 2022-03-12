@@ -22,9 +22,11 @@ defmodule Tonka.Demo do
     # -- Project container initialization -----------------------------------------
 
     # On init, the project will fill the container with services used by operations.
+    import Container
+
     container =
-      Container.new()
-      |> Container.bind(Tonka.Service.Credentials, fn c ->
+      new()
+      |> bind(Tonka.Service.Credentials, fn c ->
         store =
           File.cwd!()
           |> Path.join("var/projects/dev/credentials.json")
@@ -33,7 +35,22 @@ defmodule Tonka.Demo do
         {:ok, store, c}
       end)
 
-    {:ok, creds, container} = Container.pull(container, Tonka.Service.Credentials)
+    # |> bind(Tonka.Service.IssuesSource, Tonka.Ext.Gitlab.Issues,
+    #   # overrides the params for this service only. The defined types will only
+    #   # be available for injection for the defined services, not its
+    #   # dependencies
+    #   overrides: %{
+    #     Tonka.Params => fn c ->
+    #       case Tonka.Ext.Gitlab.Issues.cast_params(%{"some" => "params"}) do
+    #         {:ok, params} -> {:ok, params, c}
+    #         {:error, _} = err -> err
+    #       end
+    #     end
+    #   }
+    # )
+
+    {:ok, creds, container} = pull(container, Tonka.Service.Credentials)
+    # {:ok, creds, container} = pull(container, Tonka.Service.IssuesSource)
     creds |> IO.inspect(label: "pulled", pretty: true)
   end
 end

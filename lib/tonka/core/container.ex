@@ -60,7 +60,7 @@ defmodule Tonka.Core.Container do
   @spec bind(t, module) :: t
   def bind(%Container{} = c, utype) when is_atom(utype) do
     bind(c, utype, utype)
-    service = Service.new(utype)
+    service = Service.new(utype, overrides: opts[:overrides] || %{})
     put_in(c.services[utype], service)
   end
 
@@ -108,6 +108,10 @@ defmodule Tonka.Core.Container do
     impl
   end
 
+  # ---------------------------------------------------------------------------
+  #  Building services
+  # ---------------------------------------------------------------------------
+
   defp build_service(c, utype, %Service{built: false, builder: builder} = service) do
     case call_builder(builder, c) do
       {:ok, impl, %Container{} = new_c} ->
@@ -134,6 +138,16 @@ defmodule Tonka.Core.Container do
   end
 
   defp call_builder(function, container) when is_function(function, 1) do
+    raise """
+    TODO When using a builder function we cannot guarantee that the overriden
+    services will not be passed to the other services.
+    If the other serives also have override the same type it is fine, but
+    otherwise they will be able to pull.
+
+    Overrides should not be available for builder functions. As it is a
+    function, it can pass whatever it wants when creating some stuff.
+    """
+
     case function.(container) do
       {:ok, impl, %Container{} = new_container} -> {:ok, impl, new_container}
       {:error, _} = err -> err

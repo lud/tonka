@@ -141,6 +141,6 @@ defmodule Tonka.ContainerTest do
     #   }
     # )
 
-    raise "TODO test that overrides are not supported using builder funs"
+    # raise "TODO test that overrides are not supported using builder funs"
   end
 end

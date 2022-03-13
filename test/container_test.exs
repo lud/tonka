@@ -129,17 +129,21 @@ defmodule Tonka.ContainerTest do
           end
         }
       )
+      |> Container.bind(AlsoUsesParams, AlsoUsesParams,
+        overrides: %{
+          Tonka.Params => fn c ->
+            case AlsoUsesParams.cast_params(%{"other" => "value"}) do
+              {:ok, params} -> {:ok, params, c}
+              {:error, _} = err -> err
+            end
+          end
+        }
+      )
 
-    # |> Container.bind(AlsoUsesParams, AlsoUsesParams,
-    #   overrides: %{
-    #     Tonka.Params => fn c ->
-    #       case AlsoUsesParams.cast_params(%{"other" => "value"}) do
-    #         {:ok, params} -> {:ok, params, c}
-    #         {:error, _} = err -> err
-    #       end
-    #     end
-    #   }
-    # )
+    assert_raise ArgumentError, ~r/only available for module-based services/, fn ->
+      builder = fn c -> raise "this will not be called" end
+      Container.bind(container, SomeType, builder, overrides: %{Unused => :unused})
+    end
 
     # raise "TODO test that overrides are not supported using builder funs"
   end

@@ -92,18 +92,21 @@ defmodule Tonka.Core.Container do
 
   defp validate_bind_opt!({:overrides, overrides}, %{builder: builder}) do
     if not is_atom(builder) do
-      raise ":overrides bind option is only available for module-based services, got: #{inspect(builder)}"
+      raise ArgumentError,
+            ":overrides bind option is only available for module-based services, got: #{inspect(builder)}"
     end
 
     if not is_map(overrides) do
-      raise "invalid value for bind option :overrides, expected a map, got: #{inspect(overrides)}"
+      raise ArgumentError,
+            "invalid value for bind option :overrides, expected a map, got: #{inspect(overrides)}"
     end
 
-    overrides
-    |> Enum.reject(fn {_, v} -> is_builder(v) end)
-    |> case do
-      [] -> :ok
-      [{k, v} | _] -> raise "invalid bind override at key #{inspect(k)}: #{inspect(v)}"
+    case Enum.reject(overrides, fn {_, v} -> is_builder(v) end) do
+      [] ->
+        :ok
+
+      [{k, v} | _] ->
+        raise ArgumentError, "invalid bind override at key #{inspect(k)}: #{inspect(v)}"
     end
 
     {:overrides, overrides}

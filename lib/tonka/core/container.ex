@@ -43,6 +43,9 @@ defmodule Tonka.Core.Container do
 
   @type builder :: module | (t -> {:ok, term, t} | {:error, term})
 
+  @type bind_opt :: {:overrides, %{typespec => builder()}}
+  @type bind_opts :: [bind_opt]
+
   defguard is_builder(builder) when is_atom(builder) or is_function(builder, 1)
   defguard is_utype(utype) when is_atom(utype)
 
@@ -56,21 +59,58 @@ defmodule Tonka.Core.Container do
     struct!(Container, services: %{})
   end
 
+  # TODO doc binding with a single utype with default opts, accepts only atoms and expects that
+  # the utype is also a module.
   @spec bind(t, module) :: t
+  def bind(%Container{} = c, utype) when is_atom(utype),
+    do: bind(c, utype, utype, [])
 
-  def bind(%Container{} = c, utype) when is_atom(utype) do
-    bind(c, utype, utype, [])
-  end
+  # TODO doc binding with a single utype with given options, accepts only atoms
+  # and expects that the utype is also a module.
+  @spec bind(t, module, bind_opts()) :: t
+  def bind(%Container{} = c, utype, opts) when is_atom(utype) and is_list(opts),
+    do: bind(c, utype, utype, opts)
 
-  @type bind_opt :: {:overrides, %{typespec => builder()}}
-  @type bind_opts :: [bind_opt]
+  # TODO doc binding with a utype and a builder with default opts, accepts only
+  # atoms and expects that the utype is also a module.
+  @spec bind(t, typespec, builder()) :: t
+  def bind(%Container{} = c, utype, builder) when is_utype(utype) and is_builder(builder),
+    do: bind(c, utype, utype, [])
 
   @spec bind(t, typespec, builder(), bind_opts) :: t
-  def bind(container, utype, builder, opts \\ [])
-
-  def bind(%Container{} = c, utype, builder, opts) when is_utype(utype) and is_builder(builder) do
+  def bind(%Container{} = c, utype, builder, opts)
+      when is_utype(utype) and is_builder(builder) and is_list(opts) do
+    options = cast_bind_opts(opts, builder)
     service = Service.new(builder)
     put_in(c.services[utype], service)
+  end
+
+  defp cast_bind_opts(options, builder) do
+    cast_info = %{builder: builder}
+    Enum.into(options, %{}, &validate_bind_opt!(&1, cast_info))
+  end
+
+  defp validate_bind_opt!({:overrides, overrides}, %{builder: builder}) do
+    if not is_atom(builder) do
+      raise ":overrides bind option is only available for module-based services, got: #{inspect(builder)}"
+    end
+
+    if not is_map(overrides) do
+      raise "invalid value for bind option :overrides, expected a map, got: #{inspect(overrides)}"
+    end
+
+    overrides
+    |> Enum.reject(fn {_, v} -> is_builder(v) end)
+    |> case do
+      [] -> :ok
+      [{k, v} | _] -> raise "invalid bind override at key #{inspect(k)}: #{inspect(v)}"
+    end
+
+    {:overrides, overrides}
+  end
+
+  defp validate_bind_opt!({key, _}, _) do
+    raise "unknown bind option #{inspect(key)}"
   end
 
   def bind_impl(%Container{} = c, utype, value) when is_utype(utype) do

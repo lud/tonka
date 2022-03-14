@@ -123,28 +123,25 @@ defmodule Tonka.ContainerTest do
     end
   end
 
-  test "a type is overridable for a service and only that service" do
+  test "a type is zble for a service and only that service" do
+    provide_params = fn module, params ->
+      %{
+        Tonka.Params => fn c ->
+          case module.cast_params(params) do
+            {:ok, params} -> {:ok, params, c}
+            {:error, _} = err -> err
+          end
+        end
+      }
+    end
+
     container =
       Container.new()
       |> Container.bind(UsesParams, UsesParams,
-        overrides: %{
-          Tonka.Params => fn c ->
-            case UsesParams.cast_params(%{"some" => "params"}) do
-              {:ok, params} -> {:ok, params, c}
-              {:error, _} = err -> err
-            end
-          end
-        }
+        overrides: provide_params.(UsesParams, %{"some" => "params"})
       )
       |> Container.bind(AlsoUsesParams, AlsoUsesParams,
-        overrides: %{
-          Tonka.Params => fn c ->
-            case AlsoUsesParams.cast_params(%{"other" => "value"}) do
-              {:ok, params} -> {:ok, params, c}
-              {:error, _} = err -> err
-            end
-          end
-        }
+        overrides: provide_params.(AlsoUsesParams, %{"other" => "value"})
       )
   end
 end

@@ -82,7 +82,6 @@ defmodule Tonka.Core.Container do
   def bind(%Container{} = c, utype, builder, opts)
       when is_utype(utype) and is_builder(builder) and is_list(opts) do
     options = cast_bind_opts(opts, builder)
-    options |> IO.inspect(label: "options")
     service = Service.new([builder: builder] ++ options)
     put_in(c.services[utype], service)
   end
@@ -93,7 +92,6 @@ defmodule Tonka.Core.Container do
     options
     |> Enum.map(&validate_bind_opt!(&1, cast_info))
     |> with_default_opts()
-    |> IO.inspect(label: "opts")
   end
 
   defp with_default_opts(opts) do
@@ -104,8 +102,6 @@ defmodule Tonka.Core.Container do
   end
 
   defp validate_bind_opt!({:overrides, overrides}, %{builder: builder}) do
-    overrides |> IO.inspect(label: "overrides")
-
     if not is_atom(builder) do
       raise ArgumentError,
             ":overrides bind option is only available for module-based services, got: #{inspect(builder)}"
@@ -133,7 +129,6 @@ defmodule Tonka.Core.Container do
 
   def bind_impl(%Container{} = c, utype, value) when is_utype(utype) do
     options = [builder: :lol, impl: value, builder: nil, built: true, overrides: %{}]
-    options |> IO.inspect(label: "options in impl")
     service = Service.new(options)
     put_in(c.services[utype], service)
   end
@@ -184,9 +179,7 @@ defmodule Tonka.Core.Container do
   defp call_builder(%Service{built: false, builder: module, overrides: overrides}, container)
        when is_atom(module) do
     with {:ok, injects, new_container} <- build_injects(container, module, overrides),
-         injects |> IO.inspect(label: "injects"),
-         {:ok, impl} <-
-           init_module(module, injects) do
+         {:ok, impl} <- init_module(module, injects) do
       {:ok, impl, new_container}
     else
       {:error, _} = err -> err

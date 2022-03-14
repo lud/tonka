@@ -116,6 +116,13 @@ defmodule Tonka.ContainerTest do
     assert is_struct(service, SomeDependentStruct)
   end
 
+  test "a type is not overridable for builder functions" do
+    assert_raise ArgumentError, ~r/only available for module-based services/, fn ->
+      builder = fn c -> raise "this will not be called" end
+      Container.bind(Container.new(), SomeType, builder, overrides: %{Unused => :unused})
+    end
+  end
+
   test "a type is overridable for a service and only that service" do
     container =
       Container.new()
@@ -139,12 +146,5 @@ defmodule Tonka.ContainerTest do
           end
         }
       )
-
-    assert_raise ArgumentError, ~r/only available for module-based services/, fn ->
-      builder = fn c -> raise "this will not be called" end
-      Container.bind(container, SomeType, builder, overrides: %{Unused => :unused})
-    end
-
-    # raise "TODO test that overrides are not supported using builder funs"
   end
 end

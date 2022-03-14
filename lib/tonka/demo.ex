@@ -1,4 +1,6 @@
 defmodule Tonka.Demo do
+  alias Tonka.Core.Container.Params
+
   def run do
     # -----------------------------------------------------------------------------
     #  Simulate a grid run from a job
@@ -40,7 +42,7 @@ defmodule Tonka.Demo do
     #   # be available for injection for the defined services, not its
     #   # dependencies
     #   overrides: %{
-    #     Tonka.Params => fn c ->
+    #     Params => fn c ->
     #       case Tonka.Ext.Gitlab.Issues.cast_params(%{"some" => "params"}) do
     #         {:ok, params} -> {:ok, params, c}
     #         {:error, _} = err -> err

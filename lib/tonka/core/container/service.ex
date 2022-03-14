@@ -17,7 +17,7 @@ defmodule Tonka.Core.Container.Service do
 
   @callback init(map) :: service(term)
 
-  @enforce_keys [:built, :builder, :impl]
+  @enforce_keys [:built, :builder, :impl, :overrides]
   defstruct @enforce_keys
 
   @type t :: %__MODULE__{
@@ -33,16 +33,8 @@ defmodule Tonka.Core.Container.Service do
     end
   end
 
-  def new(module) when is_atom(module) do
-    %__MODULE__{built: false, builder: module, impl: nil}
-  end
-
-  def new(builder) when is_function(builder, 1) do
-    %__MODULE__{built: false, builder: builder, impl: nil}
-  end
-
-  def as_built(value) do
-    %__MODULE__{built: true, builder: nil, impl: value}
+  def new(opts) do
+    struct!(__MODULE__, opts)
   end
 
   @doc false

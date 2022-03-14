@@ -47,6 +47,7 @@ defmodule Tonka.Core.Container do
   @type bind_opts :: [bind_opt]
 
   defguard is_builder(builder) when is_atom(builder) or is_function(builder, 1)
+  defguard is_override(override) when is_function(override, 0)
   defguard is_utype(utype) when is_atom(utype)
 
   defstruct [:services]
@@ -81,16 +82,30 @@ defmodule Tonka.Core.Container do
   def bind(%Container{} = c, utype, builder, opts)
       when is_utype(utype) and is_builder(builder) and is_list(opts) do
     options = cast_bind_opts(opts, builder)
-    service = Service.new(builder)
+    options |> IO.inspect(label: "options")
+    service = Service.new([builder: builder] ++ options)
     put_in(c.services[utype], service)
   end
 
   defp cast_bind_opts(options, builder) do
     cast_info = %{builder: builder}
-    Enum.into(options, %{}, &validate_bind_opt!(&1, cast_info))
+
+    options
+    |> Enum.map(&validate_bind_opt!(&1, cast_info))
+    |> with_default_opts()
+    |> IO.inspect(label: "opts")
+  end
+
+  defp with_default_opts(opts) do
+    opts
+    |> Keyword.put_new(:built, false)
+    |> Keyword.put_new(:impl, nil)
+    |> Keyword.put_new(:overrides, %{})
   end
 
   defp validate_bind_opt!({:overrides, overrides}, %{builder: builder}) do
+    overrides |> IO.inspect(label: "overrides")
+
     if not is_atom(builder) do
       raise ArgumentError,
             ":overrides bind option is only available for module-based services, got: #{inspect(builder)}"
@@ -101,7 +116,7 @@ defmodule Tonka.Core.Container do
             "invalid value for bind option :overrides, expected a map, got: #{inspect(overrides)}"
     end
 
-    case Enum.reject(overrides, fn {_, v} -> is_builder(v) end) do
+    case Enum.reject(overrides, fn {_, v} -> is_override(v) end) do
       [] ->
         :ok
 
@@ -116,8 +131,12 @@ defmodule Tonka.Core.Container do
     raise "unknown bind option #{inspect(key)}"
   end
 
+  @todo "support opts in bind_impl"
+
   def bind_impl(%Container{} = c, utype, value) when is_utype(utype) do
-    service = Service.as_built(value)
+    options = [builder: :lol, impl: value, builder: nil, built: true, overrides: %{}]
+    options |> IO.inspect(label: "options in impl")
+    service = Service.new(options)
     put_in(c.services[utype], service)
   end
 
@@ -153,25 +172,23 @@ defmodule Tonka.Core.Container do
   #  Building services
   # ---------------------------------------------------------------------------
 
-  defp build_service(c, utype, %Service{built: false, builder: builder} = service) do
-    case call_builder(builder, c) do
+  defp build_service(c, utype, %Service{built: false} = service) do
+    case call_builder(service, c) do
       {:ok, impl, %Container{} = new_c} ->
         new_service = %Service{service | impl: impl, built: true}
         replace_service(new_c, utype, service, new_service)
 
       {:error, _} = err ->
         err
-
-      _ ->
-        {:error, {:bad_return, builder, [c]}}
     end
   end
 
-  defp call_builder(module, container) when is_atom(module) do
-    inject_specs = Service.inject_specs(module)
-
-    with {:ok, injects, new_container} <- Injector.build_injects(container, inject_specs),
-         {:ok, impl} <- init_module(module, injects) do
+  defp call_builder(%Service{built: false, builder: module, overrides: overrides}, container)
+       when is_atom(module) do
+    with {:ok, injects, new_container} <- build_injects(container, module, overrides),
+         injects |> IO.inspect(label: "injects"),
+         {:ok, impl} <-
+           init_module(module, injects) do
       {:ok, impl, new_container}
     else
       {:error, _} = err -> err
@@ -182,11 +199,29 @@ defmodule Tonka.Core.Container do
     case function.(container) do
       {:ok, impl, %Container{} = new_container} -> {:ok, impl, new_container}
       {:error, _} = err -> err
+      other -> {:error, {:bad_return, {function, [container]}, other}}
     end
   end
 
+  defp build_injects(container, module, overrides) do
+    inject_specs = Service.inject_specs(module)
+
+    case Injector.build_injects(container, inject_specs, overrides) do
+      {:ok, injects, new_container} -> {:ok, injects, new_container}
+      {:error, _} = err -> err
+    end
+  end
+
+  defp apply_overrides(injects, %Service{overrides: overrides}) do
+    Map.merge(injects, overrides)
+  end
+
   defp init_module(module, injects) when is_atom(module) do
-    module.init(injects)
+    case module.init(injects) do
+      {:ok, impl} -> {:ok, impl}
+      {:error, _} = err -> err
+      other -> {:error, {:bad_return, {module, :init, [injects]}, other}}
+    end
   end
 
   defp replace_service(%{services: services} = c, utype, service, %{built: true} = built_service) do

@@ -1,6 +1,8 @@
 defmodule Tonka.ContainerTest do
   alias Tonka.Core.Container
+  alias Tonka.Core.Container.Service
   alias Tonka.Core.Injector
+  alias Tonka.Core.Container.Params
   use ExUnit.Case, async: true
 
   test "a new container can be created" do
@@ -123,25 +125,82 @@ defmodule Tonka.ContainerTest do
     end
   end
 
-  test "a type is zble for a service and only that service" do
-    provide_params = fn module, params ->
-      %{
-        Tonka.Params => fn c ->
-          case module.cast_params(params) do
-            {:ok, params} -> {:ok, params, c}
-            {:error, _} = err -> err
-          end
-        end
-      }
+  defmodule UsesParams do
+    use Service
+
+    def expand_type, do: {:type, :binary}
+
+    provides UsesParams, binary
+    inject params in Params
+
+    init do
+      send(self(), {__MODULE__, params.p})
+      {:ok, "hello from UsesParams"}
     end
 
+    def cast_params(%{"param" => param}) when is_binary(param) do
+      {:ok, %{p: String.to_existing_atom(param)}}
+    end
+  end
+
+  defmodule AlsoUsesParams do
+    use Service
+
+    provides AlsoUsesParams, binary
+    inject dep in UsesParams
+    inject params in Params
+
+    init do
+      {:ok, "hello from AlsoUsesParams, dep was: #{dep}"}
+    end
+
+    def cast_params(%{"param" => param}) when is_binary(param) do
+      {:ok, String.to_existing_atom(param)}
+    end
+  end
+
+  defp provide_params(module, params) do
+    %{
+      Params => fn ->
+        case module.cast_params(params) do
+          {:ok, params} -> {:ok, params}
+          {:error, _} = err -> err
+        end
+      end
+    }
+  end
+
+  test "a type is overridable for a service" do
     container =
       Container.new()
       |> Container.bind(UsesParams, UsesParams,
-        overrides: provide_params.(UsesParams, %{"some" => "params"})
+        overrides: provide_params(UsesParams, %{"param" => "uses"})
       )
-      |> Container.bind(AlsoUsesParams, AlsoUsesParams,
-        overrides: provide_params.(AlsoUsesParams, %{"other" => "value"})
-      )
+
+    assert {:ok, impl, _} = Container.pull(container, UsesParams)
+
+    assert "hello from UsesParams" ==
+             impl
+
+    assert_receive {UsesParams, :uses}
   end
+
+  # test "a type is overridable for a service and only that service" do
+
+  #   container =
+  #     Container.new()
+  #     |> Container.bind(UsesParams, UsesParams,
+  #       overrides: provide_params(UsesParams, %{"param" => "uses"})
+  #     )
+  #     # Also uses params depends on UsesParams.  When we will pull that service,
+  #     # each service will send self its module name and param value as atom
+  #     |> Container.bind(AlsoUsesParams, AlsoUsesParams,
+  #       overrides: provide_params(AlsoUsesParams, %{"param" => "other"})
+  #     )
+
+  #   assert {:ok, impl, _} = Container.pull(container, AlsoUsesParams)
+
+  #   assert "hello from AlsoUsesParams, dep was: hello from UsesParams" ==
+  #            impl
+  # end
 end

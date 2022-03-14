@@ -89,14 +89,42 @@ defmodule Tonka.Core.Injector do
     |> Tonka.Core.Container.to_quoted_type()
   end
 
-  def build_injects(container, inject_specs) do
-    Enum.reduce_while(inject_specs, {:ok, %{}, container}, fn
-      inject_spec, {:ok, map, container} ->
-        case pull_inject(container, inject_spec, map) do
-          {:ok, _map, _container} = fine -> {:cont, fine}
-          {:error, _} = err -> {:halt, err}
-        end
-    end)
+  def build_injects(container, inject_specs, overrides \\ %{}) do
+    Enum.reduce_while(
+      inject_specs,
+      {:ok, %{}, container},
+      fn
+        inject_spec, {:ok, map, container} ->
+          case pull_override(overrides, inject_spec, map) do
+            {:ok, map} ->
+              {:cont, {:ok, map, container}}
+
+            :error ->
+              case pull_inject(container, inject_spec, map) do
+                {:ok, _map, _container} = fine -> {:cont, fine}
+                {:error, _} = err -> {:halt, err}
+              end
+          end
+      end
+    )
+  end
+
+  defp pull_override(overrides, %InjectSpec{type: utype, key: key}, map)
+       when is_map_key(overrides, utype) do
+    override = Map.fetch!(overrides, utype)
+
+    case call_override(override) do
+      {:ok, value} -> {:ok, Map.put(map, key, value)}
+      {:error, _} = err -> err
+    end
+  end
+
+  defp pull_override(_, _, _) do
+    :error
+  end
+
+  defp call_override(override) when is_function(override, 0) do
+    override.()
   end
 
   defp pull_inject(container, %InjectSpec{type: utype, key: key}, map) do

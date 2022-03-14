@@ -131,8 +131,6 @@ defmodule Tonka.Core.Container do
     raise "unknown bind option #{inspect(key)}"
   end
 
-  @todo "support opts in bind_impl"
-
   def bind_impl(%Container{} = c, utype, value) when is_utype(utype) do
     options = [builder: :lol, impl: value, builder: nil, built: true, overrides: %{}]
     options |> IO.inspect(label: "options in impl")
@@ -210,10 +208,6 @@ defmodule Tonka.Core.Container do
       {:ok, injects, new_container} -> {:ok, injects, new_container}
       {:error, _} = err -> err
     end
-  end
-
-  defp apply_overrides(injects, %Service{overrides: overrides}) do
-    Map.merge(injects, overrides)
   end
 
   defp init_module(module, injects) when is_atom(module) do

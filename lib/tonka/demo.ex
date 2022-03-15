@@ -1,6 +1,8 @@
 defmodule Tonka.Demo do
   alias Tonka.Core.Container
   alias Tonka.Core.Container.Params
+  alias Tonka.Core.Grid
+  alias Tonka.Core.Operation
   import Container
 
   def run do
@@ -21,9 +23,10 @@ defmodule Tonka.Demo do
     # TODO check the rate-limiter
     # TODO fake fetching the build container
     container = prepare_container()
-  end
+    grid = prepare_grid()
 
-  # -- Project container initialization -----------------------------------------
+    Grid.run(grid, "some dummy input")
+  end
 
   def prepare_container do
     # On init, the project will fill the container with services used by operations.
@@ -61,5 +64,10 @@ defmodule Tonka.Demo do
         {:error, _} = err -> err
       end
     end)
+  end
+
+  def prepare_grid do
+    Grid.new()
+    |> Grid.set_input(Tonka.Core.InputCaster.NilInput)
   end
 end

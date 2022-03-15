@@ -1,14 +1,13 @@
-defmodule Tonka.Core.Operation.OperationMacros do
+defmodule Tonka.Core.InputCaster.InputCasterMacros do
   @moduledoc false
-  alias Tonka.Core.Operation
+  alias Tonka.Core.InputCaster
   alias Tonka.Core.Injector
   alias Tonka.Core.Container.InjectSpec
   alias Tonka.Core.Container.ReturnSpec
 
-  @call_called :__tonka_op_call_called
-  @out_called :__tonka_op_output_called
-  @input_specs :__tonka_op_input_specs
-  @output_type :__tonka_op_output_type
+  @call_called :__tonka_incast_call_called
+  @out_called :__tonka_incast_output_called
+  @output_type :__tonka_incast_output_type
 
   @doc false
   defmacro init_module do
@@ -18,22 +17,9 @@ defmodule Tonka.Core.Operation.OperationMacros do
     quote location: :keep do
       import unquote(__MODULE__), only: :macros
 
-      @behaviour Operation
+      @behaviour InputCaster
       @before_compile unquote(__MODULE__)
     end
-  end
-
-  defmacro input(definition) do
-    if Module.get_attribute(__CALLER__.module, @call_called) do
-      raise("cannot declare input after call")
-    end
-
-    case Injector.register_inject(__CALLER__.module, @input_specs, definition, :varname) do
-      :ok -> nil
-      {:error, badarg} -> raise badarg
-    end
-
-    nil
   end
 
   defmacro output(typedef) do
@@ -53,7 +39,7 @@ defmodule Tonka.Core.Operation.OperationMacros do
     nil
   end
 
-  defmacro call(do: block) do
+  defmacro call(input_var, do: block) do
     if Module.get_attribute(__CALLER__.module, @call_called) do
       raise("cannot declare call twice")
     end
@@ -63,7 +49,8 @@ defmodule Tonka.Core.Operation.OperationMacros do
     quote location: :keep, generated: true do
       # We use an attribute to store the code block so unquote() from the user
       # are already expanded when stored
-      @__op_call_block unquote(Macro.escape(block, unquote: true))
+      @__incast_call_var unquote(Macro.escape(input_var, unquote: true))
+      @__incast_call_block unquote(Macro.escape(block, unquote: true))
     end
   end
 
@@ -82,33 +69,16 @@ defmodule Tonka.Core.Operation.OperationMacros do
     end
 
     [
-      def_inputs(env),
       def_output(env),
       if(Module.get_attribute(env.module, @call_called), do: def_call(env))
     ]
-  end
-
-  defp def_inputs(env) do
-    specs = Injector.registered_injects(env.module, @input_specs)
-
-    quote location: :keep do
-      @__built_input_specs for {key, defn} <- unquote(specs),
-                               do: %InjectSpec{key: key, type: defn[:utype]}
-
-      @impl Operation
-      @spec input_specs :: [InjectSpec.t()]
-
-      def input_specs do
-        @__built_input_specs
-      end
-    end
   end
 
   defp def_output(env) do
     output_type = Module.get_attribute(env.module, @output_type)
 
     quote location: :keep do
-      @impl Operation
+      @impl InputCaster
       @spec output_spec :: ReturnSpec.t()
       def output_spec do
         %ReturnSpec{type: unquote(output_type)}
@@ -118,29 +88,20 @@ defmodule Tonka.Core.Operation.OperationMacros do
 
   defp def_call(env) do
     output_spec = Module.get_attribute(env.module, @output_type)
-    input_specs = Injector.registered_injects(env.module, @input_specs)
-    input_injects = Injector.quoted_injects_map(input_specs)
 
     quote location: :keep,
           generated: true,
-          bind_quoted: [
-            input_specs: input_specs,
-            output_spec: output_spec,
-            input_injects: Macro.escape(input_injects)
-          ] do
-      input_type = Injector.expand_injects_to_quoted_map_typespec(input_specs)
-      @type input_map :: unquote(input_type)
-
+          bind_quoted: [output_spec: output_spec] do
       output_type = Injector.expand_type_to_quoted(output_spec)
       @type output :: unquote(output_type)
 
       @doc """
-      Executes the operation.
+      Casts the input to type `t:output`.
       """
-      @impl Operation
-      @spec call(input_map, map, map) :: Operation.op_out(output)
-      def call(unquote(input_injects), _, _) do
-        unquote(@__op_call_block)
+      @impl InputCaster
+      @spec call(term, map, map) :: Operation.op_out(output)
+      def call(unquote(@__incast_call_var), _, _) do
+        unquote(@__incast_call_block)
       end
     end
   end
@@ -151,11 +112,10 @@ defmodule Tonka.Core.Operation.OperationMacros do
 
     For instance, with the call/1 macro:
 
-        use Tonka.Core.Operation
-        input myinput Some.In.Type
+        use Tonka.Core.InputCaster
 
-        call do
-          myinput + 1
+        call input do
+          {:ok, inspect(input)}
         end
     """
   end
@@ -166,7 +126,7 @@ defmodule Tonka.Core.Operation.OperationMacros do
 
     For instance, with the output/1 macro:
 
-        use Tonka.Core.Operation
+        use Tonka.Core.InputCaster
         output Some.Out.Type
     """
   end

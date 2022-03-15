@@ -62,3 +62,5 @@ clean-dep dep:
     rm -rvf _build/dev/lib/{{dep}}
     rm -rvf _build/test/lib/{{dep}}
     rm -rvf _build/prod/lib/{{dep}}
+
+clean: (clean-dep "tonka")

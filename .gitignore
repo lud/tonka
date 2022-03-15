@@ -24,3 +24,4 @@ tonka-*.tar
 
 config/secrets.exs
 /var/
+.elixir_ls/

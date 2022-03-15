@@ -28,6 +28,13 @@ defmodule Tonka.Core.InputCaster do
   @callback output_spec() :: Container.ReturnSpec.t()
   @callback call(term, Operation.params(), injects :: map) :: Operation.op_out()
 
+  defmacro __using__(_) do
+    quote location: :keep do
+      import Tonka.Core.InputCaster.InputCasterMacros
+      Tonka.Core.InputCaster.InputCasterMacros.init_module()
+    end
+  end
+
   @spec new(new_opts) :: t
   def new(opts) do
     struct!(__MODULE__, opts)

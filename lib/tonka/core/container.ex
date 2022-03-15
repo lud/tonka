@@ -27,7 +27,12 @@ defmodule Tonka.Core.Container do
     end
   end
 
-  @type typespec :: typealias | function_spec | {:remote_type, module, atom} | {:type, atom}
+  @type typespec ::
+          typealias
+          | function_spec
+          | {:collection, typespec}
+          | {:remote_type, module, atom}
+          | {:type, atom}
   @type typealias :: module
   @type f_params ::
           {typespec}
@@ -234,21 +239,12 @@ defmodule Tonka.Core.Container do
     terminal
   end
 
-  def expand_type({:type, type} = terminal) when is_atom(type) do
+  def expand_type({:type, _} = terminal) do
     terminal
   end
 
-  defp raise_invalid_type(module) do
-    # implements? = Tonka.Core.Reflection.implements_behaviour?(module, Tonka.Core.Container.Type)
-
-    raise "module #{inspect(module)} does not define expand_type/0"
-    # raise """
-    # module #{inspect(module)} does not define expand_type/0
-
-    # #{if not implements? do
-    #   "#{inspect(module)} does not implement the #{inspect(Tonka.Core.Container.Type)} behaviour"
-    # end}
-    # """
+  def expand_type({:collection, type}) do
+    {:collection, expand_type(type)}
   end
 
   def to_quoted_type({:remote_type, module, type})
@@ -262,5 +258,30 @@ defmodule Tonka.Core.Container do
     quote do
       unquote(type)()
     end
+  end
+
+  def to_quoted_type({:type, {:atom, literal}}) when is_atom(literal) do
+    quote do
+      unquote(literal)
+    end
+  end
+
+  def to_quoted_type({:collection, type}) do
+    quote do
+      [unquote(to_quoted_type(type))]
+    end
+  end
+
+  defp raise_invalid_type(module) do
+    # implements? = Tonka.Core.Reflection.implements_behaviour?(module, Tonka.Core.Container.Type)
+
+    raise "module #{inspect(module)} does not define expand_type/0"
+    # raise """
+    # module #{inspect(module)} does not define expand_type/0
+
+    # #{if not implements? do
+    #   "#{inspect(module)} does not implement the #{inspect(Tonka.Core.Container.Type)} behaviour"
+    # end}
+    # """
   end
 end

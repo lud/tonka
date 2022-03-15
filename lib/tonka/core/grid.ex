@@ -33,8 +33,8 @@ defmodule Tonka.Core.Grid do
     %Grid{specs: %{}, outputs: %{}, states: %{}, input_caster: nil}
   end
 
-  @spec set_input(t, InputCaster.buildable(), input_caster_opts | map) :: t
-  def set_input(grid, caster, spec \\ %{})
+  @spec set_input(t, InputCaster.buildable(), input_caster_opts) :: t
+  def set_input(grid, caster, spec \\ [])
 
   def set_input(%Grid{input_caster: _} = grid, caster, spec) do
     %Grid{grid | input_caster: build_incast_spec(caster, spec)}

@@ -9,4 +9,6 @@ definterface Tonka.Service.IssuesSource do
 
   @spec mql_query(t, term) :: {:ok, [Tonka.Data.Issue.t()]} | {:error, term}
   def mql_query(t, term)
+
+  Kernel.def(expand_type, do: {:remote_type, __MODULE__, :t})
 end

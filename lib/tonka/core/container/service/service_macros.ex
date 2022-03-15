@@ -196,6 +196,8 @@ defmodule Tonka.Core.Container.Service.ServiceMacros do
     Injector.expand_type_to_quoted(provides_spec)
   rescue
     e in ArgumentError ->
+      IO.warn(e.message)
+
       case e.message do
         "could not load module" <> _ -> raise_circular_self(module, provides_spec)
         _ -> reraise e, __STACKTRACE__

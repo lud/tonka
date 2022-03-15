@@ -21,10 +21,11 @@ defmodule Tonka.Ext.Gitlab.Issues do
     struct!(__MODULE__, opts)
   end
 
+  @params_caster Hugs.build_props()
+                 |> Hugs.field(:projects, type: {:list, :binary}, required: true)
+
   def cast_params(params) do
-    Hugs.build_props()
-    |> Hugs.field(:projects, type: {:list, :binary}, required: true)
-    |> Hugs.denormalize_data(params)
+    Hugs.denormalize(params, @params_caster)
   end
 
   init do

@@ -2,20 +2,17 @@ defmodule Tonka.Ext.Gitlab.Issues do
   use Tonka.Core.Container.Service
   alias Tonka.Service.IssuesSource
 
-  defmodule GitlabIssuesParams do
-    require Hugs
-  end
-
-  provides(Tonka.Service.IssuesSource)
+  provides Tonka.Service.IssuesSource
 
   @enforce_keys [:projects]
+  @derive IssuesSource
   defstruct @enforce_keys
 
   @type t :: %__MODULE__{
           projects: [binary()]
         }
 
-  inject(params in Tonka.Core.Container.Params)
+  inject params in Tonka.Core.Container.Params
 
   defp new(opts) do
     struct!(__MODULE__, opts)

@@ -27,8 +27,8 @@ defmodule Tonka.Core.Container do
     end
   end
 
+  @type typespec :: typealias | function_spec | {:remote_type, module, atom} | {:type, atom}
   @type typealias :: module
-
   @type f_params ::
           {typespec}
           | {typespec, typespec}
@@ -37,13 +37,12 @@ defmodule Tonka.Core.Container do
           | {typespec, typespec, typespec, typespec, typespec, typespec}
           | {typespec, typespec, typespec, typespec, typespec, typespec, typespec}
           | {typespec, typespec, typespec, typespec, typespec, typespec, typespec, typespec}
-
   @type function_spec :: {f_params, typespec}
-  @type typespec :: typealias | function_spec | {:remote_type, module, atom} | {:type, atom}
 
   @type builder :: module | (t -> {:ok, term, t} | {:error, term})
+  @type override :: module | (() -> {:ok, term} | {:error, term})
 
-  @type bind_opt :: {:overrides, %{typespec => builder()}}
+  @type bind_opt :: {:overrides, %{typespec => override()}}
   @type bind_opts :: [bind_opt]
 
   defguard is_builder(builder) when is_atom(builder) or is_function(builder, 1)
@@ -66,15 +65,15 @@ defmodule Tonka.Core.Container do
   def bind(%Container{} = c, utype) when is_atom(utype),
     do: bind(c, utype, utype, [])
 
+  @spec bind(t, module, builder | bind_opts()) :: t
+
   # TODO doc binding with a single utype with given options, accepts only atoms
   # and expects that the utype is also a module.
-  @spec bind(t, module, bind_opts()) :: t
   def bind(%Container{} = c, utype, opts) when is_atom(utype) and is_list(opts),
     do: bind(c, utype, utype, opts)
 
   # TODO doc binding with a utype and a builder with default opts, accepts only
   # atoms and expects that the utype is also a module.
-  @spec bind(t, typespec, builder()) :: t
   def bind(%Container{} = c, utype, builder) when is_utype(utype) and is_builder(builder),
     do: bind(c, utype, builder, [])
 

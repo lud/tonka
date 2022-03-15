@@ -1,6 +1,7 @@
 defmodule Tonka.Demo do
   alias Tonka.Core.Container
   alias Tonka.Core.Container.Params
+  import Container
 
   def run do
     # -----------------------------------------------------------------------------
@@ -19,11 +20,13 @@ defmodule Tonka.Demo do
 
     # TODO check the rate-limiter
     # TODO fake fetching the build container
+    container = prepare_container()
+  end
 
-    # -- Project container initialization -----------------------------------------
+  # -- Project container initialization -----------------------------------------
 
+  def prepare_container do
     # On init, the project will fill the container with services used by operations.
-    import Container
 
     container =
       new()
@@ -35,7 +38,6 @@ defmodule Tonka.Demo do
 
         {:ok, store, c}
       end)
-      |> IO.inspect(label: "container")
       |> bind(Tonka.Service.IssuesSource, Tonka.Ext.Gitlab.Issues,
         overrides:
           provide_params(Tonka.Ext.Gitlab.Issues, %{
@@ -45,8 +47,11 @@ defmodule Tonka.Demo do
       )
 
     {:ok, creds, container} = pull(container, Tonka.Service.Credentials)
-    {:ok, creds, container} = pull(container, Tonka.Service.IssuesSource)
-    creds |> IO.inspect(label: "pulled", pretty: true)
+    creds |> IO.inspect(label: "creds", pretty: true)
+    {:ok, issues_source, container} = pull(container, Tonka.Service.IssuesSource)
+    issues_source |> IO.inspect(label: "issues_source", pretty: true)
+
+    container
   end
 
   defp provide_params(overrides \\ %{}, module, params) do

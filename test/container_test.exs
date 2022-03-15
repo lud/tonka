@@ -13,13 +13,13 @@ defmodule Tonka.ContainerTest do
   defmodule SomeStructService do
     @behaviour Container.Service
 
-    defstruct []
+    defstruct [:val]
 
     def inject_specs(:init, 1, 0), do: []
 
     def init(_) do
-      send(self(), {:building, __MODULE__})
-      {:ok, %__MODULE__{}}
+      send(self(), {:init_called, __MODULE__})
+      {:ok, %__MODULE__{val: :set_in_init}}
     end
   end
 
@@ -41,12 +41,12 @@ defmodule Tonka.ContainerTest do
     # abstract type).
     assert %Container{} = container = Container.bind(Container.new(), SomeStructService)
 
-    refute_receive {:building, SomeStructService}
+    refute_receive {:init_called, SomeStructService}
 
-    assert {:ok, %SomeStructService{}, %Container{}} =
+    assert {:ok, %SomeStructService{val: :set_in_init}, %Container{}} =
              Container.pull(container, SomeStructService)
 
-    assert_receive {:building, SomeStructService}
+    assert_receive {:init_called, SomeStructService}
   end
 
   test "using a single argument to bind/1" do
@@ -58,6 +58,30 @@ defmodule Tonka.ContainerTest do
     """)
   end
 
+  test "a builder function can be provided" do
+    ref = make_ref()
+
+    container =
+      Container.new()
+      |> Container.bind(SomeStructService, fn c ->
+        send(self(), :some_builder_was_called)
+        {:ok, %SomeStructService{val: ref}, c}
+      end)
+
+    assert {:ok, %SomeStructService{val: ^ref}, new_container} =
+             Container.pull(container, SomeStructService)
+
+    refute_receive {:init_called, SomeStructService}
+    assert_received :some_builder_was_called
+
+    # pull again, must be called only once: same ref, no message
+    assert {:ok, %SomeStructService{val: ^ref}, _} =
+             Container.pull(new_container, SomeStructService)
+
+    refute_receive {:init_called, SomeStructService}
+    refute_receive :some_builder_was_called
+  end
+
   test "a struct service can depdend on another" do
     # When a single atom is registered, it is considered as a utype (a userland
     # abstract type). Given we do not provide an implementation, the container
@@ -67,12 +91,12 @@ defmodule Tonka.ContainerTest do
       |> Container.bind(SomeStructService)
       |> Container.bind(SomeDependentStruct)
 
-    refute_receive {:building, SomeStructService}
+    refute_receive {:init_called, SomeStructService}
 
     assert {:ok, %SomeDependentStruct{}, %Container{}} =
              Container.pull(container, SomeDependentStruct)
 
-    assert_receive {:building, SomeStructService}
+    assert_receive {:init_called, SomeStructService}
   end
 
   test "a service value can be immediately set" do
@@ -84,7 +108,7 @@ defmodule Tonka.ContainerTest do
     assert {:ok, %SomeDependentStruct{}, %Container{}} =
              Container.pull(container, SomeDependentStruct)
 
-    refute_receive {:building, SomeStructService}
+    refute_receive {:init_called, SomeStructService}
   end
 
   test "the container can tell if it has a service" do
@@ -92,7 +116,7 @@ defmodule Tonka.ContainerTest do
     assert Container.has?(container, SomeStructService)
     refute Container.has?(container, SomeDependentStruct)
 
-    refute_receive {:building, SomeStructService}
+    refute_receive {:init_called, SomeStructService}
   end
 
   test "a service can be built with a builder function" do

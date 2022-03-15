@@ -1,4 +1,5 @@
 defmodule Tonka.Demo do
+  alias Tonka.Core.Container
   alias Tonka.Core.Container.Params
 
   def run do
@@ -19,8 +20,6 @@ defmodule Tonka.Demo do
     # TODO check the rate-limiter
     # TODO fake fetching the build container
 
-    alias Tonka.Core.Container
-
     # -- Project container initialization -----------------------------------------
 
     # On init, the project will fill the container with services used by operations.
@@ -36,23 +35,26 @@ defmodule Tonka.Demo do
 
         {:ok, store, c}
       end)
-
-    # |> bind(Tonka.Service.IssuesSource, Tonka.Ext.Gitlab.Issues,
-    #   # overrides the params for this service only. The defined types will only
-    #   # be available for injection for the defined services, not its
-    #   # dependencies
-    #   overrides: %{
-    #     Params => fn c ->
-    #       case Tonka.Ext.Gitlab.Issues.cast_params(%{"some" => "params"}) do
-    #         {:ok, params} -> {:ok, params, c}
-    #         {:error, _} = err -> err
-    #       end
-    #     end
-    #   }
-    # )
+      |> IO.inspect(label: "container")
+      |> bind(Tonka.Service.IssuesSource, Tonka.Ext.Gitlab.Issues,
+        overrides:
+          provide_params(Tonka.Ext.Gitlab.Issues, %{
+            "projects" => ["company-agilap/r-d/agislack"],
+            "credentials" => "gitlab.private_token"
+          })
+      )
 
     {:ok, creds, container} = pull(container, Tonka.Service.Credentials)
-    # {:ok, creds, container} = pull(container, Tonka.Service.IssuesSource)
+    {:ok, creds, container} = pull(container, Tonka.Service.IssuesSource)
     creds |> IO.inspect(label: "pulled", pretty: true)
+  end
+
+  defp provide_params(overrides \\ %{}, module, params) do
+    Map.put(overrides, Params, fn ->
+      case module.cast_params(params) do
+        {:ok, params} -> {:ok, params}
+        {:error, _} = err -> err
+      end
+    end)
   end
 end

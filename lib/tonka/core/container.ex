@@ -76,7 +76,7 @@ defmodule Tonka.Core.Container do
   # atoms and expects that the utype is also a module.
   @spec bind(t, typespec, builder()) :: t
   def bind(%Container{} = c, utype, builder) when is_utype(utype) and is_builder(builder),
-    do: bind(c, utype, utype, [])
+    do: bind(c, utype, builder, [])
 
   @spec bind(t, typespec, builder(), bind_opts) :: t
   def bind(%Container{} = c, utype, builder, opts)
@@ -186,7 +186,8 @@ defmodule Tonka.Core.Container do
     end
   end
 
-  defp call_builder(function, container) when is_function(function, 1) do
+  defp call_builder(%Service{built: false, builder: function}, container)
+       when is_function(function, 1) do
     case function.(container) do
       {:ok, impl, %Container{} = new_container} -> {:ok, impl, new_container}
       {:error, _} = err -> err

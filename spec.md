@@ -106,3 +106,34 @@ When an event generator fires, it targets a project and a grid. This project's
 grid is loaded to create a new operator (implementing a grid instance). The grid
 receives the input and executes all operations in the grid that can be executed
 from that input.
+
+
+## Issues Fetching & Caching
+
+Previous iterations of the project used a local cache of all issues. This was
+made in hope we could create a slack command that would list issues very
+quickly.  Without that cache, each command requires the issues to be fetched
+again.
+
+Caching also provided simple webhook handling since on webhooks calls we would
+immediately fetch the issue and have it ready for further queries.
+
+Without caching, there is less work to do: only implement the fetch and filter.
+Webhooks can be safely ignored because issues are always fetched.
+
+The problem is that we want to handle webhooks because we want to send alerts
+when issues are updated and do not conform to rules (proper labels, proper
+assignment, etc.).  The webhook can be implemented as an event generator that
+pushes and input to a grid.
+
+If we want to cache all the issues locally we will need an inter-service event
+system, where a service or event generator can emit an event, and other services
+can subscribe to.  But then the issues store must also emit an input event to
+trigger the alert grid.  This makes everything more complex and intricate, but
+we may have to implement this if we want to work with very large projects and
+implement slack commands.
+
+There are ways to minimize complexity of each service by adding a new service
+that handles the event listening, issues sources refetch calls, and inputs
+creation.
+

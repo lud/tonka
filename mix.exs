@@ -45,6 +45,7 @@ defmodule Tonka.MixProject do
 
       {:ark, "~> 0.7.0", runtime: false},
       {:hugs, path: "~/src/hugs", runtime: false},
+      {:yaml_elixir, "~> 2.5"},
       # {:ark, path: "~/src/ark", runtime: false},
       # {:type_check, "~> 0.10.0"},
 

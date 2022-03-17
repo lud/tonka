@@ -54,7 +54,16 @@ defmodule Tonka.Core.Container.Service do
   end
 
   def new(opts) do
-    struct!(__MODULE__, opts)
+    service = struct!(__MODULE__, opts)
+    fun? = is_function(service.builder)
+
+    if fun? and map_size(service.params) > 0,
+      do: raise(ArgumentError, "params is only available for module-based services")
+
+    if fun? and map_size(service.overrides) > 0,
+      do: raise(ArgumentError, "overrides is only available for module-based services")
+
+    service
   end
 
   @doc false

@@ -119,11 +119,11 @@ defmodule Tonka.Core.Container do
   def validate_overrides(overrides) do
     if not is_map(overrides) do
       {:error, "overrides must be a map"}
-    end
-
-    case Enum.reject(overrides, fn {_, v} -> is_override(v) end) do
-      [] -> {:ok, overrides}
-      [{k, v} | _] -> {:error, "invalid bind override at key #{inspect(k)}: #{inspect(v)}"}
+    else
+      case Enum.reject(overrides, fn {_, v} -> is_override(v) end) do
+        [] -> {:ok, overrides}
+        [{k, v} | _] -> {:error, "invalid bind override for type #{inspect(k)}: #{inspect(v)}"}
+      end
     end
   end
 

@@ -128,7 +128,7 @@ defmodule Tonka.Core.Container do
   end
 
   def bind_impl(%Container{} = c, utype, value) when is_utype(utype) do
-    options = [builder: :lol, impl: value, builder: nil, built: true, overrides: %{}]
+    options = [builder: :lol, impl: value, builder: nil, built: true, overrides: %{}, params: %{}]
     service = Service.new(options)
     put_in(c.services[utype], service)
   end

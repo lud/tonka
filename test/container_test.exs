@@ -118,7 +118,6 @@ defmodule Tonka.ContainerTest do
     assert_receive {:init_called, SomeStructService}
   end
 
-  @tag :skip
   test "a service value can be immediately set" do
     container =
       Container.new()

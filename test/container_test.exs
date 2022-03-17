@@ -130,7 +130,6 @@ defmodule Tonka.ContainerTest do
     refute_receive {:init_called, SomeStructService}
   end
 
-  @tag :skip
   test "the container can tell if it has a service" do
     container = Container.bind(Container.new(), SomeStructService)
     assert Container.has?(container, SomeStructService)
@@ -139,19 +138,22 @@ defmodule Tonka.ContainerTest do
     refute_receive {:init_called, SomeStructService}
   end
 
-  @tag :skip
   test "a service can be built with a builder function" do
     container =
       Container.new()
       |> Container.bind(SomeStructService)
       |> Container.bind(SomeDependentStruct, fn c ->
         # This is not a refenrece implementation of a builder function. This is
-        # basically what the container and service do when using macros.  An
-        # actual builder function would create the service not by calling init/1
-        # but using another API.
-        with {:ok, deps, c} <-
-               Injector.build_injects(c, SomeDependentStruct.inject_specs(:init, 1, 0)),
-             {:ok, impl} <- SomeDependentStruct.init(deps) do
+        # basically what the container and service do with module-based
+        # services.  An actual builder function would create a service from a
+        # module that does not implement the Service behaviour, thus not by
+        # calling init/1 but using another API.
+        params = %{}
+
+        with %{injects: inject_specs} <-
+               SomeDependentStruct.configure(Service.base_config(), params),
+             {:ok, deps, c} <- Injector.build_injects(c, inject_specs),
+             {:ok, impl} <- SomeDependentStruct.init(deps, params) do
           {:ok, impl, c}
         else
           {:error, _} = err -> err

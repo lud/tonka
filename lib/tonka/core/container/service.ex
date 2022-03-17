@@ -108,7 +108,8 @@ defmodule Tonka.Core.Container.Service do
     %Service{service | built: true, impl: impl}
   end
 
-  defp empty_config,
+  @doc false
+  def base_config,
     do: ServiceConfig.new()
 
   defp call_cast_params(module, params) do
@@ -120,11 +121,11 @@ defmodule Tonka.Core.Container.Service do
   end
 
   defp call_config(module, params) do
-    empty = empty_config()
+    base = base_config()
 
-    case module.configure(empty_config(), params) do
+    case module.configure(base_config(), params) do
       %ServiceConfig{} = config -> {:ok, config}
-      other -> {:error, {:bad_return, {module, :configure, [empty, params]}, other}}
+      other -> {:error, {:bad_return, {module, :configure, [base, params]}, other}}
     end
   rescue
     # we do not want ok/error tuples in confiure() to keep the flow of the

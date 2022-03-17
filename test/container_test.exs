@@ -172,66 +172,70 @@ defmodule Tonka.ContainerTest do
     end
   end
 
-  defmodule UsesParams do
-    def cast_params(%{"param" => param}) when is_binary(param) do
-      {:ok, %{p: String.to_existing_atom(param)}}
+  defmodule UsesStuff do
+    def cast_params(p),
+      do: {:ok, p}
+
+    @spec configure(Service.config(), term) :: {:ok, Service.config()} | {:error, term}
+    def configure(config, _) do
+      config
+      |> Service.use_service(:a_stuff, Stuff)
+    end
+
+    def init(%{a_stuff: %{stuff_name: stuff_name}}, _) when is_atom(stuff_name) do
+      send(self, {__MODULE__, stuff_name})
+      {:ok, "UsesStuff name: #{stuff_name}"}
     end
   end
 
-  defmodule AlsoUsesParams do
+  defmodule AlsoUsesStuff do
     use Service
 
-    def cast_params(%{"param" => param}) when is_binary(param) do
-      {:ok, %{p: String.to_existing_atom(param)}}
+    def cast_params(p),
+      do: {:ok, p}
+
+    @spec configure(Service.config(), term) :: {:ok, Service.config()} | {:error, term}
+    def configure(config, _) do
+      config
+      |> Service.use_service(:a_stuff, Stuff)
+      |> Service.use_service(:user, UsesStuff)
+    end
+
+    def init(%{a_stuff: %{stuff_name: stuff_name}, user: dep}, _) when is_atom(stuff_name) do
+      send(self, {__MODULE__, stuff_name})
+      {:ok, "AlsoUsesStuff name: #{stuff_name}, dep was: #{dep}"}
     end
   end
 
-  defp provide_params(module, params) do
-    %{
-      Params => fn ->
-        case module.cast_params(params) do
-          {:ok, params} -> {:ok, params}
-          {:error, _} = err -> err
-        end
-      end
-    }
+  defp provide_stuff(stuff) do
+    %{Stuff => fn -> {:ok, stuff} end}
   end
 
-  @tag :skip
   test "a type is overridable for a service" do
     container =
       Container.new()
-      |> Container.bind(UsesParams, UsesParams,
-        overrides: provide_params(UsesParams, %{"param" => "uses"})
-      )
+      |> Container.bind(UsesStuff, UsesStuff, overrides: provide_stuff(%{stuff_name: :uses}))
 
-    assert {:ok, impl, _} = Container.pull(container, UsesParams)
+    assert {:ok, impl, _} = Container.pull(container, UsesStuff)
 
-    assert "hello from UsesParams" ==
-             impl
+    assert "UsesStuff name: uses" == impl
 
-    assert_receive {UsesParams, :uses}
+    assert_receive {UsesStuff, :uses}
   end
 
-  @tag :skip
   test "a type is overridable for a service and only that service" do
     container =
       Container.new()
-      |> Container.bind(UsesParams, UsesParams,
-        overrides: provide_params(UsesParams, %{"param" => "uses"})
-      )
-      # Also uses params depends on UsesParams.  When we will pull that service,
+      |> Container.bind(UsesStuff, overrides: provide_stuff(%{stuff_name: :uses}))
+      # Also uses params depends on UsesStuff.  When we will pull that service,
       # each service will send self its module name and param value as atom
-      |> Container.bind(AlsoUsesParams, AlsoUsesParams,
-        overrides: provide_params(AlsoUsesParams, %{"param" => "other"})
-      )
+      |> Container.bind(AlsoUsesStuff, overrides: provide_stuff(%{stuff_name: :other}))
 
-    assert {:ok, impl, _} = Container.pull(container, AlsoUsesParams)
+    assert {:ok, impl, _} = Container.pull(container, AlsoUsesStuff)
 
-    assert "hello from AlsoUsesParams, dep was: hello from UsesParams" ==
-             impl
+    assert "AlsoUsesStuff name: other, dep was: UsesStuff name: uses" == impl
 
-    assert_receive {UsesParams, :uses}
-    assert_receive {AlsoUsesParams, :other}
+    assert_receive {UsesStuff, :uses}
+    assert_receive {AlsoUsesStuff, :other}
   end
 end

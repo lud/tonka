@@ -136,10 +136,6 @@ defmodule Tonka.Core.Container.Service do
       %ServiceConfig{} = config -> {:ok, config}
       other -> {:error, {:bad_return, {module, :configure, [base, params]}, other}}
     end
-  rescue
-    # we do not want ok/error tuples in confiure() to keep the flow of the
-    # config, so we have to rescue
-    e -> {:error, e}
   end
 
   defp build_injects(container, inject_specs, overrides) do

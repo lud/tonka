@@ -237,4 +237,57 @@ defmodule Tonka.ContainerTest do
     assert_receive {UsesStuff, :uses}
     assert_receive {AlsoUsesStuff, :other}
   end
+
+  defmodule PulledService do
+    @behaviour Service
+
+    defstruct []
+    def cast_params(term), do: {:ok, term}
+    def configure(config, _), do: config
+    def init(injects, params), do: {:ok, :available}
+  end
+
+  defmodule PulledToLate do
+    @behaviour Service
+
+    defstruct []
+    def cast_params(term), do: {:ok, term}
+    def configure(config, _), do: config
+    def init(injects, params), do: raise("this should not be called")
+  end
+
+  test "a container can be frozen" do
+    container =
+      Container.new()
+      |> Container.bind(PulledService)
+      |> Container.freeze()
+  end
+
+  test "a frozen container rejects new bindings" do
+    assert_raise RuntimeError, ~r/is frozen/, fn ->
+      Container.new()
+      |> Container.bind(PulledService)
+      |> Container.freeze()
+      |> Container.bind(Something)
+    end
+  end
+
+  test "a frozen container rejects pulling unbuilt services" do
+    c1 =
+      Container.new()
+      |> Container.bind(PulledService)
+      |> Container.bind(PulledToLate)
+
+    # Pull before freeze OK
+    {:ok, :available, c2} = Container.pull(c1, PulledService)
+
+    # Now freeze
+    frozen = Container.freeze(c2)
+
+    # Pull service already built ok
+    assert {:ok, :available, ^frozen} = Container.pull(frozen, PulledService)
+
+    # Error cannot pull service that was not built
+    assert {:error, "the container is frozen"} = Container.pull(frozen, PulledToLate)
+  end
 end

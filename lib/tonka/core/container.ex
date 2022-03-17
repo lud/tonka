@@ -44,14 +44,20 @@ defmodule Tonka.Core.Container do
   defguard is_override(override) when is_function(override, 0)
   defguard is_utype(utype) when is_atom(utype)
 
-  defstruct [:services]
+  @enforce_keys [:services, :frozen]
+  defstruct @enforce_keys
 
   @type t :: %Container{
-          services: %{typespec => Service.t()}
+          services: %{typespec => Service.t()},
+          frozen: boolean
         }
 
   def new do
-    struct!(Container, services: %{})
+    struct!(Container, services: %{}, frozen: false)
+  end
+
+  def freeze(%Container{} = c) do
+    %Container{c | frozen: true}
   end
 
   @bind_options_schema NimbleOptions.new!(
@@ -99,6 +105,10 @@ defmodule Tonka.Core.Container do
   #{NimbleOptions.docs(@bind_options_schema)}
   """
   @spec bind(t, typespec, builder(), bind_opts) :: t
+  def bind(%Container{frozen: true}, _, _, _) do
+    raise "the container is frozen"
+  end
+
   def bind(%Container{} = c, utype, builder, opts)
       when is_utype(utype) and is_builder(builder) and is_list(opts) do
     service = opts_to_service(opts, builder)
@@ -144,9 +154,10 @@ defmodule Tonka.Core.Container do
     end
   end
 
-  def ensure_built(c, utype) do
+  def ensure_built(%{frozen: frozen} = c, utype) do
     case fetch_type(c, utype) do
       {:ok, %Service{built: true}} -> {:ok, c}
+      {:ok, %Service{built: false}} when frozen -> {:error, "the container is frozen"}
       {:ok, %Service{built: false} = service} -> build_service(c, utype, service)
       :error -> {:error, %UnknownServiceError{utype: utype}}
     end

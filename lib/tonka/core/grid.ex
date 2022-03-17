@@ -26,7 +26,7 @@ defmodule Tonka.Core.Grid do
           specs: specs,
           outputs: outputs,
           states: states,
-          input_caster: {InputCaster.t(), incast_params :: map}
+          input_caster: nil | {InputCaster.t(), incast_params :: map}
         }
 
   def new do

@@ -29,6 +29,15 @@ defmodule Tonka.MixProject do
 
   defp deps do
     [
+      # App
+
+      {:ark, "~> 0.7.0", runtime: false},
+      {:hugs, path: "~/src/hugs", runtime: false},
+      {:yaml_elixir, "~> 2.5"},
+      {:bbmustache, "~> 1.12"},
+      # {:ark, path: "~/src/ark", runtime: false},
+      # {:type_check, "~> 0.10.0"},
+
       # Phoenix stack
       {:phoenix, "~> 1.6.6"},
       {:phoenix_ecto, "~> 4.4"},
@@ -40,14 +49,6 @@ defmodule Tonka.MixProject do
       {:gettext, "~> 0.18"},
       {:jason, "~> 1.2"},
       {:plug_cowboy, "~> 2.5"},
-
-      # App
-
-      {:ark, "~> 0.7.0", runtime: false},
-      {:hugs, path: "~/src/hugs", runtime: false},
-      {:yaml_elixir, "~> 2.5"},
-      # {:ark, path: "~/src/ark", runtime: false},
-      # {:type_check, "~> 0.10.0"},
 
       # dev, test, tools
       {:credo, "~> 1.6", only: [:dev, :test], runtime: false},

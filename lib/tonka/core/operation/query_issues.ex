@@ -4,7 +4,13 @@ defmodule Tonka.Core.Operation.QueryIssues do
   output {:collection, Tonka.Data.IssueGroup}
   # input mql in Tonka.Data.MqlQuery
 
-  call do
+  # def inject_spec(params) do
+  #   Operation.inject()
+  #   |> Operation.use_service(My.Service, :mykey, required: false)
+  #   |> Operation.use_input(My.Input.Type, :other_key, required: false)
+  # end
+
+  def call(inputs, params, injects) do
     {:ok, []}
   end
 end

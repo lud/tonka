@@ -4,17 +4,18 @@ defmodule Tonka.Ext.Gitlab.Issues do
 
   provides Tonka.Service.IssuesSource
 
-  @enforce_keys [:projects]
+  @enforce_keys [:projects, :private_token]
   @derive IssuesSource
   defstruct @enforce_keys
 
   @type t :: %__MODULE__{
-          projects: [binary()]
+          projects: [binary()],
+          private_token: binary
         }
 
   inject params in Tonka.Core.Container.Params
 
-  defp new(opts) do
+  def new(opts) do
     struct!(__MODULE__, opts)
   end
 

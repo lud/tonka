@@ -1,6 +1,4 @@
 defmodule Tonka.Core.Container do
-  alias Tonka.Core.Injector
-  alias Tonka.Core.Container.InjectSpec
   alias Tonka.Core.Container
   alias Tonka.Core.Container.Service
   use TODO
@@ -240,18 +238,5 @@ defmodule Tonka.Core.Container do
     quote do
       [unquote(to_quoted_type(type))]
     end
-  end
-
-  defp raise_invalid_type(module) do
-    # implements? = Tonka.Core.Reflection.implements_behaviour?(module, Tonka.Core.Container.Type)
-
-    raise "module #{inspect(module)} does not define expand_type/0"
-    # raise """
-    # module #{inspect(module)} does not define expand_type/0
-
-    # #{if not implements? do
-    #   "#{inspect(module)} does not implement the #{inspect(Tonka.Core.Container.Type)} behaviour"
-    # end}
-    # """
   end
 end

@@ -53,8 +53,8 @@ defmodule Tonka.Core.Container.Service do
     end
   end
 
-  def new(opts) do
-    service = struct!(__MODULE__, opts)
+  def new(vars) do
+    service = struct!(__MODULE__, vars)
     fun? = is_function(service.builder)
 
     if fun? and map_size(service.params) > 0,

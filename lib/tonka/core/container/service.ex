@@ -97,7 +97,17 @@ defmodule Tonka.Core.Container.Service do
     end
   end
 
-  defp empty_config, do: ServiceConfig.new()
+  defp call_builder(%Service{builder: function}, container)
+       when is_function(function, 1) do
+    case function.(container) do
+      {:ok, impl, %Container{} = new_container} -> {:ok, impl, new_container}
+      {:error, _} = err -> err
+      other -> {:error, {:bad_return, {function, [container]}, other}}
+    end
+  end
+
+  defp empty_config,
+    do: ServiceConfig.new()
 
   defp call_cast_params(module, params) do
     case module.cast_params(params) do
@@ -118,15 +128,6 @@ defmodule Tonka.Core.Container.Service do
     # we do not want ok/error tuples in confiure() to keep the flow of the
     # config, so we have to rescue
     e -> {:error, e}
-  end
-
-  defp call_builder(%Service{builder: function}, container)
-       when is_function(function, 1) do
-    case function.(container) do
-      {:ok, impl, %Container{} = new_container} -> {:ok, impl, new_container}
-      {:error, _} = err -> err
-      other -> {:error, {:bad_return, {function, [container]}, other}}
-    end
   end
 
   defp build_injects(container, inject_specs, overrides) do

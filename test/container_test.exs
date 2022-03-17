@@ -59,7 +59,6 @@ defmodule Tonka.ContainerTest do
     assert_receive {:init_called, SomeStructService}
   end
 
-  @tag :skip
   test "using a single argument to bind/1" do
     require Logger
 
@@ -69,7 +68,6 @@ defmodule Tonka.ContainerTest do
     """)
   end
 
-  @tag :skip
   test "a builder function can be provided" do
     ref = make_ref()
 

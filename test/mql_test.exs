@@ -2,12 +2,10 @@ defmodule Tonka.MQLTest do
   use ExUnit.Case, async: true
   alias Tonka.Core.Query.MQL
 
-  @tag :skip
   test "yaml is compiled with atom keys" do
     assert {:compiled, _yaml, %{a: "val"}} = all_atoms_query("a: val")
   end
 
-  @tag :skip
   test "atoms values should not be transformed by YamlElixir" do
     """
     a: :tom
@@ -16,7 +14,6 @@ defmodule Tonka.MQLTest do
     |> refute_match(%{a: :tom})
   end
 
-  @tag :skip
   test "match an array of values" do
     """
     v: val
@@ -28,7 +25,6 @@ defmodule Tonka.MQLTest do
     |> refute_match(%{a: []})
   end
 
-  @tag :skip
   test "match a number" do
     """
     i: -10
@@ -43,7 +39,6 @@ defmodule Tonka.MQLTest do
     |> refute_match(%{i: "1.001"})
   end
 
-  @tag :skip
   test "compare equal between float and integer" do
     # Direct value will not match
     """
@@ -74,7 +69,6 @@ defmodule Tonka.MQLTest do
     |> refute_match(%{n: 2.0})
   end
 
-  @tag :skip
   test "match an existing key with nil" do
     # Searching for a nil value with $eq will only find maps that DO have the
     # key AND have a `nil` value associated with the key.
@@ -84,7 +78,6 @@ defmodule Tonka.MQLTest do
     |> assert_match(%{j: nil})
   end
 
-  @tag :skip
   test "match an existing key with nil, or a missing key" do
     # Searching directly for `nil` will return all objects that DO NOT have the
     # key OR have the key with a `nil` value associated to it.
@@ -99,7 +92,6 @@ defmodule Tonka.MQLTest do
     |> refute_match("bin")
   end
 
-  @tag :skip
   test "match with $in" do
     """
     i: { $in: [0, 1] }
@@ -109,7 +101,6 @@ defmodule Tonka.MQLTest do
     |> refute_match(%{i: 2})
   end
 
-  @tag :skip
   test "match with an empty $in" do
     """
     i: { $in: [] }
@@ -119,7 +110,6 @@ defmodule Tonka.MQLTest do
     |> refute_match(%{})
   end
 
-  @tag :skip
   test "match with $in against a list" do
     """
     ns: { $in: [0, 1] }
@@ -133,7 +123,6 @@ defmodule Tonka.MQLTest do
     |> refute_match(%{ns: [9999, 8888]})
   end
 
-  @tag :skip
   test "match with $nin" do
     """
     i: { $nin: [0, 1] }
@@ -143,7 +132,6 @@ defmodule Tonka.MQLTest do
     |> assert_match(%{i: 2})
   end
 
-  @tag :skip
   test "match with $nin against a list" do
     """
     ns: { $nin: [0, 1] }
@@ -157,7 +145,6 @@ defmodule Tonka.MQLTest do
     |> assert_match(%{ns: [9999, 8888]})
   end
 
-  @tag :skip
   test "test $or on the same key using a list of matches" do
     """
     $or:
@@ -169,7 +156,6 @@ defmodule Tonka.MQLTest do
     |> refute_match(%{name: "carol"})
   end
 
-  @tag :skip
   test "match with $and on two different keys in a query sub-map" do
     """
     $and:
@@ -181,7 +167,6 @@ defmodule Tonka.MQLTest do
     |> refute_match(%{kind: "fruit", price: 9999})
   end
 
-  @tag :skip
   test "match with $and on two different keys in a query list" do
     """
     $and:
@@ -193,7 +178,6 @@ defmodule Tonka.MQLTest do
     |> refute_match(%{kind: "fruit", price: 9999})
   end
 
-  @tag :skip
   test "match with $size" do
     """
     list:
@@ -239,7 +223,6 @@ defmodule Tonka.MQLTest do
     end)
   end
 
-  @tag :skip
   test "nested $or > $and" do
     """
     $or:
@@ -256,7 +239,6 @@ defmodule Tonka.MQLTest do
     |> refute_match(%{kind: "a", val: 9999, skippy: false})
   end
 
-  @tag :skip
   test "nested $and > $or" do
     """
     $and:
@@ -272,7 +254,6 @@ defmodule Tonka.MQLTest do
     |> refute_match(%{is_valid: true})
   end
 
-  @tag :skip
   test "invert with $not" do
     """
     $not:
@@ -292,7 +273,6 @@ defmodule Tonka.MQLTest do
     |> assert_match(%{kind: "a", val: 9999})
   end
 
-  @tag :skip
   test "dates with $date_lt" do
     now = DateTime.utc_now()
     later_5min = DateTime.add(now, 5 * 60, :second)
@@ -320,7 +300,6 @@ defmodule Tonka.MQLTest do
     |> refute_match(%{at: later_5min})
   end
 
-  @tag :skip
   test "compilation error" do
     assert_raise Tonka.Core.Query.MQL.Compiler.CompilationError, fn ->
       """
@@ -331,7 +310,6 @@ defmodule Tonka.MQLTest do
     end
   end
 
-  @tag :skip
   test "compute a $subset and run a match" do
     """
     items:
@@ -385,7 +363,6 @@ defmodule Tonka.MQLTest do
     |> refute_match(%{items: []})
   end
 
-  @tag :skip
   test "some atoms can be opt-in" do
     query =
       """

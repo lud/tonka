@@ -14,13 +14,11 @@ defmodule Tonka.ReflectionTest do
   defmodule Other do
   end
 
-  @tag :skip
   test "behaviour is detected" do
     assert Reflection.implements_behaviour?(ImplementsA, A)
     refute Reflection.implements_behaviour?(Other, A)
   end
 
-  @tag :skip
   test "function specs are extracted – arity 1" do
     module = Tonka.Test.Fixtures.BunchOfFunctions
     spec = Reflection.function_spec(module, :validate_integer, 1)
@@ -34,7 +32,6 @@ defmodule Tonka.ReflectionTest do
             ]} = return
   end
 
-  @tag :skip
   test "function specs are extracted – arity 2" do
     module = Tonka.Test.Fixtures.BunchOfFunctions
     spec = Reflection.function_spec(module, :two_args, 2)
@@ -48,7 +45,6 @@ defmodule Tonka.ReflectionTest do
     assert :atom = return
   end
 
-  @tag :skip
   test "extract fun argument" do
     module = Tonka.Test.Fixtures.BunchOfFunctions
     spec = Reflection.function_spec(module, :accepts_fun_and_arg, 2)
@@ -59,13 +55,11 @@ defmodule Tonka.ReflectionTest do
     assert :binary = return
   end
 
-  @tag :skip
   test "extract module type" do
     type = Reflection.type(Tonka.Test.Fixtures.OpOneInput, :output)
     assert :binary = type
   end
 
-  @tag :skip
   test "extract module type when it is a map with know keys" do
     module = Tonka.Test.Fixtures.BunchOfFunctions
     spec = Reflection.type(module, :some_map)

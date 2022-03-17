@@ -5,7 +5,6 @@ defmodule Tonka.ContainerTest do
   alias Tonka.Core.Container.Params
   use ExUnit.Case, async: true
 
-  @tag :skip
   test "a new container can be created" do
     container = Container.new()
     assert %Container{} = container

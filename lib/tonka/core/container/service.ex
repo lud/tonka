@@ -90,20 +90,22 @@ defmodule Tonka.Core.Container.Service do
          {:ok, %{injects: inject_specs}} <- call_config(module, casted_params),
          {:ok, injects, new_container} <- build_injects(container, inject_specs, overrides),
          {:ok, impl} <- init_module(module, injects, casted_params) do
-      new_service = %Service{service | built: true, impl: impl}
-      {:ok, new_service, new_container}
+      {:ok, as_built(service, impl), new_container}
     else
       {:error, _} = err -> err
     end
   end
 
-  defp call_builder(%Service{builder: function}, container)
-       when is_function(function, 1) do
+  def build(%Service{builder: function} = service, container) when is_function(function, 1) do
     case function.(container) do
-      {:ok, impl, %Container{} = new_container} -> {:ok, impl, new_container}
+      {:ok, impl, %Container{} = new_container} -> {:ok, as_built(service, impl), new_container}
       {:error, _} = err -> err
       other -> {:error, {:bad_return, {function, [container]}, other}}
     end
+  end
+
+  defp as_built(service, impl) do
+    %Service{service | built: true, impl: impl}
   end
 
   defp empty_config,

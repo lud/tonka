@@ -29,20 +29,10 @@ defmodule Tonka.Core.Container do
 
   @type typespec ::
           typealias
-          | function_spec
           | {:collection, typespec}
           | {:remote_type, module, atom}
           | {:type, atom}
   @type typealias :: module
-  @type f_params ::
-          {typespec}
-          | {typespec, typespec}
-          | {typespec, typespec, typespec}
-          | {typespec, typespec, typespec, typespec, typespec}
-          | {typespec, typespec, typespec, typespec, typespec, typespec}
-          | {typespec, typespec, typespec, typespec, typespec, typespec, typespec}
-          | {typespec, typespec, typespec, typespec, typespec, typespec, typespec, typespec}
-  @type function_spec :: {f_params, typespec}
 
   @type builder :: module | (t -> {:ok, term, t} | {:error, term})
   @type override :: module | (() -> {:ok, term} | {:error, term})
@@ -64,6 +54,25 @@ defmodule Tonka.Core.Container do
     struct!(Container, services: %{})
   end
 
+  @bind_options_schema NimbleOptions.new!(
+                         params: [
+                           type: :any,
+                           doc: """
+                           Params to be passed to the service `c:Tonka.Core.Container.Service.cast_params/1` callback.
+                           Only used if the service is module-based.
+                           """,
+                           default: %{}
+                         ],
+                         overrides: [
+                           type: {:custom, __MODULE__, :validate_overrides, []},
+                           doc: """
+                           A map of service type to services generator functions.
+                           Genrator functions have an arity of `0`.
+                           """,
+                           default: %{}
+                         ]
+                       )
+
   # TODO doc binding with a single utype with default opts, accepts only atoms and expects that
   # the utype is also a module.
   @spec bind(t, module) :: t
@@ -82,53 +91,40 @@ defmodule Tonka.Core.Container do
   def bind(%Container{} = c, utype, builder) when is_utype(utype) and is_builder(builder),
     do: bind(c, utype, builder, [])
 
+  @doc """
+  Registers a new service in the container.
+
+  ### Options
+
+  #{NimbleOptions.docs(@bind_options_schema)}
+  """
   @spec bind(t, typespec, builder(), bind_opts) :: t
   def bind(%Container{} = c, utype, builder, opts)
       when is_utype(utype) and is_builder(builder) and is_list(opts) do
-    options = cast_bind_opts(opts, builder)
-    service = Service.new([builder: builder] ++ options)
+    service = opts_to_service(opts, builder)
     put_in(c.services[utype], service)
   end
 
-  defp cast_bind_opts(options, builder) do
-    cast_info = %{builder: builder}
-
+  defp opts_to_service(options, builder) do
     options
-    |> Enum.map(&validate_bind_opt!(&1, cast_info))
-    |> with_default_opts()
-  end
-
-  defp with_default_opts(opts) do
-    opts
+    |> NimbleOptions.validate!(@bind_options_schema)
     |> Keyword.put_new(:built, false)
     |> Keyword.put_new(:impl, nil)
     |> Keyword.put_new(:overrides, %{})
+    |> Keyword.put(:builder, builder)
+    |> Service.new()
   end
 
-  defp validate_bind_opt!({:overrides, overrides}, %{builder: builder}) do
-    if not is_atom(builder) do
-      raise ArgumentError,
-            ":overrides bind option is only available for module-based services, got: #{inspect(builder)}"
-    end
-
+  @doc false
+  def validate_overrides(overrides) do
     if not is_map(overrides) do
-      raise ArgumentError,
-            "invalid value for bind option :overrides, expected a map, got: #{inspect(overrides)}"
+      {:error, "overrides must be a map"}
     end
 
     case Enum.reject(overrides, fn {_, v} -> is_override(v) end) do
-      [] ->
-        :ok
-
-      [{k, v} | _] ->
-        raise ArgumentError, "invalid bind override at key #{inspect(k)}: #{inspect(v)}"
+      [] -> {:ok, overrides}
+      [{k, v} | _] -> {:error, "invalid bind override at key #{inspect(k)}: #{inspect(v)}"}
     end
-
-    {:overrides, overrides}
-  end
-
-  defp validate_bind_opt!({key, _}, _) do
-    raise "unknown bind option #{inspect(key)}"
   end
 
   def bind_impl(%Container{} = c, utype, value) when is_utype(utype) do
@@ -169,50 +165,13 @@ defmodule Tonka.Core.Container do
   #  Building services
   # ---------------------------------------------------------------------------
 
-  defp build_service(c, utype, %Service{built: false} = service) do
-    case call_builder(service, c) do
-      {:ok, impl, %Container{} = new_c} ->
-        new_service = %Service{service | impl: impl, built: true}
+  defp build_service(c, utype, service) do
+    case Service.build(service, c) do
+      {:ok, %Service{built: true} = new_service, %Container{} = new_c} ->
         replace_service(new_c, utype, service, new_service)
 
       {:error, _} = err ->
         err
-    end
-  end
-
-  defp call_builder(%Service{built: false, builder: module, overrides: overrides}, container)
-       when is_atom(module) do
-    with {:ok, injects, new_container} <- build_injects(container, module, overrides),
-         {:ok, impl} <- init_module(module, injects) do
-      {:ok, impl, new_container}
-    else
-      {:error, _} = err -> err
-    end
-  end
-
-  defp call_builder(%Service{built: false, builder: function}, container)
-       when is_function(function, 1) do
-    case function.(container) do
-      {:ok, impl, %Container{} = new_container} -> {:ok, impl, new_container}
-      {:error, _} = err -> err
-      other -> {:error, {:bad_return, {function, [container]}, other}}
-    end
-  end
-
-  defp build_injects(container, module, overrides) do
-    inject_specs = Service.inject_specs(module)
-
-    case Injector.build_injects(container, inject_specs, overrides) do
-      {:ok, injects, new_container} -> {:ok, injects, new_container}
-      {:error, _} = err -> err
-    end
-  end
-
-  defp init_module(module, injects) when is_atom(module) do
-    case module.init(injects) do
-      {:ok, impl} -> {:ok, impl}
-      {:error, _} = err -> err
-      other -> {:error, {:bad_return, {module, :init, [injects]}, other}}
     end
   end
 

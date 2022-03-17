@@ -58,10 +58,6 @@ time, a Project process should manage a registry of concurrent running jobs.
 
 * On application start, all projects are started as processes. They will build
   the base container and services.
-* A cool feature would be to add a scope to projects services config, for
-  instance `project` meaning they are built in that initialization phase, and
-  `grid` meaning they are built for each grid run (actually for each input). Of
-  course, `project` services cannot depend on `grid` services.
 * The project has a supervisor for process-based services and holds two
   registries. One registry for those services and one for the input jobs.
 * When an input job runs, it tries to register on the input jobs registry and
@@ -161,8 +157,10 @@ We need the params to build the inject specs, so we can select a service based
 on a name. Some project may define two issues sources, for instance Github and
 Gitlab, so we need a param to tell which one to use.
 
-    params:
+    inject:
       source: my_issues_source
+    params:
+      credentials: gitlab.token
     inputs:
       vars:
         origin: operation_output

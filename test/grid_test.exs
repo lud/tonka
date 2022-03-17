@@ -25,6 +25,7 @@ defmodule Tonka.GridTest do
     end
   end
 
+  @tag :skip
   test "a grid can be created" do
     grid = Grid.new()
     assert is_struct(grid, Grid)
@@ -33,12 +34,14 @@ defmodule Tonka.GridTest do
   defmodule Noop do
   end
 
+  @tag :skip
   test "it is possible to add an operation to a grid" do
     grid = Grid.new()
     grid = Grid.add_operation(grid, "a", Noop)
     assert is_struct(grid, Grid)
   end
 
+  @tag :skip
   test "it is possible to add two operations with the same module" do
     grid =
       Grid.new()
@@ -48,6 +51,7 @@ defmodule Tonka.GridTest do
     assert is_struct(grid, Grid)
   end
 
+  @tag :skip
   test "it is not possible to add two operations with the same key" do
     assert_raise ArgumentError, ~r/"a" is already defined/, fn ->
       Grid.new()
@@ -78,6 +82,7 @@ defmodule Tonka.GridTest do
     end
   end
 
+  @tag :skip
   test "it is possible to run the grid" do
     this = self()
     ref = make_ref()
@@ -137,6 +142,7 @@ defmodule Tonka.GridTest do
     end
   end
 
+  @tag :skip
   test "an operation can use another operation output as input" do
     this = self()
     ref = make_ref()
@@ -220,6 +226,7 @@ defmodule Tonka.GridTest do
     end
   end
 
+  @tag :skip
   test "the grid will verify that the operations are compatible - ok" do
     ref = make_ref()
 
@@ -237,6 +244,7 @@ defmodule Tonka.GridTest do
     assert_receive {^ref, text} when is_binary(text)
   end
 
+  @tag :skip
   test "the grid will verify that the operations are compatible - error" do
     ref = make_ref()
 
@@ -270,6 +278,7 @@ defmodule Tonka.GridTest do
     end
   end
 
+  @tag :skip
   test "the grid will verify that the grid input is mapped" do
     grid =
       Grid.new()
@@ -282,6 +291,7 @@ defmodule Tonka.GridTest do
     end
   end
 
+  @tag :skip
   test "the grid will verify that every input is mapped" do
     grid =
       Grid.new()

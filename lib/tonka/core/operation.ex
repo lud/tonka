@@ -19,8 +19,6 @@ defmodule Tonka.Core.Operation do
 
   defmacro __using__(_) do
     quote location: :keep do
-      import Tonka.Core.Operation.OperationMacros
-      Tonka.Core.Operation.OperationMacros.init_module()
     end
   end
 end

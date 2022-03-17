@@ -38,10 +38,19 @@ defmodule Tonka.ContainerTest do
 
     defstruct []
 
-    def inject_specs(:init, 1, 0),
-      do: [%Container.InjectSpec{key: :mykey, type: SomeStructService}]
+    @spec cast_params(term) :: {:ok, Service.params()} | {:error, term}
+    def cast_params(term) do
+      {:ok, term}
+    end
 
-    def init(%{mykey: %Tonka.ContainerTest.SomeStructService{} = dependency}) do
+    @spec configure(Service.config(), term) :: {:ok, Service.config()} | {:error, term}
+    def configure(config, _) do
+      config
+      |> Service.use_service(:mykey, SomeStructService)
+    end
+
+    @spec init(map, term) :: {:ok, struct} | {:error, term}
+    def init(injects, params) do
       {:ok, %__MODULE__{}}
     end
   end
@@ -92,7 +101,6 @@ defmodule Tonka.ContainerTest do
     refute_receive :some_builder_was_called
   end
 
-  @tag :skip
   test "a struct service can depdend on another" do
     # When a single atom is registered, it is considered as a utype (a userland
     # abstract type). Given we do not provide an implementation, the container

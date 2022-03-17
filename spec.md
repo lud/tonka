@@ -76,6 +76,7 @@ time, a Project process should manage a registry of concurrent running jobs.
   job.
 * Jobs may unregister eagerly on termination.
 
+
 ## Data
 
 * Project configuration
@@ -137,3 +138,35 @@ There are ways to minimize complexity of each service by adding a new service
 that handles the event listening, issues sources refetch calls, and inputs
 creation.
 
+
+## Layout definition YAML for inputs
+
+We need to define operations as follows in the project layout.
+
+Each input is mapped to an origin. It can be an operation output, or it can
+be a litteral value.
+
+The input specs from an operation must define the possible origins for each
+input.  Some inputs may only originate from an operation, others only from a
+literal value (which should then be a param, but whatever).
+
+If the operation defines an input to be a literal, it must export a
+cast_input(:my_key, term) function that will return a term of the expected
+type.
+
+In the UI, the literal inputs my be embedded into the configuration of an
+operation, along with the params.
+
+We need the params to build the inject specs, so we can select a service based
+on a name. Some project may define two issues sources, for instance Github and
+Gitlab, so we need a param to tell which one to use.
+
+    params:
+      source: my_issues_source
+    inputs:
+      vars:
+        origin: operation_output
+        operation: my_other_op
+      report:
+        origin: literal
+        literal: ~

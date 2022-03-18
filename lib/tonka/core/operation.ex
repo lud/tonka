@@ -23,7 +23,7 @@ defmodule Tonka.Core.Operation do
     end
   end
 
-  @enforce_keys [:module, :params, :casted_params, :cast_called]
+  @enforce_keys [:module, :params, :casted_params]
   defstruct @enforce_keys
 
   def new(module, vars \\ []) when is_atom(module) and is_list(vars) do
@@ -31,21 +31,21 @@ defmodule Tonka.Core.Operation do
   end
 
   def _new(module, %{params: params}) do
-    %__MODULE__{module: module, params: params, casted_params: nil, cast_called: false}
+    %__MODULE__{module: module, params: params, casted_params: {false, nil}}
   end
 
   defp empty_vars do
     %{params: %{}}
   end
 
-  def precast_params(%Operation{cast_called: true} = op) do
+  def precast_params(%Operation{casted_params: {true, _}} = op) do
     {:ok, op}
   end
 
   def precast_params(%Operation{module: module, params: params} = op) do
     case call_cast_params(module, params) do
       {:ok, casted_params} ->
-        {:ok, %Operation{op | casted_params: casted_params, cast_called: true}}
+        {:ok, %Operation{op | casted_params: {true, casted_params}}}
 
       other ->
         other

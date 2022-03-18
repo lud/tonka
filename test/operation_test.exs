@@ -6,8 +6,6 @@ defmodule Tonka.OperationTest do
   use ExUnit.Case, async: true
 
   defmodule ASimpleOp do
-    use Operation
-
     def cast_params(raw) do
       send(self(), {__MODULE__, :params_casted})
       {:ok, raw}
@@ -29,7 +27,46 @@ defmodule Tonka.OperationTest do
 
     # on the second call we will not receive the message from the cast_params
     # callback
-    assert {:ok, op} = Operation.precast_params(op)
+    assert {:ok, _op} = Operation.precast_params(op)
     refute_receive {ASimpleOp, :params_casted}
+  end
+
+  defmodule RejectsParams do
+    def cast_params(raw) do
+      send(self(), {__MODULE__, :params_casted})
+      {:error, :rejected}
+    end
+  end
+
+  test "an operation can reject its params" do
+    op = Operation.new(RejectsParams)
+    assert {:error, :rejected} = Operation.precast_params(op)
+    IO.warn("todo test that we get that error with configure/call if the params are not cached")
+  end
+
+  defmodule OpWithInputs do
+    def cast_params(raw) do
+      send(self(), {__MODULE__, :params_casted})
+      {:ok, :my_params}
+    end
+
+    def configure(config, :my_params) do
+      send(self(), {__MODULE__, :configured})
+      config
+    end
+  end
+
+  test "it is possible to get an operation config" do
+    op = Operation.new(OpWithInputs)
+
+    assert {:ok, op} = Operation.preconfigure(op)
+    assert_receive {OpWithInputs, :params_casted}
+    assert_receive {OpWithInputs, :configured}
+
+    # on the second call we will not receive the message from the cast_params
+    # callback
+    assert {:ok, _op} = Operation.preconfigure(op)
+    refute_receive {OpWithInputs, :params_casted}
+    refute_receive {OpWithInputs, :configured}
   end
 end

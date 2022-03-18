@@ -3,6 +3,7 @@ defmodule Tonka.OperationTest do
   alias Tonka.Core.Operation
   alias Tonka.Core.Container
   alias Tonka.Core.Grid.InvalidInputTypeError
+  alias Operation.OpConfig
   use ExUnit.Case, async: true
 
   defmodule ASimpleOp do
@@ -44,7 +45,7 @@ defmodule Tonka.OperationTest do
     IO.warn("todo test that we get that error with configure/call if the params are not cached")
   end
 
-  defmodule OpWithInputs do
+  defmodule ConfigurableOp do
     def cast_params(raw) do
       send(self(), {__MODULE__, :params_casted})
       {:ok, :my_params}
@@ -57,16 +58,25 @@ defmodule Tonka.OperationTest do
   end
 
   test "it is possible to get an operation config" do
-    op = Operation.new(OpWithInputs)
+    op = Operation.new(ConfigurableOp)
 
     assert {:ok, op} = Operation.preconfigure(op)
-    assert_receive {OpWithInputs, :params_casted}
-    assert_receive {OpWithInputs, :configured}
+    assert_receive {ConfigurableOp, :params_casted}
+    assert_receive {ConfigurableOp, :configured}
 
     # on the second call we will not receive the message from the cast_params
     # callback
     assert {:ok, _op} = Operation.preconfigure(op)
-    refute_receive {OpWithInputs, :params_casted}
-    refute_receive {OpWithInputs, :configured}
+    refute_receive {ConfigurableOp, :params_casted}
+    refute_receive {ConfigurableOp, :configured}
+  end
+
+  test "adding inputs to op config" do
+    Operation.base_config()
+    |> Operation.use_input(:mykey, SomeInput)
+
+    raise "todo test use_service"
+    raise "todo test get_inputs"
+    raise "todo test get_injects"
   end
 end

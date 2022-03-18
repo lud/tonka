@@ -5,32 +5,45 @@ defmodule Tonka.Core.Operation do
   """
 
   alias Tonka.Core.Container.InjectSpec
+  alias Tonka.Core.Operation.InputSpec
   alias Tonka.Core.Container.ReturnSpec
+  alias Tonka.Core.Container.Service.ServiceConfig
   alias __MODULE__
 
   defmodule OpConfig do
-    @enforce_keys [:injects, :inputs]
+    @enforce_keys [:service_config, :inputs]
     defstruct @enforce_keys
 
     @todo "type input specs"
 
     @type t :: %__MODULE__{
-            injects: [InjectSpec.t()],
-            inputs: list
+            service_config: ServiceConfig.t(),
+            inputs: [InputSpec.t()]
           }
 
     def new do
-      %__MODULE__{injects: [], inputs: []}
+      %__MODULE__{service_config: ServiceConfig.new(), inputs: []}
     end
   end
 
-  @type params :: map
+  @type params :: term
   @type op_in :: map
   @type op_out :: op_out(term)
   @type op_out(output) :: {:ok, output} | {:error, term} | {:async, Task.t()}
 
-  @callback input_specs() :: [InjectSpec.t()]
-  @callback output_spec() :: ReturnSpec.t()
+  @type config :: OpConfig.t()
+
+  @doc """
+  Returns the operation configuration:
+  * The list of other services types to inject
+  * The list of inputs and their configuration
+
+  The params are passed to that function as an help for development and testing.
+  The returned configuration defines the arguments of the operation `call/3`
+  callback, those should not change depending on the params.
+  """
+  @callback configure(config, params) :: config
+  @callback return_spec() :: ReturnSpec.t()
 
   @callback call(op_in, params, injects :: map) :: op_out
 
@@ -112,21 +125,46 @@ defmodule Tonka.Core.Operation do
   def base_config,
     do: OpConfig.new()
 
-  # def build(
-  #       %Operation{params: params, module: module} = service,
-  #       container
-  #     )
-  #     when is_atom(module) do
-  #   # We do not store the casted params, because if we need to rebuild a service
-  #   # we can just reuse the current struct by flipping the built flag to false.
+  # ---------------------------------------------------------------------------
+  #  Configuration API
+  # ---------------------------------------------------------------------------
 
-  #   with {:ok, casted_params} <- call_cast_params(module, params),
-  #        {:ok, %{injects: inject_specs}} <- call_config(module, casted_params),
-  #        {:ok, injects, new_container} <- build_injects(container, inject_specs, overrides),
-  #        {:ok, impl} <- init_module(module, injects, casted_params) do
-  #     {:ok, as_built(service, impl), new_container}
-  #   else
-  #     {:error, _} = err -> err
-  #   end
-  # end
+  @use_service_options_schema NimbleOptions.new!([])
+
+  def use_service(%OpConfig{} = config, key, opts) when is_atom(key) do
+    opts = NimbleOptions.validate!(opts, @use_service_options_schema)
+  end
+
+  @input_schema NimbleOptions.new!(
+                  cast_static: [
+                    type: :mfa,
+                    required: false,
+                    doc: """
+                    A `{module, function, args}` tuple that will be called with
+                    the raw input if the input is given through configuration as
+                    a static value.  \
+
+                    The input key and the literal value will be prepended to the
+                    arguments.  \
+
+                    If not given, that operation will not accept static values
+                    for that input and will only use another operation's output.
+                    """
+                  ]
+                )
+
+  @doc """
+  Defines an input for the operation.
+
+  ### Options
+
+  #{NimbleOptions.docs(@input_schema)}
+  """
+  def use_input(%OpConfig{inputs: inputs} = config, key, utype, opts \\ [])
+      when is_atom(key) and is_list(opts) do
+    opts = NimbleOptions.validate!(opts, @input_schema)
+    spec = %InputSpec{cast_static: opts[:cast_static], key: key, type: utype}
+    inputs = [spec | inputs]
+    %OpConfig{config | inputs: inputs}
+  end
 end

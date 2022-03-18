@@ -1,6 +1,8 @@
 defmodule Tonka.Core.Operation.QueryIssues do
   use Tonka.Core.Operation
 
+  @todo "move to Tonka.Op namespace"
+
   # input mql in Tonka.Data.MqlQuery
 
   # def inject_spec(params) do

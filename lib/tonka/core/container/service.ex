@@ -41,7 +41,7 @@ defmodule Tonka.Core.Container.Service do
   * The list of other services types to inject
 
   The params are passed to that function as an help for development and testing.
-  The returned configuration defines the parameters of the service init
+  The returned configuration defines the arguments of the service `init/2`
   callback, those should not change depending on the params.
   """
   @callback configure(config, params) :: {:ok, config} | {:error, term}
@@ -71,6 +71,10 @@ defmodule Tonka.Core.Container.Service do
     module.inject_specs(:init, 1, 0)
   end
 
+  # ---------------------------------------------------------------------------
+  #  Configuration API
+  # ---------------------------------------------------------------------------
+
   # @use_service_options_schema NimbleOptions.new!()
 
   def use_service(%ServiceConfig{injects: injects} = cfg, key, utype) when is_atom(key) do
@@ -96,7 +100,7 @@ defmodule Tonka.Core.Container.Service do
     # we can just reuse the current struct by flipping the built flag to false.
 
     with {:ok, casted_params} <- call_cast_params(module, params),
-         {:ok, %{injects: inject_specs}} <- call_config(module, casted_params),
+         {:ok, %{injects: inject_specs}} <- call_configure(module, casted_params),
          {:ok, injects, new_container} <- build_injects(container, inject_specs, overrides),
          {:ok, impl} <- init_module(module, injects, casted_params) do
       {:ok, as_built(service, impl), new_container}
@@ -129,7 +133,7 @@ defmodule Tonka.Core.Container.Service do
     end
   end
 
-  defp call_config(module, params) do
+  defp call_configure(module, params) do
     base = base_config()
 
     case module.configure(base_config(), params) do

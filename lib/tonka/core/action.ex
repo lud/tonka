@@ -74,6 +74,14 @@ defmodule Tonka.Core.Action do
   @todo "struct typespecs"
   @type t :: %__MODULE__{}
 
+  # defimpl Inspect do
+  #   def inspect(%{module: module, casted_params: p, config_called: c} = action, _) do
+  #     params = if(p, do: "o", else: "x")
+  #     config = if(p, do: "o", else: "x")
+  #     "#Action<#{inspect(module)} #{params}#{config}>"
+  #   end
+  # end
+
   # ---------------------------------------------------------------------------
   #  Building Action from the Grid
   # ---------------------------------------------------------------------------

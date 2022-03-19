@@ -39,16 +39,39 @@ defmodule Tonka.Core.Grid do
     %Grid{actions: %{}, outputs: %{}, statuses: %{}, input_caster: nil}
   end
 
-  @addop_schema NimbleOptions.new!(
-                  params: [
-                    doc: """
-                    The raw data structure that will be passed to the action
-                    module as params. Defaults to an empty map
-                    """,
-                    default: %{}
-                  ]
-                )
+  @add_schema NimbleOptions.new!(
+                params: [
+                  doc: """
+                  The raw data structure that will be passed to the action
+                  module as params. Defaults to an empty map
+                  """,
+                  default: %{}
+                ],
+                inputs: [
+                  doc: """
+                  Defines the mapping of each input. A map with all action
+                  input keys is expected, with the values being a sub-map with
+                  an `:origin` field set to `:static`, `:action` or
+                  `:grid_input`.
+                      - If `:static`, the sub-map must also have a `:static` key
+                        containing the input data.
+                      - If `:action`, the sub-map must also have an `:action`
+                        key with the name of another action of the grid.
+                      - If `:grid_input`, the grid initial input will be passed
+                        to that action input.
+                  """,
+                  type: {:custom, __MODULE__, :validate_input_mapping, []},
+                  default: %{}
+                ]
+              )
 
+  @doc """
+  Adds an action to the grid.
+
+  ### Options
+
+  #{NimbleOptions.docs(@add_schema)}
+  """
   def add_action(grid, key, module, opts \\ [])
 
   def add_action(%Grid{actions: actions}, key, _module, _opts)
@@ -58,10 +81,39 @@ defmodule Tonka.Core.Grid do
 
   def add_action(%Grid{actions: actions} = grid, key, module, opts)
       when is_binary(key) and is_atom(module) do
-    opts = NimbleOptions.validate!(opts, @addop_schema)
-    action = Action.new(module, params: opts[:params])
+    opts = NimbleOptions.validate!(opts, @add_schema)
+    action = Action.new(module, params: opts[:params], input_mapping: opts[:inputs])
     actions = Map.put(actions, key, action)
     %Grid{grid | actions: actions}
+  end
+
+  def static_input(data),
+    do: %{origin: :static, static: data}
+
+  def action_input(action_key) when is_binary(action_key),
+    do: %{origin: :action, action: action_key}
+
+  def grid_input(),
+    do: %{origin: :grid_input}
+
+  @doc false
+  # used for NimbleOptions
+  def validate_input_mapping(mapping) when not is_map(mapping) do
+    {:error, "invalid input mapping: #{inspect(mapping)}"}
+  end
+
+  def validate_input_mapping(mapping) do
+    Enum.reject(mapping, fn
+      {k, _} when not is_binary(k) -> true
+      {_, %{origin: :action, action: a}} when is_binary(a) -> true
+      {_, %{origin: :static, static: _}} -> true
+      {_, %{origin: :grid_input}} -> true
+      _ -> false
+    end)
+    |> case do
+      [] -> {:ok, mapping}
+      [{_, invalid} | _more_invalid] -> {:error, "invalid mapping #{inspect(invalid)}"}
+    end
   end
 
   # ---------------------------------------------------------------------------
@@ -101,24 +153,42 @@ defmodule Tonka.Core.Grid do
   end
 
   # validates the input for one action given all other actions outputs
-  defp validate_inputs(%{config_called: true} = action, actions) do
-    {act_key, %{input_mapping: mapping, config: %{inputs: input_specs}}} = action
+  defp validate_inputs({act_key, %{config_called: true} = action}, actions)
+       when is_map(actions) do
+    action |> IO.inspect(label: "action")
+    %{input_mapping: mapping, config: %{inputs: input_specs}} = action
 
-    Enum.filter(input_specs, fn %{key: input_key, type: input_type} = input_spec ->
-      with {:ok, output_type} <- fetch_mapped_input_type(mapping, input_key, act_key, actions),
-           :ok <- validate_type_compat(input_type, output_type) do
-        :ok
-      else
-        :x -> {:error, :x}
-      end
+    input_specs
+    |> Enum.map(fn {_input_key, input_spec} ->
+      validate_action_input(input_spec, act_key, mapping, actions)
     end)
     |> Enum.filter(fn
       :ok -> false
       {:error, _} -> true
+      other -> raise "got other: #{inspect(other)}"
     end)
     |> case do
       [] -> :ok
       errors -> {:error, Keyword.values(errors)}
+    end
+  end
+
+  defp validate_action_input(
+         %{key: input_key, type: input_type} = input_spec,
+         act_key,
+         mapping,
+         actions
+       ) do
+    with {:ok, output_type} <- fetch_mapped_input_type(mapping, input_key, act_key, actions),
+         :ok <- validate_type_compat(input_type, output_type) do
+      :ok
+    else
+      {:error, :unmapped} ->
+        {:error,
+         %UnmappedInputError{
+           action_key: act_key,
+           input_key: input_key
+         }}
     end
   end
 
@@ -159,6 +229,7 @@ defmodule Tonka.Core.Grid do
     GLogger.debug("running a grid")
 
     with {:ok, grid} <- precast_all(grid),
+         {:ok, grid} <- preconfigure_all(grid),
          {:ok, grid} <- validate(grid) do
       run(grid)
     else
@@ -199,9 +270,25 @@ defmodule Tonka.Core.Grid do
   end
 
   defp precast_action({k, action}) do
-    GLogger.debug(~s(precasting params of action "#{k}"))
+    GLogger.debug(~s(casting params for action "#{k}"))
 
     case Action.precast_params(action) do
+      {:ok, action} -> {:ok, {k, action}}
+      {:error, _} = err -> err
+    end
+  end
+
+  def preconfigure_all(%Grid{actions: actions} = grid) do
+    case reduce_actions_ok(actions, &preconfigure_action/1) do
+      {:ok, actions} -> {:ok, %Grid{grid | actions: actions}}
+      {:error, _} = err -> err
+    end
+  end
+
+  defp preconfigure_action({k, action}) do
+    GLogger.debug(~s(calling configuration for action "#{k}"))
+
+    case Action.preconfigure(action) do
       {:ok, action} -> {:ok, {k, action}}
       {:error, _} = err -> err
     end

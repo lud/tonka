@@ -59,13 +59,9 @@ defmodule Tonka.GridTest do
   defmodule MessageParamSender do
     def cast_params(it), do: {:ok, it}
 
-    def input_specs() do
-      [
-        %Container.InjectSpec{
-          key: :parent,
-          type: {:raw, :pid}
-        }
-      ]
+    def configure(config, _) do
+      config
+      |> Action.use_input(:parent, {:raw, :pid})
     end
 
     def output_spec() do
@@ -89,7 +85,10 @@ defmodule Tonka.GridTest do
 
     grid =
       Grid.new()
-      |> Grid.add_action("a", MessageParamSender, params: %{message: {ref, "hello"}})
+      |> Grid.add_action("a", MessageParamSender,
+        params: %{message: {ref, "hello"}},
+        inputs: %{parent: Grid.static_input(self())}
+      )
 
     assert {:ok, _} = Grid.run(grid, this)
     assert_receive {^ref, "hello"}

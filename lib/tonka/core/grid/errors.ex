@@ -7,7 +7,7 @@ defmodule Tonka.Core.Grid.InvalidInputTypeError do
         expected_type: input_type,
         provided_type: provided_type
       }) do
-    "invalid input type for operation #{inspect(op_key)} at input #{inspect(input_key)}," <>
+    "invalid input type for action #{inspect(op_key)} at input #{inspect(input_key)}," <>
       " expected: #{inspect(input_type)} but got #{inspect(provided_type)}"
   end
 end
@@ -22,6 +22,6 @@ defmodule Tonka.Core.Grid.UnmappedInputError do
   defexception [:op_key, :input_key]
 
   def message(%{op_key: op_key, input_key: input_key}) do
-    "unmapped input #{inspect(input_key)} for operation #{inspect(op_key)}"
+    "unmapped input #{inspect(input_key)} for action #{inspect(op_key)}"
   end
 end

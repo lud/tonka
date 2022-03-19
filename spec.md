@@ -85,7 +85,7 @@ time, a Project process should manage a registry of concurrent running jobs.
 
 There are two types of functions in this app.
 
-* Data Transformers: they take an input, executes some side-effects and produce
+* Data Actions: they take an input, executes some side-effects and produce
   an output. They are executed within a grid instance. They are not pure
   functions as the main purpose of this application is to genereate
   side-effects.
@@ -101,7 +101,7 @@ event generators of those projects.
 
 When an event generator fires, it targets a project and a grid. This project's
 grid is loaded to create a new operator (implementing a grid instance). The grid
-receives the input and executes all operations in the grid that can be executed
+receives the input and executes all actions in the grid that can be executed
 from that input.
 
 
@@ -137,21 +137,21 @@ creation.
 
 ## Layout definition YAML for inputs
 
-We need to define operations as follows in the project layout.
+We need to define actions as follows in the project layout.
 
-Each input is mapped to an origin. It can be an operation output, or it can
+Each input is mapped to an origin. It can be an action output, or it can
 be a litteral value.
 
-The input specs from an operation must define the possible origins for each
-input.  Some inputs may only originate from an operation, others only from a
+The input specs from an action must define the possible origins for each
+input.  Some inputs may only originate from an action, others only from a
 literal value (which should then be a param, but whatever).
 
-If the operation defines an input to be a literal, it must export a
+If the action defines an input to be a literal, it must export a
 cast_input(:my_key, term) function that will return a term of the expected
 type.
 
 In the UI, the literal inputs my be embedded into the configuration of an
-operation, along with the params.
+action, along with the params.
 
 We need the params to build the inject specs, so we can select a service based
 on a name. Some project may define two issues sources, for instance Github and
@@ -163,8 +163,8 @@ Gitlab, so we need a param to tell which one to use.
       credentials: gitlab.token
     inputs:
       vars:
-        origin: operation_output
-        operation: my_other_op
+        origin: action_output
+        action: my_other_op
       report:
         origin: literal
         literal: ~

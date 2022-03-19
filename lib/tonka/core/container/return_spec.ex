@@ -1,6 +1,6 @@
 defmodule Tonka.Core.Container.ReturnSpec do
   @moduledoc """
-  Defines the specification of the ouput value of a `Tonka.Core.Operation`.
+  Defines the specification of the ouput value of a `Tonka.Core.Action`.
   """
 
   @enforce_keys [:type]

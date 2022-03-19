@@ -2,7 +2,7 @@ defmodule Tonka.Demo do
   alias Tonka.Core.Container
   alias Tonka.Core.Container.Params
   alias Tonka.Core.Grid
-  alias Tonka.Core.Operation
+  alias Tonka.Core.Action
   import Container
 
   def run do
@@ -29,7 +29,7 @@ defmodule Tonka.Demo do
   end
 
   def prepare_container do
-    # On init, the project will fill the container with services used by operations.
+    # On init, the project will fill the container with services used by actions.
 
     container =
       new()
@@ -70,6 +70,6 @@ defmodule Tonka.Demo do
     Grid.new()
     |> Grid.set_input(Tonka.Core.InputCaster.NilInput)
 
-    # |> Grid.add_operation("define_query", )
+    # |> Grid.add_action("define_query", )
   end
 end

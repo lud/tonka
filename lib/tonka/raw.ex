@@ -2,7 +2,7 @@ defmodule Tonka.Raw do
   alias Tonka.Core.Container
   alias Tonka.Core.Container.Params
   alias Tonka.Core.Grid
-  alias Tonka.Core.Operation
+  alias Tonka.Core.Action
   import Container
 
   def run do

@@ -30,7 +30,7 @@ end
 defmodule Tonka.Test.Fixtures.OpOneInput do
   alias Tonka.Test.Fixtures.OpOneInput.MyInput
   require alias Tonka.Test.UserlandMacros
-  # use Operation
+  # use Action
 
   suffix = "_SUF"
 

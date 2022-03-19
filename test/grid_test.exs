@@ -1,6 +1,6 @@
 defmodule Tonka.GridTest do
   alias Tonka.Core.Grid
-  alias Tonka.Core.Operation
+  alias Tonka.Core.Action
   alias Tonka.Core.Container
   alias Tonka.Core.Grid.InvalidInputTypeError
   use ExUnit.Case, async: true
@@ -33,26 +33,27 @@ defmodule Tonka.GridTest do
   defmodule Noop do
   end
 
-  test "it is possible to add an operation to a grid" do
+  test "it is possible to add an action to a grid" do
     grid = Grid.new()
-    grid = Grid.add_operation(grid, "a", Noop)
+    grid = Grid.add_action(grid, "a", Noop)
     assert is_struct(grid, Grid)
   end
 
-  test "it is possible to add two operations with the same module" do
+  test "it is possible to add two actions with the same module" do
     grid =
       Grid.new()
-      |> Grid.add_operation("a", Noop)
-      |> Grid.add_operation("b", Noop)
+      |> Grid.add_action("a", Noop)
+      |> Grid.add_action("b", Noop)
 
     assert is_struct(grid, Grid)
   end
 
-  test "it is not possible to add two operations with the same key" do
+  @tag :skip
+  test "it is not possible to add two actions with the same key" do
     assert_raise ArgumentError, ~r/"a" is already defined/, fn ->
       Grid.new()
-      |> Grid.add_operation("a", Noop)
-      |> Grid.add_operation("a", Noop)
+      |> Grid.add_action("a", Noop)
+      |> Grid.add_action("a", Noop)
     end
   end
 
@@ -78,6 +79,7 @@ defmodule Tonka.GridTest do
     end
   end
 
+  @tag :skip
   test "it is possible to run the grid" do
     this = self()
     ref = make_ref()
@@ -85,7 +87,7 @@ defmodule Tonka.GridTest do
     grid =
       Grid.new()
       |> Grid.set_input(NoCaster.for_type({:raw, :pid}))
-      |> Grid.add_operation("a", MessageParamSender,
+      |> Grid.add_action("a", MessageParamSender,
         inputs: %{parent: :incast},
         params: %{message: {ref, "hello"}}
       )
@@ -138,18 +140,18 @@ defmodule Tonka.GridTest do
   end
 
   @tag :skip
-  test "an operation can use another operation output as input" do
+  test "an action can use another action output as input" do
     this = self()
     ref = make_ref()
 
     grid =
       Grid.new()
       |> Grid.set_input(NoCaster.for_type({:raw, :binary}))
-      |> Grid.add_operation("a", InputMessageSender,
+      |> Grid.add_action("a", InputMessageSender,
         inputs: %{message: "b"},
         params: %{parent: this}
       )
-      |> Grid.add_operation("b", Upcaser,
+      |> Grid.add_action("b", Upcaser,
         inputs: %{text: :incast},
         params: %{tag: ref}
       )
@@ -160,7 +162,7 @@ defmodule Tonka.GridTest do
   end
 
   defmodule RequiresAText do
-    @behaviour Operation
+    @behaviour Action
 
     def input_specs() do
       [
@@ -186,7 +188,7 @@ defmodule Tonka.GridTest do
   end
 
   defmodule ProvidesAText do
-    @behaviour Operation
+    @behaviour Action
 
     def input_specs() do
       []
@@ -204,7 +206,7 @@ defmodule Tonka.GridTest do
   end
 
   defmodule ProvidesAnInt do
-    @behaviour Operation
+    @behaviour Action
 
     def input_specs() do
       []
@@ -222,17 +224,17 @@ defmodule Tonka.GridTest do
   end
 
   @tag :skip
-  test "the grid will verify that the operations are compatible - ok" do
+  test "the grid will verify that the actions are compatible - ok" do
     ref = make_ref()
 
     grid =
       Grid.new()
       |> Grid.set_input(NoCaster.for_type({:raw, :pid}))
-      |> Grid.add_operation("consumer", RequiresAText,
+      |> Grid.add_action("consumer", RequiresAText,
         inputs: %{mytext: "provider"},
         params: %{parent: self(), tag: ref}
       )
-      |> Grid.add_operation("provider", ProvidesAText, inputs: %{_: :incast})
+      |> Grid.add_action("provider", ProvidesAText, inputs: %{_: :incast})
 
     Grid.run(grid, "hello")
 
@@ -240,18 +242,18 @@ defmodule Tonka.GridTest do
   end
 
   @tag :skip
-  test "the grid will verify that the operations are compatible - error" do
+  test "the grid will verify that the actions are compatible - error" do
     ref = make_ref()
 
     grid =
       Grid.new()
       |> Grid.set_input(NoCaster.for_type({:raw, :pid}))
-      |> Grid.add_operation("consumer", RequiresAText,
+      |> Grid.add_action("consumer", RequiresAText,
         inputs: %{mytext: "provider"},
         params: %{parent: self(), tag: ref}
       )
       # Here we provide and integer to the consumer, which cannt work
-      |> Grid.add_operation("provider", ProvidesAnInt, inputs: %{_: :incast})
+      |> Grid.add_action("provider", ProvidesAnInt, inputs: %{_: :incast})
 
     # At this point everything is fine. But when we will try to build the grid
     # it will fail. It must not fail because of the guard in:
@@ -277,9 +279,9 @@ defmodule Tonka.GridTest do
   test "the grid will verify that the grid input is mapped" do
     grid =
       Grid.new()
-      |> Grid.add_operation("consumer", RequiresAText, inputs: %{mytext: "provider"})
+      |> Grid.add_action("consumer", RequiresAText, inputs: %{mytext: "provider"})
       # Here we provide and integer to the consumer, which cannt work
-      |> Grid.add_operation("provider", ProvidesAnInt, inputs: %{_: :incast})
+      |> Grid.add_action("provider", ProvidesAnInt, inputs: %{_: :incast})
 
     assert_raise Grid.NoInputCasterError, fn ->
       Grid.run(grid, :some_input)
@@ -292,7 +294,7 @@ defmodule Tonka.GridTest do
       Grid.new()
       |> Grid.set_input(NoCaster.for_type({:raw, :pid}))
       # here we do not map the input :mytext for RequiresAText
-      |> Grid.add_operation("consumer", RequiresAText)
+      |> Grid.add_action("consumer", RequiresAText)
 
     assert_raise Grid.UnmappedInputError, fn ->
       Grid.run(grid, :some_input)

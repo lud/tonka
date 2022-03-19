@@ -1,7 +1,7 @@
 defmodule Tonka.Test.Fixtures.OpNoInputs do
-  alias Tonka.Core.Operation
+  alias Tonka.Core.Action
   alias Tonka.Core.Container
-  use Operation
+  use Action
 
   # def __mix_recompile__?, do: true
 

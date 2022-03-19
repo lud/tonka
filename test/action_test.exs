@@ -1,6 +1,6 @@
-defmodule Tonka.OperationTest do
+defmodule Tonka.ActionTest do
   alias Tonka.Core.Grid
-  alias Tonka.Core.Operation
+  alias Tonka.Core.Action
   alias Tonka.Core.Container
   alias Tonka.Core.Grid.InvalidInputTypeError
   use ExUnit.Case, async: true
@@ -12,22 +12,22 @@ defmodule Tonka.OperationTest do
     end
   end
 
-  test "it is possible to define an operation" do
-    assert %Operation{} = Operation.new(ASimpleOp)
+  test "it is possible to define an action" do
+    assert %Action{} = Action.new(ASimpleOp)
   end
 
-  test "it is possible precast the params of an operation" do
+  test "it is possible precast the params of an action" do
     # the params will be casted only once. This is because on grid
-    # initialization we want to cast the params of all operations, then get the
-    # config of all operations to validate the grid wiring (inputs and injects),
-    # then only run each operation one by one.
-    op = Operation.new(ASimpleOp)
-    assert {:ok, op} = Operation.precast_params(op)
+    # initialization we want to cast the params of all actions, then get the
+    # config of all actions to validate the grid wiring (inputs and injects),
+    # then only run each action one by one.
+    act = Action.new(ASimpleOp)
+    assert {:ok, act} = Action.precast_params(act)
     assert_receive {ASimpleOp, :params_casted}
 
     # on the second call we will not receive the message from the cast_params
     # callback
-    assert {:ok, _op} = Operation.precast_params(op)
+    assert {:ok, _op} = Action.precast_params(act)
     refute_receive {ASimpleOp, :params_casted}
   end
 
@@ -38,9 +38,9 @@ defmodule Tonka.OperationTest do
     end
   end
 
-  test "an operation can reject its params" do
-    op = Operation.new(RejectsParams)
-    assert {:error, :rejected} = Operation.precast_params(op)
+  test "an action can reject its params" do
+    act = Action.new(RejectsParams)
+    assert {:error, :rejected} = Action.precast_params(act)
     IO.warn("todo test that we get that error with configure/call if the params are not cached")
   end
 
@@ -56,23 +56,23 @@ defmodule Tonka.OperationTest do
     end
   end
 
-  test "it is possible to get an operation config" do
-    op = Operation.new(ConfigurableOp)
+  test "it is possible to get an action config" do
+    act = Action.new(ConfigurableOp)
 
-    assert {:ok, op} = Operation.preconfigure(op)
+    assert {:ok, act} = Action.preconfigure(act)
     assert_receive {ConfigurableOp, :params_casted}
     assert_receive {ConfigurableOp, :configured}
 
     # on the second call we will not receive the message from the cast_params
     # callback
-    assert {:ok, _op} = Operation.preconfigure(op)
+    assert {:ok, _op} = Action.preconfigure(act)
     refute_receive {ConfigurableOp, :params_casted}
     refute_receive {ConfigurableOp, :configured}
   end
 
-  test "adding inputs to op config" do
-    Operation.base_config()
-    |> Operation.use_input(:mykey, SomeInput)
+  test "adding inputs to act config" do
+    Action.base_config()
+    |> Action.use_input(:mykey, SomeInput)
 
     # raise "todo test use_service"
     # raise "todo test get_inputs"

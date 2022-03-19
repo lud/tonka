@@ -5,7 +5,7 @@ defmodule Tonka.Core.Reflection do
 
   These helpers are intended to be used in tests, not in production code:
 
-  * Type information is extracted from beam files, which is a slow operation.
+  * Type information is extracted from beam files, which is a slow action.
   * The type helpers supports a small subset of the Elixir/Erlang type system,
     i.e. only what we need in tests.
   """

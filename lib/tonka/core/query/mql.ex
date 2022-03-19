@@ -53,10 +53,10 @@ defmodule Tonka.Core.Query.MQL do
 
   @num_comp_ops ~w($gt $gte $lt $lte)a
 
-  defp match({op, n}, _) when op in @num_comp_ops and not is_number(n),
-    do: raise("Expected a number with #{op}, got: #{inspect(n)}")
+  defp match({act, n}, _) when act in @num_comp_ops and not is_number(n),
+    do: raise("Expected a number with #{act}, got: #{inspect(n)}")
 
-  defp match({op, _}, v) when op in @num_comp_ops and not is_number(v),
+  defp match({act, _}, v) when act in @num_comp_ops and not is_number(v),
     # The BEAM can compare anything but we will stick to numbers
     do: false
 
@@ -133,10 +133,10 @@ defmodule Tonka.Core.Query.MQL do
 
   @date_operators __MODULE__.Compiler.date_operators(:atom)
 
-  defp match({op, d} = kv, _v)
-       when op in @date_operators and
+  defp match({act, d} = kv, _v)
+       when act in @date_operators and
               (not is_tuple(d) or elem(d, 0) != :compiled),
-       do: raise("MQL Error: #{op} requires compilation, got: #{inspect(kv)}")
+       do: raise("MQL Error: #{act} requires compilation, got: #{inspect(kv)}")
 
   # Matching for date when the value is not a date. We will return false,
   # but should we raise ?
@@ -154,8 +154,8 @@ defmodule Tonka.Core.Query.MQL do
     match({:"$date_lt", {:compiled, point}}, v)
   end
 
-  defp match({op, bad}, _v) when op in @date_operators,
-    do: raise("MQL Error: #{op} did not match, got: #{inspect(bad)}")
+  defp match({act, bad}, _v) when act in @date_operators,
+    do: raise("MQL Error: #{act} did not match, got: #{inspect(bad)}")
 
   defp match({:"$elem_match", q}, v) when is_list(v),
     do: Enum.any?(v, &match(q, &1))

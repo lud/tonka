@@ -4,7 +4,7 @@
   subdirectories: ["priv/*/migrations"],
   force_do_end_blocks: false,
   locals_without_parens: [
-    # operation macros
+    # action macros
     input: 1,
     output: 1,
     call: 1,

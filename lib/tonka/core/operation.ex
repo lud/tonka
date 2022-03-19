@@ -135,34 +135,18 @@ defmodule Tonka.Core.Operation do
     opts = NimbleOptions.validate!(opts, @use_service_options_schema)
   end
 
-  @input_schema NimbleOptions.new!(
-                  cast_static: [
-                    type: :mfa,
-                    required: false,
-                    doc: """
-                    A `{module, function, args}` tuple that will be called with
-                    the raw input if the input is given through configuration as
-                    a static value.  \
-
-                    The input key and the literal value will be prepended to the
-                    arguments.  \
-
-                    If not given, that operation will not accept static values
-                    for that input and will only use another operation's output.
-                    """
-                  ]
-                )
+  # @input_schema NimbleOptions.new!([])
 
   @doc """
   Defines an input for the operation.
 
-  ### Options
 
-  #{NimbleOptions.docs(@input_schema)}
   """
+  # ### Options
+  # {NimbleOptions.docs(@input_schema)}
   def use_input(%OpConfig{inputs: inputs} = config, key, utype, opts \\ [])
       when is_atom(key) and is_list(opts) do
-    opts = NimbleOptions.validate!(opts, @input_schema)
+    # opts = NimbleOptions.validate!(opts, @input_schema)
     spec = %InputSpec{cast_static: opts[:cast_static], key: key, type: utype}
     inputs = [spec | inputs]
     %OpConfig{config | inputs: inputs}

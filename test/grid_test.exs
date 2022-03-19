@@ -48,7 +48,6 @@ defmodule Tonka.GridTest do
     assert is_struct(grid, Grid)
   end
 
-  @tag :skip
   test "it is not possible to add two actions with the same key" do
     assert_raise ArgumentError, ~r/"a" is already defined/, fn ->
       Grid.new()
@@ -58,6 +57,8 @@ defmodule Tonka.GridTest do
   end
 
   defmodule MessageParamSender do
+    def cast_params(it), do: {:ok, it}
+
     def input_specs() do
       [
         %Container.InjectSpec{
@@ -79,24 +80,24 @@ defmodule Tonka.GridTest do
     end
   end
 
-  @tag :skip
   test "it is possible to run the grid" do
+    # As an action has the grid input mapped to one of its inputs, the grid
+    # must cast that input to the expected type.
+
     this = self()
     ref = make_ref()
 
     grid =
       Grid.new()
-      |> Grid.set_input(NoCaster.for_type({:raw, :pid}))
-      |> Grid.add_action("a", MessageParamSender,
-        inputs: %{parent: :incast},
-        params: %{message: {ref, "hello"}}
-      )
+      |> Grid.add_action("a", MessageParamSender, params: %{message: {ref, "hello"}})
 
-    Grid.run(grid, this)
+    assert {:ok, _} = Grid.run(grid, this)
     assert_receive {^ref, "hello"}
   end
 
   defmodule Upcaser do
+    def cast_params(it), do: {:ok, it}
+
     def input_specs() do
       [
         %Container.InjectSpec{
@@ -118,6 +119,8 @@ defmodule Tonka.GridTest do
   end
 
   defmodule InputMessageSender do
+    def cast_params(it), do: {:ok, it}
+
     def input_specs() do
       [
         %Container.InjectSpec{
@@ -156,13 +159,15 @@ defmodule Tonka.GridTest do
         params: %{tag: ref}
       )
 
-    Grid.run(grid, "hello")
+    assert {:ok, _} = Grid.run(grid, "hello")
 
     assert_receive {^ref, "HELLO"}
   end
 
   defmodule RequiresAText do
     @behaviour Action
+
+    def cast_params(it), do: {:ok, it}
 
     def input_specs() do
       [
@@ -190,6 +195,8 @@ defmodule Tonka.GridTest do
   defmodule ProvidesAText do
     @behaviour Action
 
+    def cast_params(it), do: {:ok, it}
+
     def input_specs() do
       []
     end
@@ -207,6 +214,8 @@ defmodule Tonka.GridTest do
 
   defmodule ProvidesAnInt do
     @behaviour Action
+
+    def cast_params(it), do: {:ok, it}
 
     def input_specs() do
       []
@@ -236,7 +245,7 @@ defmodule Tonka.GridTest do
       )
       |> Grid.add_action("provider", ProvidesAText, inputs: %{_: :incast})
 
-    Grid.run(grid, "hello")
+    assert {:ok, _} = Grid.run(grid, "hello")
 
     assert_receive {^ref, text} when is_binary(text)
   end
@@ -271,7 +280,7 @@ defmodule Tonka.GridTest do
            )
 
     assert_raise InvalidInputTypeError, fn ->
-      Grid.run(grid, input)
+      assert {:ok, _} = Grid.run(grid, input)
     end
   end
 
@@ -284,7 +293,7 @@ defmodule Tonka.GridTest do
       |> Grid.add_action("provider", ProvidesAnInt, inputs: %{_: :incast})
 
     assert_raise Grid.NoInputCasterError, fn ->
-      Grid.run(grid, :some_input)
+      assert {:ok, _} = Grid.run(grid, :some_input)
     end
   end
 
@@ -297,7 +306,7 @@ defmodule Tonka.GridTest do
       |> Grid.add_action("consumer", RequiresAText)
 
     assert_raise Grid.UnmappedInputError, fn ->
-      Grid.run(grid, :some_input)
+      assert {:ok, _} = Grid.run(grid, :some_input)
     end
   end
 end

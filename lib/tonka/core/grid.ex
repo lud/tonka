@@ -3,10 +3,13 @@ defmodule Tonka.Core.Grid do
   A grid is an execution context for multiple actions.
   """
 
+  use Tonka.GLogger
+
   alias Tonka.Core.Grid.{
     InvalidInputTypeError,
     NoInputCasterError,
-    UnmappedInputError
+    UnmappedInputError,
+    UndefinedOriginActionError
   }
 
   alias Tonka.Core.Action
@@ -15,21 +18,25 @@ defmodule Tonka.Core.Grid do
   @type input_caster_opt :: {:params, map}
   @type input_caster_opts :: [input_caster_opt]
   @type outputs :: %{optional(binary | :incast) => term}
-  @type op_spec :: %{module: module, input: %{optional(atom) => binary | :incast}, params: map}
-  @type specs :: %{optional(binary) => op_spec}
-  @type states :: %{optional(binary) => :uninitialized | :called}
+  @type action :: Action.t()
+  @type actions :: %{optional(binary) => action}
+  @type statuses :: %{optional(binary) => :uninitialized | :called}
 
-  @enforce_keys [:actions, :outputs, :states, :input_caster]
+  @enforce_keys [:actions, :outputs, :statuses, :input_caster]
   defstruct @enforce_keys
 
   @type t :: %__MODULE__{
           actions: [Action.t()],
           outputs: outputs,
-          states: states
+          statuses: statuses
         }
 
+  # ---------------------------------------------------------------------------
+  #  Grid Building
+  # ---------------------------------------------------------------------------
+
   def new do
-    %Grid{actions: %{}, outputs: %{}, states: %{}, input_caster: nil}
+    %Grid{actions: %{}, outputs: %{}, statuses: %{}, input_caster: nil}
   end
 
   @addop_schema NimbleOptions.new!(
@@ -57,137 +64,107 @@ defmodule Tonka.Core.Grid do
     %Grid{grid | actions: actions}
   end
 
-  # @spec set_input(t, InputCaster.buildable(), input_caster_opts) :: t
-  # def set_input(grid, caster, spec \\ [])
+  # ---------------------------------------------------------------------------
+  #  Grid Validation
+  # ---------------------------------------------------------------------------
 
-  # def set_input(%Grid{input_caster: _} = grid, caster, spec) do
-  #   %Grid{grid | input_caster: build_incast_spec(caster, spec)}
-  # end
+  def validate(%Grid{} = grid) do
+    with :ok <- validate_all_inputs(grid) do
+      {:ok, grid}
+    end
+  end
 
-  # defp cast_op_spec(module, spec) when is_map(spec) do
-  #   spec
-  #   |> Map.put(:module, module)
-  #   |> Map.put_new(:inputs, %{})
-  #   |> Map.put_new(:params, %{})
-  # end
+  def validate!(grid) do
+    case validate(grid) do
+      {:ok, grid} -> grid
+      {:error, {_tag, [%_{} = err | _]}} -> raise err
+    end
+  end
 
-  # defp cast_op_spec(module, spec) when is_list(spec) do
-  #   cast_op_spec(module, Map.new(spec))
-  # end
+  # Validates that all mapped action inputs are mapped, and are mapped to an
+  # output that provides the same type.  The inputs mapped to the :incast (the
+  # grid input) are validated by ensuring that the type module of the input has
+  # a cast_input/1 callback.
+  defp validate_all_inputs(%{actions: actions}) do
+    Enum.reduce(actions, _invalids = [], fn action, invalids ->
+      validated = validate_inputs(action, actions)
 
-  # defp build_incast_spec(caster, spec) when is_map(spec) do
-  #   caster = InputCaster.build(caster)
+      case validated do
+        :ok -> invalids
+        {:error, more_invalids} -> more_invalids ++ invalids
+      end
+    end)
+    |> case do
+      [] -> :ok
+      invalids -> {:error, {:invalid_inputs, invalids}}
+    end
+  end
 
-  #   spec = Map.put_new(spec, :params, %{})
+  # validates the input for one action given all other actions outputs
+  defp validate_inputs(%{config_called: true} = action, actions) do
+    {act_key, %{input_mapping: mapping, config: %{inputs: input_specs}}} = action
 
-  #   {caster, spec}
-  # end
+    Enum.filter(input_specs, fn %{key: input_key, type: input_type} = input_spec ->
+      with {:ok, output_type} <- fetch_mapped_input_type(mapping, input_key, act_key, actions),
+           :ok <- validate_type_compat(input_type, output_type) do
+        :ok
+      else
+        :x -> {:error, :x}
+      end
+    end)
+    |> Enum.filter(fn
+      :ok -> false
+      {:error, _} -> true
+    end)
+    |> case do
+      [] -> :ok
+      errors -> {:error, Keyword.values(errors)}
+    end
+  end
 
-  # defp build_incast_spec(module, spec) when is_list(spec) do
-  #   build_incast_spec(module, Map.new(spec))
-  # end
+  defp fetch_mapped_input_type(mapping, input_key, act_key, actions) do
+    case mapping[input_key] do
+      %{origin: :action, action: origin_action_key} ->
+        fetch_origin_action_output_type(actions, origin_action_key)
 
-  # def validate(%Grid{} = grid) do
-  #   with :ok <- validate_input_caster(grid),
-  #        :ok <- validate_all_inputs(grid) do
-  #     {:ok, grid}
-  #   end
-  # end
+      nil ->
+        {:error, :unmapped}
+    end
+  end
 
-  # def validate!(grid) do
-  #   case validate(grid) do
-  #     {:ok, grid} -> grid
-  #     {:error, {_tag, [%_{} = err | _]}} -> raise err
-  #   end
-  # end
+  defp fetch_origin_action_output_type(actions, origin_action_key) do
+    case Map.fetch(actions, origin_action_key) do
+      {:ok, %{module: module}} -> {:ok, module.return_type()}
+      :error -> {:error, {:no_such_action, origin_action_key}}
+    end
+  end
 
-  # defp validate_input_caster(%{input_caster: incast}) do
-  #   case incast do
-  #     nil -> raise NoInputCasterError
-  #     _ -> :ok
-  #   end
-  # end
+  defp validate_type_compat(input_type, output_type) do
+    if input_type == output_type do
+      :ok
+    else
+      {:error, {:incompatible_types, input_type, output_type}}
+    end
+  end
 
-  # defp validate_all_inputs(%{specs: specs, input_caster: incast}) do
-  #   Enum.reduce(specs, _invalids = [], fn spec, invs ->
-  #     validated = validate_inputs(spec, specs, incast)
+  # ---------------------------------------------------------------------------
+  #  Grid Running
+  # ---------------------------------------------------------------------------
 
-  #     case validated do
-  #       :ok -> invs
-  #       {:error, more_invs} -> more_invs ++ invs
-  #     end
-  #   end)
-  #   |> case do
-  #     [] -> :ok
-  #     invalids -> {:error, {:invalid_inputs, invalids}}
-  #   end
-  # end
+  def run(%Grid{actions: actions} = grid, input) do
+    outputs = %{input: input}
+    statuses = start_statuses(grid.actions)
+    grid = %Grid{grid | outputs: outputs, statuses: statuses}
 
-  # defp validate_inputs(spec, specs, incast) do
-  #   {op_key, %{module: module, inputs: mapped_inputs}} = spec
-  #   input_specs = module.input_specs()
+    GLogger.debug("running a grid")
 
-  #   input_specs
-  #   |> Enum.map(fn input ->
-  #     input_key = input.key
-
-  #     with {:ok, source_key} <- fetch_mapped_input_source_key(mapped_inputs, input_key, op_key) do
-  #       output = fetch_mapped_source_output(specs, source_key, incast)
-  #       validate_type_compat(input, output, op_key)
-  #     end
-  #   end)
-  #   |> Enum.filter(fn
-  #     :ok -> false
-  #     {:error, _} -> true
-  #   end)
-  #   |> case do
-  #     [] -> :ok
-  #     errors -> {:error, Keyword.values(errors)}
-  #   end
-  # end
-
-  # defp fetch_mapped_input_source_key(mapped_inputs, input_key, op_key) do
-  #   case Map.fetch(mapped_inputs, input_key) do
-  #     :error -> {:error, %UnmappedInputError{op_key: op_key, input_key: input_key}}
-  #     {:ok, source_key} -> {:ok, source_key}
-  #   end
-  # end
-
-  # defp fetch_mapped_source_output(specs, source_key, {incast, _}) do
-  #   case source_key do
-  #     :incast ->
-  #       incast.output_spec
-
-  #     _ ->
-  #       %{module: source_module} = Map.fetch!(specs, source_key)
-  #       source_module.output_spec()
-  #   end
-  # end
-
-  # defp validate_type_compat(input, output, op_key) do
-  #   %{type: input_type} = input
-  #   %{type: output_type} = output
-
-  #   if input_type == output_type do
-  #     :ok
-  #   else
-  #     {:error,
-  #      %InvalidInputTypeError{
-  #        op_key: op_key,
-  #        input_key: input.key,
-  #        expected_type: input_type,
-  #        provided_type: output_type
-  #      }}
-  #   end
-  # end
-
-  # def run(%Grid{} = grid, input) do
-  #   outputs = %{input: input}
-  #   states = start_states(grid.specs)
-  #   grid = %Grid{grid | outputs: outputs, states: states}
-
-  #   grid |> validate!() |> call_input(input) |> run()
-  # end
+    with {:ok, grid} <- precast_all(grid),
+         {:ok, grid} <- validate(grid) do
+      run(grid)
+    else
+      {:error, _} = err -> err
+    end
+  end
 
   # defp call_input(%{input_caster: {incast, caster_params}, outputs: outputs} = grid, input) do
   #   output = InputCaster.call(incast, input, caster_params, %{})
@@ -195,49 +172,90 @@ defmodule Tonka.Core.Grid do
   #   %Grid{grid | outputs: Map.put(outputs, :incast, output)}
   # end
 
-  # defp start_states(specs) do
-  #   Enum.into(specs, %{}, fn {key, _} -> {key, :uninitialized} end)
-  # end
+  defp start_statuses(actions) do
+    Enum.into(actions, %{}, fn {key, _} -> {key, :uninitialized} end)
+  end
 
-  # defp run(grid) do
-  #   runnable = find_runnable(grid)
+  @spec reduce_actions_ok(actions, ({binary, action} -> {:ok, action} | {:error, term})) ::
+          {:ok, actions} | {:error, term}
+  defp reduce_actions_ok(enum, callback) do
+    Enum.reduce_while(enum, [], fn item, acc ->
+      case callback.(item) do
+        {:ok, result} -> {:cont, [result | acc]}
+        {:error, _} = err -> {:halt, err}
+      end
+    end)
+    |> case do
+      {:error, _} = err -> err
+      list -> {:ok, Map.new(list)}
+    end
+  end
 
-  #   case runnable do
-  #     {:ok, key} -> grid |> call_op(key) |> run()
-  #     :none -> {:done, grid}
-  #   end
-  # end
+  def precast_all(%Grid{actions: actions} = grid) do
+    case reduce_actions_ok(actions, &precast_action/1) do
+      {:ok, actions} -> {:ok, %Grid{grid | actions: actions}}
+      {:error, _} = err -> err
+    end
+  end
 
-  # defp call_op(%{specs: specs, outputs: outputs, states: states} = grid, key) do
-  #   inputs = build_input(grid, key)
+  defp precast_action({k, action}) do
+    GLogger.debug(~s(precasting params of action "#{k}"))
 
-  #   %{module: module, params: params} = Map.fetch!(specs, key)
+    case Action.precast_params(action) do
+      {:ok, action} -> {:ok, {k, action}}
+      {:error, _} = err -> err
+    end
+  end
 
-  #   output = module.call(inputs, params, %{})
+  defp run(grid) do
+    runnable = find_runnable(grid)
 
-  #   %Grid{
-  #     grid
-  #     | states: Map.put(states, key, :called),
-  #       outputs: Map.put(outputs, key, output)
-  #   }
-  # end
+    case runnable do
+      {:ok, key} -> grid |> call_action(key) |> run()
+      :none -> {:done, grid}
+    end
+  end
 
-  # defp find_runnable(%Grid{specs: specs, outputs: outputs, states: states}) do
-  #   states
-  #   |> Enum.filter(fn {_, state} -> state == :uninitialized end)
-  #   |> Enum.map(fn {key, _} -> {key, Map.fetch!(specs, key)} end)
-  #   |> Enum.filter(fn {_key, %{inputs: inputs}} ->
-  #     inputs_keys = Map.values(inputs)
-  #     Enum.all?(inputs_keys, &Map.has_key?(outputs, &1))
-  #   end)
-  #   |> case do
-  #     [{key, _} | _] -> {:ok, key}
-  #     [] -> :none
-  #   end
-  # end
+  defp call_action(%{actions: actions, outputs: outputs, statuses: statuses} = grid, key) do
+    # inputs = build_input(grid, key)
+    inputs = []
 
-  # defp build_input(%{outputs: outputs, specs: specs}, key) do
-  #   %{inputs: inputs} = Map.fetch!(specs, key)
+    %{module: module, params: params} = Map.fetch!(actions, key)
+
+    output = module.call(inputs, params, %{})
+
+    %Grid{
+      grid
+      | statuses: Map.put(statuses, key, :called),
+        outputs: Map.put(outputs, key, output)
+    }
+  end
+
+  defp find_runnable(%Grid{actions: actions, outputs: outputs, statuses: statuses}) do
+    uninit_keys = for {key, :uninitialized} <- statuses, do: key
+    uninit_actions = Map.take(actions, uninit_keys)
+
+    case uninit_actions do
+      [] ->
+        :done
+
+      _ ->
+        with_inputs_ready = Enum.filter(uninit_actions, &all_inputs_ready?(&1, outputs))
+
+        case with_inputs_ready do
+          [{key, _} | _] -> {:ok, key}
+          [] -> :noavail
+        end
+    end
+  end
+
+  defp all_inputs_ready?(%{config_called: true, config: config} = _action, outputs) do
+    inputs_keys = Enum.map(config.inputs, & &1.key)
+    Enum.all?(inputs_keys, &Map.has_key?(outputs, &1))
+  end
+
+  # defp build_input(%{outputs: outputs, actions: actions}, key) do
+  #   %{inputs: inputs} = Map.fetch!(actions, key)
   #   Enum.into(inputs, %{}, fn {key, source} -> {key, Map.fetch!(outputs, source)} end)
   # end
 end

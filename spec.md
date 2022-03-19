@@ -146,7 +146,7 @@ The input specs from an action must define the possible origins for each
 input.  Some inputs may only originate from an action, others only from a
 literal value (which should then be a param, but whatever).
 
-If the action defines an input to be a literal, it must export a
+If the action defines an input to be a static, it must export a
 cast_input(:my_key, term) function that will return a term of the expected
 type.
 
@@ -163,8 +163,8 @@ Gitlab, so we need a param to tell which one to use.
       credentials: gitlab.token
     inputs:
       vars:
-        origin: action_output
-        action: my_other_op
+        origin: action
+        action: my_other_act
       report:
-        origin: literal
-        literal: ~
+        origin: static
+        static: {some: data}

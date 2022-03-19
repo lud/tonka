@@ -10,7 +10,7 @@ defmodule Tonka.Core.Action do
   alias Tonka.Core.Container.Service.ServiceConfig
   alias __MODULE__
 
-  defmodule OpConfig do
+  defmodule ActionConfig do
     @enforce_keys [:service_config, :inputs]
     defstruct @enforce_keys
 
@@ -31,7 +31,14 @@ defmodule Tonka.Core.Action do
   @type op_out :: op_out(term)
   @type op_out(output) :: {:ok, output} | {:error, term} | {:async, Task.t()}
 
-  @type config :: OpConfig.t()
+  @type input_mapping :: %{
+          binary => %{
+            :origin => :action | :static | :grid_input,
+            optional(:static) => term,
+            optional(:action) => binary
+          }
+        }
+  @type config :: ActionConfig.t()
 
   @doc """
   Returns the action configuration:
@@ -43,7 +50,7 @@ defmodule Tonka.Core.Action do
   callback, those should not change depending on the params.
   """
   @callback configure(config, params) :: config
-  @callback return_spec() :: ReturnSpec.t()
+  @callback return_type() :: Tonka.Core.Container.typespec()
 
   @callback call(op_in, params, injects :: map) :: op_out
 
@@ -53,26 +60,46 @@ defmodule Tonka.Core.Action do
     end
   end
 
-  @enforce_keys [:module, :params, :casted_params, :cast_called, :config, :config_called]
+  @enforce_keys [
+    :module,
+    :params,
+    :casted_params,
+    :cast_called,
+    :config,
+    :config_called,
+    :input_mapping
+  ]
   defstruct @enforce_keys
 
-  def new(module, vars \\ []) when is_atom(module) and is_list(vars) do
-    _new(module, Map.merge(empty_vars(), Map.new(vars)))
+  @todo "struct typespecs"
+  @type t :: %__MODULE__{}
+
+  # ---------------------------------------------------------------------------
+  #  Building Action from the Grid
+  # ---------------------------------------------------------------------------
+
+  @todo "NimbleOptions"
+  @type new_opt :: {:params, term} | {:inputs, input_mapping}
+  @type new_opts :: [new_opt]
+  @spec new(module, new_opts) :: t()
+  def new(module, opts \\ []) when is_atom(module) and is_list(opts) do
+    _new(module, Map.merge(empty_vars(), Map.new(opts)))
   end
 
-  def _new(module, %{params: params}) do
+  def _new(module, %{params: params, input_mapping: input_mapping}) do
     %__MODULE__{
       module: module,
       params: params,
       casted_params: nil,
       cast_called: false,
       config: nil,
-      config_called: false
+      config_called: false,
+      input_mapping: input_mapping
     }
   end
 
   defp empty_vars do
-    %{params: %{}}
+    %{params: %{}, input_mapping: %{}}
   end
 
   def precast_params(%Action{cast_called: true} = act) do
@@ -116,14 +143,14 @@ defmodule Tonka.Core.Action do
     base = base_config()
 
     case module.configure(base_config(), params) do
-      %OpConfig{} = config -> {:ok, config}
+      %ActionConfig{} = config -> {:ok, config}
       other -> {:error, {:bad_return, {module, :configure, [base, params]}, other}}
     end
   end
 
   @doc false
   def base_config,
-    do: OpConfig.new()
+    do: ActionConfig.new()
 
   # ---------------------------------------------------------------------------
   #  Configuration API
@@ -131,7 +158,7 @@ defmodule Tonka.Core.Action do
 
   @use_service_options_schema NimbleOptions.new!([])
 
-  def use_service(%OpConfig{} = config, key, opts) when is_atom(key) do
+  def use_service(%ActionConfig{} = config, key, opts) when is_atom(key) do
     opts = NimbleOptions.validate!(opts, @use_service_options_schema)
   end
 
@@ -144,7 +171,7 @@ defmodule Tonka.Core.Action do
   """
   # ### Options
   # {NimbleOptions.docs(@input_schema)}
-  def use_input(%OpConfig{inputs: inputs} = config, key, utype, opts \\ [])
+  def use_input(%ActionConfig{inputs: inputs} = config, key, utype, opts \\ [])
       when is_atom(key) and is_list(opts) do
     # opts = NimbleOptions.validate!(opts, @input_schema)
     spec = %InputSpec{cast_static: opts[:cast_static], key: key, type: utype}
@@ -153,6 +180,6 @@ defmodule Tonka.Core.Action do
       raise ArgumentError, "input #{inspect(key)} is already defined"
     end
 
-    %OpConfig{config | inputs: Map.put(inputs, key, spec)}
+    %ActionConfig{config | inputs: Map.put(inputs, key, spec)}
   end
 end

@@ -31,7 +31,7 @@ defmodule Tonka.MixProject do
     [
       # App
 
-      {:ark, "~> 0.7.0", runtime: false},
+      {:ark, "~> 0.7.1", runtime: false},
       {:hugs, path: "~/src/hugs", runtime: false},
       {:yaml_elixir, "~> 2.5"},
       {:bbmustache, "~> 1.12"},

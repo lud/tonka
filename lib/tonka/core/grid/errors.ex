@@ -15,14 +15,14 @@ end
 defmodule Tonka.Core.Grid.NoInputCasterError do
   defexception []
 
-  def message(_), do: "the grid has no input caster defined"
+  def message(_), do: "the type grid has no input caster defined"
 end
 
 defmodule Tonka.Core.Grid.UndefinedOriginActionError do
   defexception [:action_key, :origin_key]
 
   def message(%{action_key: act, origin_key: ori}) do
-    ~s(the grid has no "#{ori}" action but this origin is defined in action "#{act}")
+    "the grid has no '#{ori}' action but this origin is defined in action '#{act}'"
   end
 end
 
@@ -30,6 +30,6 @@ defmodule Tonka.Core.Grid.UnmappedInputError do
   defexception [:action_key, :input_key]
 
   def message(%{action_key: action_key, input_key: input_key}) do
-    ~s(unmapped input #{inspect(input_key)} for action "#{action_key}")
+    "unmapped input #{inspect(input_key)} for action '#{action_key}'"
   end
 end

@@ -246,7 +246,7 @@ defmodule Tonka.Core.Grid do
     statuses = start_statuses(grid.actions)
     grid = %Grid{grid | outputs: outputs, statuses: statuses}
 
-    GLogger.debug("running a grid")
+    GLogger.debug("running the grid")
 
     with {:ok, grid} <- precast_all(grid),
          {:ok, grid} <- preconfigure_all(grid),
@@ -263,16 +263,9 @@ defmodule Tonka.Core.Grid do
 
   @spec reduce_actions_ok(actions, ({binary, action} -> {:ok, action} | {:error, term})) ::
           {:ok, actions} | {:error, term}
-  defp reduce_actions_ok(enum, callback) do
-    Enum.reduce_while(enum, [], fn item, acc ->
-      case callback.(item) do
-        {:ok, result} -> {:cont, [result | acc]}
-        {:error, _} = err -> {:halt, err}
-      end
-    end)
-    |> case do
-      {:error, _} = err -> err
-      list -> {:ok, Map.new(list)}
+  defp reduce_actions_ok(actions, f) do
+    with {:ok, actions} <- Ark.Ok.map_ok(actions, f) do
+      {:ok, Map.new(actions)}
     end
   end
 
@@ -284,7 +277,7 @@ defmodule Tonka.Core.Grid do
   end
 
   defp precast_action({k, action}) do
-    GLogger.debug(~s(casting params for action "#{k}"))
+    GLogger.debug("casting params for action '#{k}'")
 
     case Action.precast_params(action) do
       {:ok, action} -> {:ok, {k, action}}
@@ -300,7 +293,7 @@ defmodule Tonka.Core.Grid do
   end
 
   defp preconfigure_action({k, action}) do
-    GLogger.debug(~s(calling configuration for action "#{k}"))
+    GLogger.debug("calling configuration for action '#{k}'")
 
     case Action.preconfigure(action) do
       {:ok, action} -> {:ok, {k, action}}
@@ -312,59 +305,105 @@ defmodule Tonka.Core.Grid do
     runnable = find_runnable(grid)
 
     case runnable do
-      {:ok, key} -> grid |> call_action(key) |> run()
-      :done -> {:done, grid}
-      :noavail -> {:error, {:no_runnable_action, grid}}
+      {:ok, key} ->
+        with {:ok, new_grid} <- call_action(grid, key) do
+          run(new_grid)
+        end
+
+      :done ->
+        {:ok, {:done, grid}}
+
+      :noavail ->
+        {:error, {:noavail, grid}}
     end
   end
 
   defp call_action(%{actions: actions, outputs: outputs, statuses: statuses} = grid, key) do
-    # inputs = build_input(grid, key)
-    inputs = []
+    action = Map.fetch!(actions, key)
 
-    %{module: module, params: params} = Map.fetch!(actions, key)
+    with {:ok, inputs} <- build_input(grid, key),
+         {:ok, output} <- do_call_action(action, inputs, %{}, key) do
+      grid = %Grid{
+        grid
+        | statuses: Map.put(statuses, key, :called),
+          outputs: Map.put(outputs, key, output)
+      }
 
-    output = module.call(inputs, params, %{})
+      {:ok, grid}
+    else
+      {:error, reason} -> {:error, {{:action_failed, key, reason}, grid}}
+    end
+  end
 
-    %Grid{
-      grid
-      | statuses: Map.put(statuses, key, :called),
-        outputs: Map.put(outputs, key, output)
-    }
+  defp do_call_action(action, inputs, injects, key) do
+    GLogger.debug("calling action '#{key}'")
+    Action.call(action, inputs, injects)
   end
 
   defp find_runnable(%Grid{actions: actions, outputs: outputs, statuses: statuses}) do
     uninit_keys = for {key, :uninitialized} <- statuses, do: key
-    uninit_actions = actions |> Map.take(uninit_keys) |> Map.values()
+    uninit_actions = actions |> Map.take(uninit_keys)
     uninit_keys |> IO.inspect(label: "uninit_keys")
     uninit_actions |> IO.inspect(label: "uninit_actions")
 
-    case uninit_actions do
-      [] ->
-        :done
-
-      _ ->
-        with_inputs_ready =
-          Enum.filter(uninit_actions, fn action -> all_inputs_ready?(action, outputs) end)
-
-        case with_inputs_ready do
-          [{key, _} | _] -> {:ok, key}
-          [] -> :noavail
-        end
+    if 0 == map_size(uninit_actions) do
+      :done
+    else
+      uninit_actions
+      |> Enum.filter(fn {k, action} ->
+        {k, all_inputs_ready?(action, outputs)}
+      end)
+      |> case do
+        [{key, _} | _] -> {:ok, key}
+        [] -> :noavail
+      end
     end
   end
 
-  defp all_inputs_ready?(%{config_called: true, config: config} = _action, outputs) do
-    inputs_keys = Enum.map(config.inputs, fn {_, input_spec} -> input_spec.key end)
-    inputs_keys |> IO.inspect(label: "inputs_keys")
-    outputs |> IO.inspect(label: "outputs")
-    raise "todo need to resolve the input key from the mapping"
-    raise "todo store the input values in the action"
-    Enum.all?(inputs_keys, &Map.has_key?(outputs, &1))
+  defp all_inputs_ready?(
+         %{config_called: true, config: config, input_mapping: mapping} = action,
+         outputs
+       ) do
+    # This function can only be called if the mapping has been verified, as we
+    # will not look into the input specs again but only consider the mapping.
+    depended_actions =
+      mapping
+      |> Enum.filter(fn {_, %{origin: ori}} -> ori == :action end)
+      |> Enum.all?(fn {_, %{action: depended_on_action_key}} ->
+        Map.has_key?(outputs, depended_on_action_key)
+      end)
   end
 
-  # defp build_input(%{outputs: outputs, actions: actions}, key) do
-  #   %{inputs: inputs} = Map.fetch!(actions, key)
-  #   Enum.into(inputs, %{}, fn {key, source} -> {key, Map.fetch!(outputs, source)} end)
-  # end
+  defp build_input(%{outputs: outputs, actions: actions}, key) do
+    GLogger.debug("building inputs for action '#{key}'")
+    action = Map.fetch!(actions, key)
+    %{input_mapping: mapping, config: %{inputs: input_specs}} = action
+
+    inputs_result = Ark.Ok.map_ok(mapping, &fetch_input(&1, input_specs, outputs))
+
+    case inputs_result do
+      {:ok, inputs} -> {:ok, Map.new(inputs)}
+      {:error, _} = err -> err
+    end
+  end
+
+  defp fetch_input(mapped_input_kv, input_specs, outputs)
+
+  defp fetch_input({input_key, %{origin: :action, action: key}}, _, outputs) do
+    {:ok, {input_key, Map.fetch!(outputs, key)}}
+  end
+
+  defp fetch_input({input_key, %{origin: :static, static: rawvalue}}, input_specs, _) do
+    %{type: input_type} = Map.fetch!(input_specs, input_key)
+
+    case input_type do
+      # in case of a raw type there is no cast to do. This is done to support
+      # dev/tests.
+      {:raw, _} ->
+        {:ok, {input_key, rawvalue}}
+
+        # caster when is_atom(caster) ->
+        # caster.cast_input(rawvalue)
+    end
+  end
 end

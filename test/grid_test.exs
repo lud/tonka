@@ -70,9 +70,9 @@ defmodule Tonka.GridTest do
       }
     end
 
-    def call(%{parent: parent}, %{message: message}, _) do
+    def call(%{parent: parent}, _, %{message: message}) do
       send(parent, message)
-      :ok
+      {:ok, nil}
     end
   end
 
@@ -90,7 +90,7 @@ defmodule Tonka.GridTest do
         inputs: %{parent: Grid.static_input(self())}
       )
 
-    assert {:ok, _} = Grid.run(grid, this)
+    assert {:ok, {:done, _}} = Grid.run(grid, this)
     assert_receive {^ref, "hello"}
   end
 
@@ -112,7 +112,7 @@ defmodule Tonka.GridTest do
       }
     end
 
-    def call(%{text: text}, %{tag: tag}, _) do
+    def call(%{text: text}, _, %{tag: tag}) do
       {tag, String.upcase(text)}
     end
   end
@@ -135,7 +135,7 @@ defmodule Tonka.GridTest do
       }
     end
 
-    def call(%{message: message}, %{parent: parent}, _) do
+    def call(%{message: message}, _, %{parent: parent}) do
       send(parent, message)
       :ok
     end
@@ -183,7 +183,7 @@ defmodule Tonka.GridTest do
       }
     end
 
-    def call(%{mytext: mytext}, %{parent: parent, tag: tag}, _)
+    def call(%{mytext: mytext}, _, %{parent: parent, tag: tag})
         when is_binary(mytext) do
       message = {tag, String.upcase(mytext)}
       send(parent, message)

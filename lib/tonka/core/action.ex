@@ -190,4 +190,19 @@ defmodule Tonka.Core.Action do
 
     %ActionConfig{config | inputs: Map.put(inputs, key, spec)}
   end
+
+  # ---------------------------------------------------------------------------
+  #  Calling the action
+  # ---------------------------------------------------------------------------
+
+  def call(action, inputs, injects)
+
+  def call(%Action{module: module, casted_params: cparams} = action, inputs, injects)
+      when is_map(inputs) and is_map(injects) do
+    case module.call(inputs, injects, cparams) do
+      {:ok, _} = fine -> fine
+      {:error, _} = err -> err
+      other -> {:error, {:bad_return, {module, :call, [inputs, cparams, injects]}, other}}
+    end
+  end
 end

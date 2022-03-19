@@ -90,7 +90,7 @@ defmodule Tonka.GridTest do
         inputs: %{parent: Grid.static_input(self())}
       )
 
-    assert {:ok, {:done, _}} = Grid.run(grid, this)
+    assert {:ok, :done, _} = Grid.run(grid, this)
     assert_receive {^ref, "hello"}
   end
 

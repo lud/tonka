@@ -25,11 +25,8 @@ defmodule Tonka.Core.Grid do
   @enforce_keys [:actions, :outputs, :statuses, :input_caster]
   defstruct @enforce_keys
 
-  @type t :: %__MODULE__{
-          actions: [Action.t()],
-          outputs: outputs,
-          statuses: statuses
-        }
+  @todo "typing of struct"
+  @type t :: %__MODULE__{}
 
   # ---------------------------------------------------------------------------
   #  Grid Building
@@ -189,6 +186,14 @@ defmodule Tonka.Core.Grid do
            action_key: act_key,
            input_key: input_key
          }}
+
+      {:error, {:incompatible_types, input_type, output_type}} ->
+        %InvalidInputTypeError{
+          action_key: act_key,
+          expected_type: input_type,
+          provided_type: output_type,
+          input_key: input_key
+        }
     end
   end
 
@@ -241,6 +246,12 @@ defmodule Tonka.Core.Grid do
   #  Grid Running
   # ---------------------------------------------------------------------------
 
+  @spec run(t, input :: term) :: {:ok, success_status, t} | {:error, error_info, t}
+        when success_status: :done,
+             error_info: :noavail | {:action_failed, action_key, reason},
+             reason: term,
+             action_key: binary
+
   def run(%Grid{actions: actions} = grid, input) do
     outputs = %{input: input}
     statuses = start_statuses(grid.actions)
@@ -253,7 +264,30 @@ defmodule Tonka.Core.Grid do
          {:ok, grid} <- validate(grid) do
       run(grid)
     else
-      {:error, _} = err -> err
+      {:error, reason} -> {:error, reason, grid}
+    end
+  end
+
+  @spec run(t) :: {:ok, success_status, term} | {:error, error_info, term}
+        when success_status: :done,
+             error_info: :noavail | {:action_failed, action_key, reason},
+             reason: term,
+             action_key: binary
+
+  defp run(grid) do
+    runnable = find_runnable(grid)
+
+    case runnable do
+      {:ok, key} ->
+        with {:ok, new_grid} <- call_action(grid, key) do
+          run(new_grid)
+        end
+
+      :done ->
+        {:ok, :done, grid}
+
+      :noavail ->
+        {:error, :noavail, grid}
     end
   end
 
@@ -301,22 +335,7 @@ defmodule Tonka.Core.Grid do
     end
   end
 
-  defp run(grid) do
-    runnable = find_runnable(grid)
-
-    case runnable do
-      {:ok, key} ->
-        with {:ok, new_grid} <- call_action(grid, key) do
-          run(new_grid)
-        end
-
-      :done ->
-        {:ok, {:done, grid}}
-
-      :noavail ->
-        {:error, {:noavail, grid}}
-    end
-  end
+  @spec call_action(t, binary) :: {:ok, t} | {:error, {:action_failed, binary, term}, t}
 
   defp call_action(%{actions: actions, outputs: outputs, statuses: statuses} = grid, key) do
     action = Map.fetch!(actions, key)
@@ -331,7 +350,7 @@ defmodule Tonka.Core.Grid do
 
       {:ok, grid}
     else
-      {:error, reason} -> {:error, {{:action_failed, key, reason}, grid}}
+      {:error, reason} -> {:error, {:action_failed, key, reason}, grid}
     end
   end
 

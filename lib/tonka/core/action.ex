@@ -94,7 +94,7 @@ defmodule Tonka.Core.Action do
     _new(module, Map.merge(empty_vars(), Map.new(opts)))
   end
 
-  def _new(module, %{params: params, input_mapping: input_mapping}) do
+  defp _new(module, %{params: params, input_mapping: input_mapping}) do
     %__MODULE__{
       module: module,
       params: params,

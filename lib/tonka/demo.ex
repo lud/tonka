@@ -68,7 +68,6 @@ defmodule Tonka.Demo do
 
   def prepare_grid do
     Grid.new()
-    |> Grid.set_input(Tonka.Core.InputCaster.NilInput)
 
     # |> Grid.add_action("define_query", )
   end

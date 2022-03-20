@@ -5,7 +5,7 @@ defmodule Tonka.MixProject do
     [
       app: :tonka,
       version: "0.1.0",
-      elixir: "~> 1.12",
+      elixir: "~> 1.13",
       elixirc_paths: elixirc_paths(Mix.env()),
       compilers: [:gettext] ++ Mix.compilers(),
       # consolidate_protocols: false,
@@ -32,7 +32,8 @@ defmodule Tonka.MixProject do
       # App
 
       {:ark, "~> 0.7.1", runtime: false},
-      {:hugs, path: "~/src/hugs", runtime: false},
+      # {:hugs, path: "~/src/hugs", runtime: false},
+      {:hugs, "~> 0.1.10", runtime: false},
       {:yaml_elixir, "~> 2.5"},
       {:bbmustache, "~> 1.12"},
       {:nimble_options, "~> 0.4.0"},

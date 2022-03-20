@@ -2,7 +2,7 @@ defmodule Tonka.Core.Grid do
   @moduledoc """
   A grid is an execution context for multiple actions.
   """
-
+  use TODO
   use Tonka.GLogger
 
   alias Tonka.Core.Grid.{
@@ -69,15 +69,15 @@ defmodule Tonka.Core.Grid do
 
   #{NimbleOptions.docs(@add_schema)}
   """
+
   def add_action(grid, key, module, opts \\ [])
 
-  def add_action(%Grid{actions: actions}, key, _module, _opts)
-      when is_map_key(actions, key) do
-    raise ArgumentError, "an action with the key #{inspect(key)} is already defined"
-  end
-
   def add_action(%Grid{actions: actions} = grid, key, module, opts)
-      when is_binary(key) and is_atom(module) do
+      when is_binary(key) and is_atom(module) and is_list(opts) do
+    if is_map_key(actions, key) do
+      raise ArgumentError, "an action with the key #{inspect(key)} is already defined"
+    end
+
     opts = NimbleOptions.validate!(opts, @add_schema)
     action = Action.new(module, params: opts[:params], input_mapping: opts[:inputs])
     actions = Map.put(actions, key, action)
@@ -176,7 +176,7 @@ defmodule Tonka.Core.Grid do
          mapping,
          actions
        ) do
-    with {:ok, output_type} <- fetch_mapped_input_type(mapping, input_spec, act_key, actions),
+    with {:ok, output_type} <- fetch_mapped_input_type(mapping, input_spec, actions),
          :ok <- validate_type_compat(input_type, output_type) do
       :ok
     else
@@ -199,7 +199,7 @@ defmodule Tonka.Core.Grid do
 
   @todo "factorize and document {:raw, type} tuples"
 
-  defp fetch_mapped_input_type(mapping, input_spec, act_key, actions) do
+  defp fetch_mapped_input_type(mapping, input_spec, actions) do
     %{key: input_key, type: input_type} = input_spec
 
     case mapping[input_key] do
@@ -252,7 +252,7 @@ defmodule Tonka.Core.Grid do
              reason: term,
              action_key: binary
 
-  def run(%Grid{actions: actions} = grid, input) do
+  def run(%Grid{} = grid, input) do
     outputs = %{input: input}
     statuses = start_statuses(grid.actions)
     grid = %Grid{grid | outputs: outputs, statuses: statuses}
@@ -379,18 +379,15 @@ defmodule Tonka.Core.Grid do
     end
   end
 
-  defp all_inputs_ready?(
-         %{config_called: true, config: config, input_mapping: mapping} = action,
-         outputs
-       ) do
+  defp all_inputs_ready?(%{config_called: true, input_mapping: mapping}, outputs) do
     # This function can only be called if the mapping has been verified, as we
     # will not look into the input specs again but only consider the mapping.
-    depended_actions =
-      mapping
-      |> Enum.filter(fn {_, %{origin: ori}} -> ori == :action end)
-      |> Enum.all?(fn {_, %{action: depended_on_action_key}} ->
-        Map.has_key?(outputs, depended_on_action_key)
-      end)
+
+    mapping
+    |> Enum.filter(fn {_, %{origin: ori}} -> ori == :action end)
+    |> Enum.all?(fn {_, %{action: depended_on_action_key}} ->
+      Map.has_key?(outputs, depended_on_action_key)
+    end)
   end
 
   defp build_input(%{outputs: outputs, actions: actions}, key) do

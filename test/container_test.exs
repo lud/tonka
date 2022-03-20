@@ -67,15 +67,6 @@ defmodule Tonka.ContainerTest do
     assert_receive {:init_called, SomeStructService}
   end
 
-  test "using a single argument to bind/1" do
-    require Logger
-
-    Logger.warn("""
-    # Given we do not provide an implementation, the container should expect
-    # that the utype name is also a module that produces this utype.
-    """)
-  end
-
   test "a builder function can be provided" do
     ref = make_ref()
 

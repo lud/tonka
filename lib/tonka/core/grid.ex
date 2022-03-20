@@ -15,14 +15,12 @@ defmodule Tonka.Core.Grid do
   alias Tonka.Core.Action
   alias __MODULE__
 
-  @type input_caster_opt :: {:params, map}
-  @type input_caster_opts :: [input_caster_opt]
   @type outputs :: %{optional(binary | :incast) => term}
   @type action :: Action.t()
   @type actions :: %{optional(binary) => action}
   @type statuses :: %{optional(binary) => :uninitialized | :called}
 
-  @enforce_keys [:actions, :outputs, :statuses, :input_caster]
+  @enforce_keys [:actions, :outputs, :statuses]
   defstruct @enforce_keys
 
   @todo "typing of struct"
@@ -33,7 +31,7 @@ defmodule Tonka.Core.Grid do
   # ---------------------------------------------------------------------------
 
   def new do
-    %Grid{actions: %{}, outputs: %{}, statuses: %{}, input_caster: nil}
+    %Grid{actions: %{}, outputs: %{}, statuses: %{}}
   end
 
   @add_schema NimbleOptions.new!(
@@ -237,7 +235,7 @@ defmodule Tonka.Core.Grid do
         {:ok, input_type}
 
       caster when is_atom(caster) ->
-        if function_exported?(input_type, :cast_input, 1),
+        if Tonka.Core.Reflection.load_function_exported?(input_type, :cast_input, 1),
           do: {:ok, input_type},
           else: {:error, {:no_caster, origin}}
     end
@@ -286,6 +284,11 @@ defmodule Tonka.Core.Grid do
   actions, then runs some validation checks on the actions input and output
   types and mappings.
   """
+  IO.warn(
+    "ensure that the modified grid with casted/configuration is returned" <>
+      " from all error steps"
+  )
+
   def prepare_and_validate(%Grid{} = grid) do
     with {:ok, grid} <- precast_all(grid),
          {:ok, grid} <- preconfigure_all(grid) do
@@ -468,4 +471,18 @@ defmodule Tonka.Core.Grid do
         end
     end
   end
+
+  # ---------------------------------------------------------------------------
+  #  Error Formatting
+  # ---------------------------------------------------------------------------
+
+  def format_error({:invalid_inputs, list}) do
+    """
+    some inputs were invalid:
+
+    - #{Enum.map_join(list, "\n- ", &format_error/1)}
+    """
+  end
+
+  def format_error(%{__exception__: true} = e), do: Exception.message(e)
 end

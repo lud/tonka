@@ -2,6 +2,7 @@ defmodule Tonka.Demo do
   alias Tonka.Core.Container
   alias Tonka.Core.Container.Params
   alias Tonka.Core.Grid
+  require Logger
   alias Tonka.Core.Action
   import Container
 
@@ -25,7 +26,15 @@ defmodule Tonka.Demo do
     container = prepare_container()
     grid = prepare_grid()
 
-    {:ok, :done, _} = Grid.run(grid, "some dummy input")
+    case Grid.run(grid, "some dummy input") do
+      {:ok, :done, grid} ->
+        # grid |> IO.inspect(label: "grid", pretty: true)
+        # grid.outputs |> IO.inspect(label: "grid.outputs")
+        IO.puts("OK")
+
+      {:error, detail, grid} ->
+        Logger.error(Grid.format_error(detail))
+    end
   end
 
   def prepare_container do
@@ -73,9 +82,20 @@ defmodule Tonka.Demo do
     Grid.new()
 
     # |> Grid.add_action("define_query", )
-    |> Grid.add_action("define_query", Tonka.Actions.Queries.CompileMql,
-      params: %{"data_type" => "issue"}
+    |> Grid.add_action("define_query", Tonka.Actions.Queries.CompileMQLGroups,
+      params: %{"data_type" => "issue"},
+      inputs:
+        %{}
+        |> Grid.pipe_static(
+          :query_groups,
+          """
+          - title: TODO List
+            query:
+              labels: 'todo'
+            limit: 1
+          """
+          |> YamlElixir.read_from_string!()
+        )
     )
-    |> IO.inspect(label: "grid")
   end
 end

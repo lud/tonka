@@ -23,7 +23,6 @@ defmodule Tonka.Raw do
     # post = encode_slack_rich(report)
     # transport = slack(target)
     # post(transport, post)
-    query_groups |> IO.inspect(label: "query_groups", pretty: true)
   end
 
   defp build_credentials do

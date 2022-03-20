@@ -56,6 +56,7 @@ defmodule Tonka.Core.Action do
 
   defmacro __using__(_) do
     quote location: :keep do
+      alias unquote(__MODULE__)
       @behaviour unquote(__MODULE__)
     end
   end
@@ -185,7 +186,7 @@ defmodule Tonka.Core.Action do
   def use_input(%ActionConfig{inputs: inputs} = config, key, utype, opts \\ [])
       when is_atom(key) and is_list(opts) do
     # opts = NimbleOptions.validate!(opts, @input_schema)
-    spec = %InputSpec{cast_static: opts[:cast_static], key: key, type: utype}
+    spec = %InputSpec{key: key, type: utype}
 
     if Map.has_key?(inputs, key) do
       raise ArgumentError, "input #{inspect(key)} is already defined"

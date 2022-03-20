@@ -5,7 +5,7 @@ defmodule Tonka.GridInjectionTest do
   alias Tonka.Core.Container.ServiceResolutionError
   alias Tonka.Core.Container.Service
   alias Tonka.Core.Grid.InvalidInputTypeError
-  alias Tonka.Core.Grid.UndefinedServiceError
+  alias Tonka.Core.Grid.UnavailableServiceError
   alias Tonka.Core.Grid.NoInputCasterError
   alias Tonka.Core.Grid.UnmappedInputError
 
@@ -42,19 +42,6 @@ defmodule Tonka.GridInjectionTest do
     end
   end
 
-  test "the grid will check that the container defines the used service" do
-    grid =
-      Grid.new()
-      |> Grid.add_action("my_action", UsesService)
-
-    container =
-      Container.new()
-      |> Container.freeze()
-
-    assert {:error, %UndefinedServiceError{action_key: "my_action", inject_key: :myserv}, _} =
-             Grid.run(grid, container, "some_input")
-  end
-
   defmodule StringProvider do
     def new(string) do
       %{string: string}
@@ -80,6 +67,32 @@ defmodule Tonka.GridInjectionTest do
     end
   end
 
+  test "the grid will check that the container defines the used service" do
+    grid =
+      Grid.new()
+      |> Grid.add_action("my_action", UsesService)
+
+    container =
+      Container.new()
+      |> Container.freeze()
+
+    assert {
+             :error,
+             {:invalid_injects,
+              [
+                %UnavailableServiceError{
+                  action_key: "my_action",
+                  container_error: %ServiceResolutionError{
+                    errkind: :not_found,
+                    utype: StringProvider
+                  },
+                  inject_key: :myserv
+                }
+              ]},
+             _
+           } = Grid.run(grid, container, "some_input")
+  end
+
   test "the grid will fail pulling a service that is not built" do
     grid =
       Grid.new()
@@ -90,7 +103,18 @@ defmodule Tonka.GridInjectionTest do
       |> Container.bind(StringProvider)
       |> Container.freeze()
 
-    assert {:ok, :done, _} = Grid.run(grid, container, "some_input")
+    assert {:error,
+            {:invalid_injects,
+             [
+               %UnavailableServiceError{
+                 action_key: "my_action",
+                 container_error: %ServiceResolutionError{
+                   errkind: :build_frozen,
+                   utype: StringProvider
+                 },
+                 inject_key: :myserv
+               }
+             ]}, _} = Grid.run(grid, container, "some_input")
   end
 
   # test "the grid will pull services from the container when calling actions" do

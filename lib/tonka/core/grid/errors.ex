@@ -37,7 +37,7 @@ defmodule Tonka.Core.Grid.UnmappedInputError do
   end
 end
 
-defmodule Tonka.Core.Grid.UndefinedServiceError do
+defmodule Tonka.Core.Grid.UnavailableServiceError do
   defexception [:action_key, :inject_key, :container_error]
 
   def message(%{action_key: action_key, inject_key: inject_key, container_error: ce}) do

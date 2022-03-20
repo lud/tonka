@@ -10,7 +10,7 @@ defmodule Tonka.Core.Grid do
     NoInputCasterError,
     UnmappedInputError,
     UndefinedOriginActionError,
-    UndefinedServiceError
+    UnavailableServiceError
   }
 
   alias Tonka.Core.Container
@@ -167,10 +167,17 @@ defmodule Tonka.Core.Grid do
 
   defp validate_action_inject(%{key: inject_key, type: utype} = inject_spec, act_key, container) do
     # we will fetch the type to get a meaningful error from the container
-    if Container.has_built?(container, utype) do
-      :ok
-    else
-      {:error, %UndefinedServiceError{action_key: act_key, inject_key: inject_key}}
+    case Container.pull_frozen(container, utype) do
+      {:ok, _} ->
+        :ok
+
+      {:error, reason} ->
+        {:error,
+         %UnavailableServiceError{
+           action_key: act_key,
+           inject_key: inject_key,
+           container_error: reason
+         }}
     end
   end
 

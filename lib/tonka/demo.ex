@@ -29,7 +29,7 @@ defmodule Tonka.Demo do
     case Grid.run(grid, "some dummy input") do
       {:ok, :done, grid} ->
         # grid |> IO.inspect(label: "grid", pretty: true)
-        # grid.outputs |> IO.inspect(label: "grid.outputs")
+        grid.outputs |> IO.inspect(label: "grid.outputs")
         IO.puts("OK")
 
       {:error, detail, grid} ->

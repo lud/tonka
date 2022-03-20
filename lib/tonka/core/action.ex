@@ -194,17 +194,12 @@ defmodule Tonka.Core.Action do
 
   def call(action, inputs, injects)
 
-  def call(%Action{module: module, casted_params: cparams} = action, inputs, injects)
+  def call(%Action{module: module, casted_params: cparams}, inputs, injects)
       when is_map(inputs) and is_map(injects) do
     case module.call(inputs, injects, cparams) do
-      {:ok, _} = fine ->
-        fine
-
-      {:error, _} = err ->
-        err
-
-      other ->
-        {:error, {:bad_return, {module, :call, [inputs, cparams, injects]}, other}}
+      {:ok, _} = fine -> fine
+      {:error, _} = err -> err
+      other -> {:error, {:bad_return, {module, :call, [inputs, cparams, injects]}, other}}
     end
   end
 end

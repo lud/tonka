@@ -33,7 +33,7 @@ defmodule Tonka.MixProject do
 
       {:ark, "~> 0.7.2", runtime: false},
       # {:hugs, path: "~/src/hugs", runtime: false},
-      {:hugs, "~> 0.1.10", runtime: false},
+      {:hugs, "~> 0.1.11", runtime: false},
       {:yaml_elixir, "~> 2.5"},
       {:bbmustache, "~> 1.12"},
       {:nimble_options, "~> 0.4.0"},

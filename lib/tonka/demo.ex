@@ -25,7 +25,7 @@ defmodule Tonka.Demo do
     container = prepare_container()
     grid = prepare_grid()
 
-    Grid.run(grid, "some dummy input")
+    {:ok, :done, _} = Grid.run(grid, "some dummy input")
   end
 
   def prepare_container do
@@ -73,6 +73,9 @@ defmodule Tonka.Demo do
     Grid.new()
 
     # |> Grid.add_action("define_query", )
-    |> Grid.add_action("define_query", Tonka.Actions.Queries.CompileMql)
+    |> Grid.add_action("define_query", Tonka.Actions.Queries.CompileMql,
+      params: %{"data_type" => "issue"}
+    )
+    |> IO.inspect(label: "grid")
   end
 end

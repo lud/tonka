@@ -5,26 +5,6 @@ defmodule Tonka.GridTest do
   alias Tonka.Core.Grid.InvalidInputTypeError
   use ExUnit.Case, async: true
 
-  defmodule NoCaster do
-    @behaviour Tonka.Core.InputCaster
-
-    def for_type(type) do
-      Tonka.Core.InputCaster.new(module: __MODULE__, output_spec: _output_spec(type))
-    end
-
-    def _output_spec(type) do
-      %Container.ReturnSpec{type: type}
-    end
-
-    def output_spec() do
-      raise "#{inspect(__MODULE__)}.output_spec/0 cannot be called directly"
-    end
-
-    def call(term, _, _) do
-      term
-    end
-  end
-
   test "a grid can be created" do
     grid = Grid.new()
     assert is_struct(grid, Grid)
@@ -64,12 +44,6 @@ defmodule Tonka.GridTest do
       |> Action.use_input(:parent, {:raw, :pid})
     end
 
-    def output_spec() do
-      %Container.ReturnSpec{
-        type: {:raw, :atom}
-      }
-    end
-
     def call(%{parent: parent}, _, %{message: message}) do
       send(parent, message)
       {:ok, nil}
@@ -87,7 +61,7 @@ defmodule Tonka.GridTest do
       Grid.new()
       |> Grid.add_action("a", MessageParamSender,
         params: %{message: {ref, "hello"}},
-        inputs: %{parent: Grid.static_input(self())}
+        inputs: %{} |> Grid.pipe_static(:parent, self())
       )
 
     assert {:ok, :done, _} = Grid.run(grid, this)
@@ -97,68 +71,48 @@ defmodule Tonka.GridTest do
   defmodule Upcaser do
     def cast_params(it), do: {:ok, it}
 
-    def input_specs() do
-      [
-        %Container.InjectSpec{
-          key: :text,
-          type: {:raw, :binary}
-        }
-      ]
-    end
+    def return_type, do: {:raw, :binary}
 
-    def output_spec() do
-      %Container.ReturnSpec{
-        type: {:raw, :term}
-      }
+    def configure(config, _) do
+      config
+      |> Action.use_input(:text, {:raw, :binary})
     end
 
     def call(%{text: text}, _, %{tag: tag}) do
-      {tag, String.upcase(text)}
+      {:ok, {tag, String.upcase(text)}}
     end
   end
 
   defmodule InputMessageSender do
     def cast_params(it), do: {:ok, it}
 
-    def input_specs() do
-      [
-        %Container.InjectSpec{
-          key: :message,
-          type: {:raw, :term}
-        }
-      ]
-    end
-
-    def output_spec() do
-      %Container.ReturnSpec{
-        type: {:raw, :atom}
-      }
+    def configure(config, _) do
+      config
+      |> Action.use_input(:message, {:raw, :binary})
     end
 
     def call(%{message: message}, _, %{parent: parent}) do
       send(parent, message)
-      :ok
+      {:ok, nil}
     end
   end
 
-  @tag :skip
   test "an action can use another action output as input" do
     this = self()
     ref = make_ref()
 
     grid =
       Grid.new()
-      |> Grid.set_input(NoCaster.for_type({:raw, :binary}))
       |> Grid.add_action("a", InputMessageSender,
-        inputs: %{message: "b"},
+        inputs: %{} |> Grid.pipe_action(:message, "b"),
         params: %{parent: this}
       )
       |> Grid.add_action("b", Upcaser,
-        inputs: %{text: :incast},
+        inputs: %{} |> Grid.pipe_grid_input(:text),
         params: %{tag: ref}
       )
 
-    assert {:ok, _} = Grid.run(grid, "hello")
+    assert {:ok, :done, _} = Grid.run(grid, "hello")
 
     assert_receive {^ref, "HELLO"}
   end
@@ -167,21 +121,6 @@ defmodule Tonka.GridTest do
     @behaviour Action
 
     def cast_params(it), do: {:ok, it}
-
-    def input_specs() do
-      [
-        %Container.InjectSpec{
-          key: :mytext,
-          type: {:raw, :binary}
-        }
-      ]
-    end
-
-    def output_spec() do
-      %Container.ReturnSpec{
-        type: {:raw, :atom}
-      }
-    end
 
     def call(%{mytext: mytext}, _, %{parent: parent, tag: tag})
         when is_binary(mytext) do
@@ -196,16 +135,6 @@ defmodule Tonka.GridTest do
 
     def cast_params(it), do: {:ok, it}
 
-    def input_specs() do
-      []
-    end
-
-    def output_spec() do
-      %Container.ReturnSpec{
-        type: {:raw, :binary}
-      }
-    end
-
     def call(_, _, _) do
       Base.encode16(:crypto.strong_rand_bytes(12))
     end
@@ -215,16 +144,6 @@ defmodule Tonka.GridTest do
     @behaviour Action
 
     def cast_params(it), do: {:ok, it}
-
-    def input_specs() do
-      []
-    end
-
-    def output_spec() do
-      %Container.ReturnSpec{
-        type: {:raw, :integer}
-      }
-    end
 
     def call(_, _, _) do
       :erlang.system_time()

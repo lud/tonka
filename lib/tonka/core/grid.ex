@@ -84,14 +84,15 @@ defmodule Tonka.Core.Grid do
     %Grid{grid | actions: actions}
   end
 
-  def static_input(data),
-    do: %{origin: :static, static: data}
+  def pipe_static(mapping, input_key, data) when is_map(mapping) and is_atom(input_key),
+    do: Map.put(mapping, input_key, %{origin: :static, static: data})
 
-  def action_input(action_key) when is_binary(action_key),
-    do: %{origin: :action, action: action_key}
+  def pipe_action(mapping, input_key, action_key)
+      when is_map(mapping) and is_atom(input_key) and is_binary(action_key),
+      do: Map.put(mapping, input_key, %{origin: :action, action: action_key})
 
-  def grid_input(),
-    do: %{origin: :grid_input}
+  def pipe_grid_input(mapping, input_key) when is_map(mapping) and is_atom(input_key),
+    do: Map.put(mapping, input_key, %{origin: :grid_input})
 
   @doc false
   # used for NimbleOptions
@@ -100,16 +101,30 @@ defmodule Tonka.Core.Grid do
   end
 
   def validate_input_mapping(mapping) do
-    Enum.reject(mapping, fn
-      {k, _} when not is_binary(k) -> true
-      {_, %{origin: :action, action: a}} when is_binary(a) -> true
-      {_, %{origin: :static, static: _}} -> true
-      {_, %{origin: :grid_input}} -> true
-      _ -> false
-    end)
-    |> case do
-      [] -> {:ok, mapping}
-      [{_, invalid} | _more_invalid] -> {:error, "invalid mapping #{inspect(invalid)}"}
+    mapping |> IO.inspect(label: "mapping")
+
+    case Ark.Ok.map_ok(mapping, &validate_mapped_input/1) do
+      {:ok, _} -> {:ok, mapping}
+      {:error, _} = err -> err
+    end
+  end
+
+  defp validate_mapped_input({k, v}) do
+    case {k, v} do
+      {k, _} when not is_atom(k) ->
+        {:error, "expected mapped input key to be an atom, got: #{inspect(k)}"}
+
+      {_, %{origin: :action, action: a}} when is_binary(a) ->
+        {:ok, {k, v}}
+
+      {_, %{origin: :static, static: _}} ->
+        {:ok, {k, v}}
+
+      {_, %{origin: :grid_input}} ->
+        {:ok, {k, v}}
+
+      other ->
+        {:error, "invalid mapping format: #{inspect(other)}"}
     end
   end
 
@@ -152,7 +167,6 @@ defmodule Tonka.Core.Grid do
   # validates the input for one action given all other actions outputs
   defp validate_inputs({act_key, %{config_called: true} = action}, actions)
        when is_map(actions) do
-    action |> IO.inspect(label: "action")
     %{input_mapping: mapping, config: %{inputs: input_specs}} = action
 
     input_specs
@@ -202,28 +216,33 @@ defmodule Tonka.Core.Grid do
   defp fetch_mapped_input_type(mapping, input_spec, actions) do
     %{key: input_key, type: input_type} = input_spec
 
+    mapping |> IO.inspect(label: "mapping")
+    mapping[input_key] |> IO.inspect(label: "mapping[input_key]")
+
     case mapping[input_key] do
       %{origin: :action, action: origin_action_key} ->
         fetch_origin_action_output_type(actions, origin_action_key)
 
       %{origin: :static, static: _data} ->
-        # @optimize store the casted input result for each target type Do not
-        # try to cast the input yet. We just check that the target type has a
-        # cast_input/1 exported, and return the expected input type as the
-        # caster output_type, which will always match itself.
-        # We allow the type to be a {:raw, type} tuple for tests.
-        case input_type do
-          {:raw, _} ->
-            {:ok, input_type}
+        check_castable_input_type(input_type)
 
-          caster when is_atom(caster) ->
-            if function_exported?(input_type, :cast_input, 1),
-              do: {:ok, input_type},
-              else: {:error, :no_caster}
-        end
+      %{origin: :grid_input} ->
+        check_castable_input_type(input_type)
 
       nil ->
         {:error, :unmapped}
+    end
+  end
+
+  defp check_castable_input_type(input_type) do
+    case input_type do
+      {:raw, _} ->
+        {:ok, input_type}
+
+      caster when is_atom(caster) ->
+        if function_exported?(input_type, :cast_input, 1),
+          do: {:ok, input_type},
+          else: {:error, {:no_caster, input_type}}
     end
   end
 
@@ -279,6 +298,8 @@ defmodule Tonka.Core.Grid do
 
     case runnable do
       {:ok, key} ->
+        GLogger.debug("action '#{key}' is runnable")
+
         with {:ok, new_grid} <- call_action(grid, key) do
           run(new_grid)
         end
@@ -362,16 +383,12 @@ defmodule Tonka.Core.Grid do
   defp find_runnable(%Grid{actions: actions, outputs: outputs, statuses: statuses}) do
     uninit_keys = for {key, :uninitialized} <- statuses, do: key
     uninit_actions = actions |> Map.take(uninit_keys)
-    uninit_keys |> IO.inspect(label: "uninit_keys")
-    uninit_actions |> IO.inspect(label: "uninit_actions")
 
     if 0 == map_size(uninit_actions) do
       :done
     else
       uninit_actions
-      |> Enum.filter(fn {k, action} ->
-        {k, all_inputs_ready?(action, outputs)}
-      end)
+      |> Enum.filter(fn {_, action} -> all_inputs_ready?(action, outputs) end)
       |> case do
         [{key, _} | _] -> {:ok, key}
         [] -> :noavail
@@ -411,7 +428,16 @@ defmodule Tonka.Core.Grid do
 
   defp fetch_input({input_key, %{origin: :static, static: rawvalue}}, input_specs, _) do
     %{type: input_type} = Map.fetch!(input_specs, input_key)
+    cast_raw_input_to_type(rawvalue, input_type, input_key)
+  end
 
+  defp fetch_input({input_key, %{origin: :grid_input}}, input_specs, %{input: rawvalue}) do
+    %{type: input_type} = Map.fetch!(input_specs, input_key)
+
+    cast_raw_input_to_type(rawvalue, input_type, input_key)
+  end
+
+  defp cast_raw_input_to_type(rawvalue, input_type, input_key) do
     case input_type do
       # in case of a raw type there is no cast to do. This is done to support
       # dev/tests.

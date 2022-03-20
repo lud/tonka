@@ -2,6 +2,7 @@ defmodule Tonka.ActionTest do
   alias Tonka.Core.Grid
   alias Tonka.Core.Action
   alias Tonka.Core.Container
+  alias Tonka.Core.Container.InjectSpec
   alias Tonka.Core.Action.InputSpec
   alias Tonka.Core.Grid.InvalidInputTypeError
   use ExUnit.Case, async: true
@@ -84,8 +85,14 @@ defmodule Tonka.ActionTest do
   end
 
   test "adding services to action config" do
-    # config =
-    # Action.base_config()
-    # |> Action.use_service(:mykey, SomeInput)
+    config =
+      Action.base_config()
+      |> Action.use_service(:mykey, SomeInput)
+      |> Action.use_service(:other, SomeOther)
+
+    assert %{
+             mykey: %InjectSpec{key: :mykey, type: SomeInput},
+             other: %InjectSpec{key: :other, type: SomeOther}
+           } == config.injects
   end
 end

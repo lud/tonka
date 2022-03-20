@@ -7,22 +7,24 @@ defmodule Tonka.Core.Action do
   alias Tonka.Core.Container.InjectSpec
   alias Tonka.Core.Action.InputSpec
   alias Tonka.Core.Container.ReturnSpec
+  alias Tonka.Core.Container.InjectSpec
   alias Tonka.Core.Container.Service.ServiceConfig
   alias __MODULE__
 
   defmodule ActionConfig do
-    @enforce_keys [:service_config, :inputs]
+    @enforce_keys [:service_config, :inputs, :injects]
     defstruct @enforce_keys
 
     @todo "type input specs"
 
     @type t :: %__MODULE__{
             service_config: ServiceConfig.t(),
-            inputs: %{atom => InputSpec.t()}
+            inputs: %{atom => InputSpec.t()},
+            injects: %{atom => InjectSpec.t()}
           }
 
     def new do
-      %__MODULE__{service_config: ServiceConfig.new(), inputs: %{}}
+      %__MODULE__{service_config: ServiceConfig.new(), inputs: %{}, injects: %{}}
     end
   end
 
@@ -168,11 +170,16 @@ defmodule Tonka.Core.Action do
   #  Configuration API
   # ---------------------------------------------------------------------------
 
-  @use_service_options_schema NimbleOptions.new!([])
+  # @use_service_options_schema NimbleOptions.new!([])
 
-  def use_service(%ActionConfig{} = config, key, utype, opts)
-      when is_atom(key) and is_list(opts) do
-    opts = NimbleOptions.validate!(opts, @use_service_options_schema)
+  def use_service(%ActionConfig{injects: injects} = config, key, utype) when is_atom(key) do
+    spec = %InjectSpec{key: key, type: utype}
+
+    if Map.has_key?(injects, key) do
+      raise ArgumentError, "service #{inspect(key)} is already configured"
+    end
+
+    %ActionConfig{config | injects: Map.put(injects, key, spec)}
   end
 
   @doc """

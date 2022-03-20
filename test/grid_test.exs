@@ -122,11 +122,16 @@ defmodule Tonka.GridTest do
 
     def cast_params(it), do: {:ok, it}
 
+    def configure(config, _) do
+      config
+      |> Action.use_input(:mytext, {:raw, :binary})
+    end
+
     def call(%{mytext: mytext}, _, %{parent: parent, tag: tag})
         when is_binary(mytext) do
       message = {tag, String.upcase(mytext)}
       send(parent, message)
-      :ok
+      {:ok, nil}
     end
   end
 
@@ -135,8 +140,14 @@ defmodule Tonka.GridTest do
 
     def cast_params(it), do: {:ok, it}
 
+    def return_type, do: {:raw, :binary}
+
+    def configure(config, _) do
+      config
+    end
+
     def call(_, _, _) do
-      Base.encode16(:crypto.strong_rand_bytes(12))
+      {:ok, Base.encode16(:crypto.strong_rand_bytes(12))}
     end
   end
 
@@ -150,20 +161,18 @@ defmodule Tonka.GridTest do
     end
   end
 
-  @tag :skip
   test "the grid will verify that the actions are compatible - ok" do
     ref = make_ref()
 
     grid =
       Grid.new()
-      |> Grid.set_input(NoCaster.for_type({:raw, :pid}))
       |> Grid.add_action("consumer", RequiresAText,
-        inputs: %{mytext: "provider"},
+        inputs: %{} |> Grid.pipe_action(:mytext, "provider"),
         params: %{parent: self(), tag: ref}
       )
-      |> Grid.add_action("provider", ProvidesAText, inputs: %{_: :incast})
+      |> Grid.add_action("provider", ProvidesAText)
 
-    assert {:ok, _} = Grid.run(grid, "hello")
+    assert {:ok, :done, _} = Grid.run(grid, "hello")
 
     assert_receive {^ref, text} when is_binary(text)
   end

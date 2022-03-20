@@ -1,4 +1,4 @@
-defmodule Tonka.Ext.Gitlab.Issues do
+defmodule Tonka.Ext.Gitlab.Services.Issues do
   use Tonka.Core.Container.Service
   alias Tonka.Service.IssuesSource
 

@@ -3,6 +3,8 @@ defmodule Tonka.GridTest do
   alias Tonka.Core.Action
   alias Tonka.Core.Container
   alias Tonka.Core.Grid.InvalidInputTypeError
+  alias Tonka.Core.Grid.NoInputCasterError
+
   use ExUnit.Case, async: true
 
   test "a grid can be created" do
@@ -214,19 +216,6 @@ defmodule Tonka.GridTest do
              {:error, {:invalid_inputs, [%InvalidInputTypeError{}]}, %Grid{}},
              Grid.run(grid, input)
            )
-  end
-
-  @tag :skip
-  test "the grid will verify that the grid input is mapped" do
-    grid =
-      Grid.new()
-      |> Grid.add_action("consumer", RequiresAText, inputs: %{mytext: "provider"})
-      # Here we provide and integer to the consumer, which cannt work
-      |> Grid.add_action("provider", ProvidesAnInt, inputs: %{_: :incast})
-
-    assert_raise Grid.NoInputCasterError, fn ->
-      assert {:ok, _} = Grid.run(grid, :some_input)
-    end
   end
 
   @tag :skip

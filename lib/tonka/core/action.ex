@@ -29,7 +29,7 @@ defmodule Tonka.Core.Action do
   end
 
   @type params :: term
-  @type action_in :: map
+  @type inputs :: %{atom => term}
   @type action_out :: action_out(term)
   @type action_out(output) :: {:ok, output} | {:error, term} | {:async, Task.t()}
 
@@ -54,7 +54,7 @@ defmodule Tonka.Core.Action do
   @callback configure(config, params) :: config
   @callback return_type() :: Tonka.Core.Container.typespec()
   @callback cast_params(term) :: {:ok, params} | {:error, term}
-  @callback call(action_in, injects :: map, params) :: action_out
+  @callback call(inputs, injects :: map, params) :: action_out
 
   defmacro __using__(_) do
     quote location: :keep do

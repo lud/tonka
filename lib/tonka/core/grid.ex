@@ -253,6 +253,14 @@ defmodule Tonka.Core.Grid do
            input_type: input_type,
            origin: origin
          }}
+
+      {:error, {:undef_origin_action, origin_act}} ->
+        {:error,
+         %UndefinedOriginActionError{
+           action_key: act_key,
+           input_key: input_key,
+           origin_action_key: origin_act
+         }}
     end
   end
 
@@ -291,7 +299,7 @@ defmodule Tonka.Core.Grid do
   defp fetch_origin_action_output_type(actions, origin_action_key) do
     case Map.fetch(actions, origin_action_key) do
       {:ok, %{module: module}} -> {:ok, module.return_type()}
-      :error -> {:error, {:no_such_action, origin_action_key}}
+      :error -> {:error, {:undef_origin_action, origin_action_key}}
     end
   end
 

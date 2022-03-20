@@ -264,4 +264,24 @@ defmodule Tonka.ContainerTest do
     assert {:error, %ServiceResolutionError{errkind: :build_frozen}} =
              Container.pull(frozen, PulledToLate)
   end
+
+  test "using pull_frozen ensures that the container cannot be changed" do
+    c0 =
+      Container.new()
+      |> Container.bind(PulledService)
+      |> Container.bind(PulledToLate)
+      |> Container.bind_impl(Prebuilt, :prebuilt)
+
+    {:ok, _pulled, c1} = Container.pull(c0, PulledService)
+
+    # Pull before freeze will result in an error if the service is not built
+    assert {:ok, :prebuilt} = Container.pull_frozen(c1, Prebuilt)
+    assert {:ok, :available} = Container.pull_frozen(c1, PulledService)
+
+    assert {:error,
+            %Tonka.Core.Container.ServiceResolutionError{
+              errkind: :build_frozen,
+              utype: PulledToLate
+            }} = Container.pull_frozen(c1, PulledToLate)
+  end
 end

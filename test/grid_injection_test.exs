@@ -5,7 +5,7 @@ defmodule Tonka.GridInjectionTest do
   alias Tonka.Core.Container.ServiceResolutionError
   alias Tonka.Core.Container.Service
   alias Tonka.Core.Grid.InvalidInputTypeError
-  alias Tonka.Core.Grid.UnavailableServiceError
+  alias Tonka.Core.Grid.UndefinedServiceError
   alias Tonka.Core.Grid.NoInputCasterError
   alias Tonka.Core.Grid.UnmappedInputError
 
@@ -51,7 +51,7 @@ defmodule Tonka.GridInjectionTest do
       Container.new()
       |> Container.freeze()
 
-    assert {:error, %UnavailableServiceError{action_key: "my_action", inject_key: :myserv}, _} =
+    assert {:error, %UndefinedServiceError{action_key: "my_action", inject_key: :myserv}, _} =
              Grid.run(grid, container, "some_input")
   end
 

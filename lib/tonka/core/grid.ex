@@ -9,7 +9,8 @@ defmodule Tonka.Core.Grid do
     InvalidInputTypeError,
     NoInputCasterError,
     UnmappedInputError,
-    UndefinedOriginActionError
+    UndefinedOriginActionError,
+    UndefinedServiceError
   }
 
   alias Tonka.Core.Container
@@ -132,19 +133,45 @@ defmodule Tonka.Core.Grid do
 
   # Validates that all services types required by actions are defined and built
   # in the container..
-  defp validate_all_injects(%{actions: actions}) do
-    # Enum.reduce(actions, _invalids = [], fn action, invalids ->
-    #   validated = validate_inputs(action, actions)
+  defp validate_all_injects(%{actions: actions}, container) do
+    Enum.reduce(actions, _invalids = [], fn action, invalids ->
+      validated = validate_injects(action, container)
 
-    #   case validated do
-    #     :ok -> invalids
-    #     {:error, more_invalids} -> more_invalids ++ invalids
-    #   end
-    # end)
-    # |> case do
-    #   [] -> :ok
-    #   invalids -> {:error, {:invalid_inputs, invalids}}
-    # end
+      case validated do
+        :ok -> invalids
+        {:error, more_invalids} -> more_invalids ++ invalids
+      end
+    end)
+    |> case do
+      [] -> :ok
+      invalids -> {:error, {:invalid_injects, invalids}}
+    end
+  end
+
+  defp validate_injects({act_key, %{config_called: true} = action}, container) do
+    %{config: %{injects: inject_specs}} = action
+
+    inject_specs
+    |> Enum.map(fn {inject_key, inject_spec} ->
+      validate_action_inject(inject_spec, act_key, container)
+    end)
+    |> Enum.filter(fn
+      :ok -> false
+      {:error, _} = err -> true
+    end)
+    |> case do
+      [] -> :ok
+      errors -> {:error, Keyword.values(errors)}
+    end
+  end
+
+  defp validate_action_inject(%{key: inject_key, type: utype} = inject_spec, act_key, container) do
+    # we will fetch the type to get a meaningful error from the container
+    if Container.has_built?(container, utype) do
+      :ok
+    else
+      {:error, %UndefinedServiceError{action_key: act_key, inject_key: inject_key}}
+    end
   end
 
   # Validates that all mapped action inputs are mapped, and are mapped to an
@@ -286,7 +313,7 @@ defmodule Tonka.Core.Grid do
              reason: term,
              action_key: binary
 
-  def run(%Grid{} = grid, container, input) do
+  def run(%Grid{} = grid, %Container{} = container, input) do
     if not Container.frozen?(container) do
       raise ArgumentError, "expected the passed container to be frozen"
     end
@@ -297,10 +324,17 @@ defmodule Tonka.Core.Grid do
 
     GLogger.debug("running the grid")
 
-    case prepare_and_validate(grid) do
+    case prepare_and_validate(grid, container) do
       {:ok, grid} -> run(grid)
       {:error, reason} -> {:error, reason, grid}
     end
+  end
+
+  @todo "deprecate"
+  # @deprecated "pass a container to the grid using prepare_and_validate/2"
+  def prepare_and_validate(%Grid{} = grid) do
+    container = Container.new() |> Container.freeze()
+    prepare_and_validate(grid, container)
   end
 
   @doc """
@@ -309,10 +343,10 @@ defmodule Tonka.Core.Grid do
   types and mappings.
   """
 
-  def prepare_and_validate(%Grid{} = grid) do
+  def prepare_and_validate(%Grid{} = grid, %Container{} = container) do
     with {:ok, grid} <- precast_all(grid),
          {:ok, grid} <- preconfigure_all(grid),
-         :ok <- validate_all_injects(grid),
+         :ok <- validate_all_injects(grid, container),
          :ok <- validate_all_inputs(grid) do
       {:ok, grid}
     end

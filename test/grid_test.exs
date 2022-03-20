@@ -3,6 +3,7 @@ defmodule Tonka.GridTest do
   alias Tonka.Core.Action
   alias Tonka.Core.Container
   alias Tonka.Core.Grid.InvalidInputTypeError
+  alias Tonka.Core.Grid.UndefinedOriginActionError
   alias Tonka.Core.Grid.NoInputCasterError
   alias Tonka.Core.Grid.UnmappedInputError
 
@@ -223,6 +224,28 @@ defmodule Tonka.GridTest do
     assert match?(
              {:error, {:invalid_inputs, [^expected_error]}, %Grid{}},
              Grid.run(grid, input)
+           )
+  end
+
+  test "the grid will verify that an origin action exists" do
+    ref = make_ref()
+
+    grid =
+      Grid.new()
+      |> Grid.add_action("consumer", RequiresAText,
+        inputs: %{} |> Grid.pipe_action(:mytext, "some_missing_provider"),
+        params: %{parent: self(), tag: ref}
+      )
+
+    expected_error = %UndefinedOriginActionError{
+      action_key: "consumer",
+      input_key: :mytext,
+      origin_action_key: "some_missing_provider"
+    }
+
+    assert match?(
+             {:error, {:invalid_inputs, [^expected_error]}},
+             Grid.prepare_and_validate(grid)
            )
   end
 

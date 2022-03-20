@@ -22,10 +22,10 @@ defmodule Tonka.Core.Grid.NoInputCasterError do
 end
 
 defmodule Tonka.Core.Grid.UndefinedOriginActionError do
-  defexception [:action_key, :origin_key]
+  defexception [:action_key, :origin_action_key, :input_key]
 
-  def message(%{action_key: act, origin_key: ori}) do
-    "the grid has no '#{ori}' action but this origin is defined in action '#{act}'"
+  def message(%{action_key: act, input_key: ik, origin_action_key: ori}) do
+    "action '#{act}' defines input #{inspect(ik)} to use the result of an unknown action '#{ori}'"
   end
 end
 
@@ -37,10 +37,10 @@ defmodule Tonka.Core.Grid.UnmappedInputError do
   end
 end
 
-defmodule Tonka.Core.Grid.UnavailableServiceError do
-  defexception [:action_key, :inject_key]
+defmodule Tonka.Core.Grid.UndefinedServiceError do
+  defexception [:action_key, :inject_key, :container_error]
 
-  def message(%{action_key: action_key, inject_key: inject_key}) do
-    "service #{inspect(inject_key)} was not found when initializing action '#{action_key}'"
+  def message(%{action_key: action_key, inject_key: inject_key, container_error: ce}) do
+    "service #{inspect(inject_key)} was not found when initializing action '#{action_key}': #{Exception.message(ce)}"
   end
 end

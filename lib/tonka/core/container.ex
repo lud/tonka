@@ -23,15 +23,16 @@ defmodule Tonka.Core.Container do
     defexception utype: nil, errkind: nil, selector: nil
 
     def message(%{utype: utype, errkind: errkind, selector: selector}) do
-      case errkind do
-        :not_found -> "could not find service"
-        :build_frozen -> "could not build service"
-        {:build_error, reason} -> "got error #{inspect(reason)} when building service"
-      end <>
-        " of type #{inspect(utype)} " <>
+      "could not resolve service type #{inspect(utype)}" <>
         case selector do
           nil -> ""
-          _ -> " selected with selector: #{inspect(selector)}"
+          _ -> " with selector: #{inspect(selector)}"
+        end <>
+        ": " <>
+        case errkind do
+          :not_found -> "the service was not found"
+          :build_frozen -> "the container is frozen"
+          {:build_error, reason} -> "got error #{inspect(reason)} when building service"
         end
     end
   end
@@ -188,6 +189,13 @@ defmodule Tonka.Core.Container do
   def pull(%Container{} = c, utype) when is_atom(utype) do
     case ensure_built(c, utype) do
       {:ok, c} -> {:ok, fetch_impl!(c, utype), c}
+      {:error, _} = err -> err
+    end
+  end
+
+  def pull_frozen(%Container{} = c, utype) when is_atom(utype) do
+    case pull(freeze(c), utype) do
+      {:ok, value, _} -> {:ok, value}
       {:error, _} = err -> err
     end
   end

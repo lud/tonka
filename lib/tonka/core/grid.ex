@@ -191,7 +191,7 @@ defmodule Tonka.Core.Grid do
            input_key: input_key
          }}
 
-      {:error, {:incompatible_types, ^input_type, output_type}} ->
+      {:error, {:incompatible_type, output_type}} ->
         {:error,
          %InvalidInputTypeError{
            action_key: act_key,
@@ -200,7 +200,7 @@ defmodule Tonka.Core.Grid do
            input_key: input_key
          }}
 
-      {:error, {:no_caster, ^input_type, origin}} ->
+      {:error, {:no_caster, origin}} ->
         {:error,
          %NoInputCasterError{
            action_key: act_key,
@@ -239,7 +239,7 @@ defmodule Tonka.Core.Grid do
       caster when is_atom(caster) ->
         if function_exported?(input_type, :cast_input, 1),
           do: {:ok, input_type},
-          else: {:error, {:no_caster, input_type, origin}}
+          else: {:error, {:no_caster, origin}}
     end
   end
 
@@ -254,7 +254,7 @@ defmodule Tonka.Core.Grid do
     if input_type == output_type do
       :ok
     else
-      {:error, {:incompatible_types, input_type, output_type}}
+      {:error, {:incompatible_type, output_type}}
     end
   end
 
@@ -311,7 +311,7 @@ defmodule Tonka.Core.Grid do
             GLogger.info("✓ action '#{key}' completed successfully")
             run(new_grid)
 
-          {:error, reason} = err ->
+          {:error, {:action_failed, key, reason}, _grid} = err ->
             GLogger.error("action '#{key}' failed with reason: #{inspect(reason)}")
             err
         end
@@ -460,8 +460,12 @@ defmodule Tonka.Core.Grid do
       {:raw, _} ->
         {:ok, {input_key, rawvalue}}
 
-        # caster when is_atom(caster) ->
-        # caster.cast_input(rawvalue)
+      caster when is_atom(caster) ->
+        case caster.cast_input(rawvalue) do
+          {:ok, value} -> {:ok, {input_key, value}}
+          {:error, reason} -> {:error, {:cast_error, reason}}
+          other -> {:error, {:invalid_cast, other}}
+        end
     end
   end
 end

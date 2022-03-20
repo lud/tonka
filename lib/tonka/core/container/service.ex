@@ -46,7 +46,7 @@ defmodule Tonka.Core.Container.Service do
   The returned configuration defines the arguments of the service `init/2`
   callback, those should not change depending on the params.
   """
-  @callback configure(config, params) :: {:ok, config} | {:error, term}
+  @callback configure(config, params) :: config
   @callback init(injects, params) :: {:ok, impl} | {:error, term}
 
   defmacro __using__(_) do
@@ -140,8 +140,11 @@ defmodule Tonka.Core.Container.Service do
     base = base_config()
 
     case module.configure(base_config(), params) do
-      %ServiceConfig{} = config -> {:ok, config}
-      other -> {:error, {:bad_return, {module, :configure, [base, params]}, other}}
+      %ServiceConfig{} = config ->
+        {:ok, config}
+
+      other ->
+        {:error, {:bad_return, {module, :configure, [base, params]}, other}}
     end
   end
 

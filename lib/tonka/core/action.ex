@@ -151,8 +151,11 @@ defmodule Tonka.Core.Action do
     base = base_config()
 
     case module.configure(base_config(), params) do
-      %ActionConfig{} = config -> {:ok, config}
-      other -> {:error, {:bad_return, {module, :configure, [base, params]}, other}}
+      %ActionConfig{} = config ->
+        {:ok, config}
+
+      other ->
+        {:error, {:bad_return, {module, :configure, [base, params]}, other}}
     end
   end
 
@@ -200,9 +203,14 @@ defmodule Tonka.Core.Action do
   def call(%Action{module: module, casted_params: cparams} = action, inputs, injects)
       when is_map(inputs) and is_map(injects) do
     case module.call(inputs, injects, cparams) do
-      {:ok, _} = fine -> fine
-      {:error, _} = err -> err
-      other -> {:error, {:bad_return, {module, :call, [inputs, cparams, injects]}, other}}
+      {:ok, _} = fine ->
+        fine
+
+      {:error, _} = err ->
+        err
+
+      other ->
+        {:error, {:bad_return, {module, :call, [inputs, cparams, injects]}, other}}
     end
   end
 end

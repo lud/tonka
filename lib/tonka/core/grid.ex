@@ -101,8 +101,6 @@ defmodule Tonka.Core.Grid do
   end
 
   def validate_input_mapping(mapping) do
-    mapping |> IO.inspect(label: "mapping")
-
     case Ark.Ok.map_ok(mapping, &validate_mapped_input/1) do
       {:ok, _} -> {:ok, mapping}
       {:error, _} = err -> err
@@ -165,7 +163,6 @@ defmodule Tonka.Core.Grid do
     input_specs
     |> Enum.map(fn {_input_key, input_spec} ->
       validate_action_input(input_spec, act_key, mapping, actions)
-      |> IO.inspect(label: "---------------validate_action_input")
     end)
     |> Enum.filter(fn
       :ok -> false
@@ -218,9 +215,6 @@ defmodule Tonka.Core.Grid do
 
   defp fetch_mapped_input_type(mapping, input_spec, actions) do
     %{key: input_key, type: input_type} = input_spec
-
-    mapping |> IO.inspect(label: "mapping")
-    mapping[input_key] |> IO.inspect(label: "mapping[input_key]")
 
     case mapping[input_key] do
       %{origin: :action, action: origin_action_key} ->
@@ -317,9 +311,13 @@ defmodule Tonka.Core.Grid do
         end
 
       :done ->
+        GLogger.debug("all actions have run")
         {:ok, :done, grid}
 
       :noavail ->
+        # This clause cannot actually be called since we verify the inputs
+        todo "remove this clause"
+        GLogger.error("could not find an action to run but some actions were not called")
         {:error, :noavail, grid}
     end
   end

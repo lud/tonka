@@ -36,3 +36,11 @@ defmodule Tonka.Core.Grid.UnmappedInputError do
     "unmapped input #{inspect(input_key)} for action '#{action_key}'"
   end
 end
+
+defmodule Tonka.Core.Grid.UnavailableServiceError do
+  defexception [:action_key, :inject_key]
+
+  def message(%{action_key: action_key, inject_key: inject_key}) do
+    "service #{inspect(inject_key)} was not found when initializing action '#{action_key}'"
+  end
+end

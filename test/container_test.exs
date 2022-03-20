@@ -1,5 +1,6 @@
 defmodule Tonka.ContainerTest do
   alias Tonka.Core.Container
+  alias Tonka.Core.Container.ServiceResolutionError
   alias Tonka.Core.Container.Service
   alias Tonka.Core.Injector
   alias Tonka.Core.Container.Params
@@ -59,10 +60,15 @@ defmodule Tonka.ContainerTest do
     # abstract type).
     assert %Container{} = container = Container.bind(Container.new(), SomeStructService)
 
+    assert Container.has?(container, SomeStructService)
+    refute Container.has_built?(container, SomeStructService)
+
     refute_receive {:init_called, SomeStructService}
 
-    assert {:ok, %SomeStructService{val: :set_in_init}, %Container{}} =
+    assert {:ok, %SomeStructService{val: :set_in_init}, %Container{} = new_container} =
              Container.pull(container, SomeStructService)
+
+    assert Container.has_built?(new_container, SomeStructService)
 
     assert_receive {:init_called, SomeStructService}
   end
@@ -108,11 +114,17 @@ defmodule Tonka.ContainerTest do
     assert_receive {:init_called, SomeStructService}
   end
 
-  test "a service value can be immediately set" do
+  test "a service value can be immediately set with bind_impl" do
     container =
       Container.new()
       |> Container.bind_impl(SomeStructService, %SomeStructService{})
       |> Container.bind(SomeDependentStruct)
+
+    assert Container.has?(container, SomeStructService)
+    assert Container.has_built?(container, SomeStructService)
+
+    assert Container.has?(container, SomeDependentStruct)
+    refute Container.has_built?(container, SomeDependentStruct)
 
     assert {:ok, %SomeDependentStruct{}, %Container{}} =
              Container.pull(container, SomeDependentStruct)
@@ -249,6 +261,7 @@ defmodule Tonka.ContainerTest do
     assert {:ok, :available, ^frozen} = Container.pull(frozen, PulledService)
 
     # Error cannot pull service that was not built
-    assert {:error, "the container is frozen"} = Container.pull(frozen, PulledToLate)
+    assert {:error, %ServiceResolutionError{errkind: :build_frozen}} =
+             Container.pull(frozen, PulledToLate)
   end
 end

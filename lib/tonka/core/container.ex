@@ -19,11 +19,20 @@ defmodule Tonka.Core.Container do
   to available services provided by the tool than actual types.
   """
 
-  defmodule UnknownServiceError do
-    defexception [:utype]
+  defmodule ServiceResolutionError do
+    defexception utype: nil, errkind: nil, selector: nil
 
-    def message(%{utype: utype}) do
-      "unknown service #{inspect(utype)} in container"
+    def message(%{utype: utype, errkind: errkind, selector: selector}) do
+      case errkind do
+        :not_found -> "could not find service"
+        :build_frozen -> "could not build service"
+        {:build_error, reason} -> "got error #{inspect(reason)} when building service"
+      end <>
+        " of type #{inspect(utype)} " <>
+        case selector do
+          nil -> ""
+          _ -> " selected with selector: #{inspect(selector)}"
+        end
     end
   end
 
@@ -165,6 +174,17 @@ defmodule Tonka.Core.Container do
     Map.has_key?(c.services, utype)
   end
 
+  def has?(%Container{services: services}, utype) do
+    Map.has_key?(services, utype)
+  end
+
+  def has_built?(%Container{} = c, utype) do
+    case fetch_type(c, utype) do
+      {:ok, %Service{built: true}} -> true
+      _ -> false
+    end
+  end
+
   def pull(%Container{} = c, utype) when is_atom(utype) do
     case ensure_built(c, utype) do
       {:ok, c} -> {:ok, fetch_impl!(c, utype), c}
@@ -174,10 +194,17 @@ defmodule Tonka.Core.Container do
 
   def ensure_built(%{frozen: frozen} = c, utype) do
     case fetch_type(c, utype) do
-      {:ok, %Service{built: true}} -> {:ok, c}
-      {:ok, %Service{built: false}} when frozen -> {:error, "the container is frozen"}
-      {:ok, %Service{built: false} = service} -> build_service(c, utype, service)
-      :error -> {:error, %UnknownServiceError{utype: utype}}
+      {:ok, %Service{built: true}} ->
+        {:ok, c}
+
+      {:ok, %Service{built: false}} when frozen ->
+        {:error, %ServiceResolutionError{utype: utype, errkind: :build_frozen}}
+
+      {:ok, %Service{built: false} = service} ->
+        build_service(c, utype, service)
+
+      :error ->
+        {:error, %ServiceResolutionError{utype: utype, errkind: :not_found}}
     end
   end
 
@@ -215,7 +242,7 @@ defmodule Tonka.Core.Container do
     Ark.Ok.reduce_ok(inject_specs, {%{}, container}, &pull_inject/2)
   end
 
-  defp pull_inject({inject_key, %InjectSpec{type: utype, key: key}}, {map, container}) do
+  defp pull_inject({key, %InjectSpec{type: utype, key: key}}, {map, container}) do
     case Container.pull(container, utype) do
       {:ok, impl, new_container} ->
         new_map = Map.put(map, key, impl)

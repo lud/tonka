@@ -130,10 +130,21 @@ defmodule Tonka.Core.Grid do
   #  Grid Validation
   # ---------------------------------------------------------------------------
 
-  defp validate(%Grid{} = grid) do
-    with :ok <- validate_all_inputs(grid) do
-      {:ok, grid}
-    end
+  # Validates that all services types required by actions are defined and built
+  # in the container..
+  defp validate_all_injects(%{actions: actions}) do
+    # Enum.reduce(actions, _invalids = [], fn action, invalids ->
+    #   validated = validate_inputs(action, actions)
+
+    #   case validated do
+    #     :ok -> invalids
+    #     {:error, more_invalids} -> more_invalids ++ invalids
+    #   end
+    # end)
+    # |> case do
+    #   [] -> :ok
+    #   invalids -> {:error, {:invalid_inputs, invalids}}
+    # end
   end
 
   # Validates that all mapped action inputs are mapped, and are mapped to an
@@ -297,15 +308,13 @@ defmodule Tonka.Core.Grid do
   actions, then runs some validation checks on the actions input and output
   types and mappings.
   """
-  IO.warn(
-    "ensure that the modified grid with casted/configuration is returned" <>
-      " from all error steps"
-  )
 
   def prepare_and_validate(%Grid{} = grid) do
     with {:ok, grid} <- precast_all(grid),
-         {:ok, grid} <- preconfigure_all(grid) do
-      validate(grid)
+         {:ok, grid} <- preconfigure_all(grid),
+         :ok <- validate_all_injects(grid),
+         :ok <- validate_all_inputs(grid) do
+      {:ok, grid}
     end
   end
 

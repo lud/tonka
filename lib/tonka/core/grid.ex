@@ -12,6 +12,8 @@ defmodule Tonka.Core.Grid do
     UndefinedOriginActionError
   }
 
+  alias Tonka.Core.Container
+  alias Tonka.Core.Container.Service
   alias Tonka.Core.Action
   alias __MODULE__
 
@@ -260,13 +262,21 @@ defmodule Tonka.Core.Grid do
   #  Grid Running
   # ---------------------------------------------------------------------------
 
-  @spec run(t, input :: term) :: {:ok, success_status, t} | {:error, error_info, t}
+  def run(%Grid{} = grid, input) do
+    run(grid, Container.new(), input)
+  end
+
+  @spec run(t, Container.t(), input :: term) :: {:ok, success_status, t} | {:error, error_info, t}
         when success_status: :done,
              error_info: :noavail | {:action_failed, action_key, reason},
              reason: term,
              action_key: binary
 
-  def run(%Grid{} = grid, input) do
+  def run(%Grid{} = grid, container, input) do
+    if not Container.frozen?(container) do
+      raise ArgumentError, "expected the passed container to be frozen"
+    end
+
     outputs = %{input: input}
     statuses = start_statuses(grid.actions)
     grid = %Grid{grid | outputs: outputs, statuses: statuses}

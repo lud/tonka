@@ -260,7 +260,12 @@ defmodule Tonka.ContainerTest do
     container =
       Container.new()
       |> Container.bind(PulledService)
-      |> Container.freeze()
+
+    assert false == Container.frozen?(container)
+
+    container = Container.freeze(container)
+
+    assert true == Container.frozen?(container)
   end
 
   test "a frozen container rejects new bindings" do

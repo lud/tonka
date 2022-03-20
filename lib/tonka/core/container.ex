@@ -62,6 +62,11 @@ defmodule Tonka.Core.Container do
     %Container{c | frozen: true}
   end
 
+  @spec frozen?(t) :: boolean
+  def frozen?(%Container{frozen: frozen?}) do
+    !!frozen?
+  end
+
   @common_bind_opts [
     name: [
       type: {:or, [{:in, [nil]}, :string]},

@@ -69,15 +69,6 @@ defmodule Tonka.Demo do
     {:ok, store, c}
   end
 
-  defp provide_params(overrides \\ %{}, module, params) do
-    Map.put(overrides, Params, fn ->
-      case module.cast_params(params) do
-        {:ok, params} -> {:ok, params}
-        {:error, _} = err -> err
-      end
-    end)
-  end
-
   def prepare_grid do
     Grid.new()
 

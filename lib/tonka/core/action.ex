@@ -88,7 +88,7 @@ defmodule Tonka.Core.Action do
   # ---------------------------------------------------------------------------
 
   @todo "NimbleOptions"
-  @type new_opt :: {:params, term} | {:inputs, input_mapping}
+  @type new_opt :: {:params, term} | {:input_mapping, input_mapping}
   @type new_opts :: [new_opt]
   @spec new(module, new_opts) :: t()
   def new(module, opts \\ []) when is_atom(module) and is_list(opts) do

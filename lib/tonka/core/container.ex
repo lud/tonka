@@ -1,5 +1,6 @@
 defmodule Tonka.Core.Container do
   alias Tonka.Core.Container
+  alias Tonka.Core.Injector
   alias Tonka.Core.Container.Service
   use TODO
 
@@ -228,6 +229,13 @@ defmodule Tonka.Core.Container do
     services = Map.put(services, utype, built_service)
 
     {:ok, %Container{c | services: services}}
+  end
+
+  def build_injects(container, inject_specs, overrides) do
+    case Injector.build_injects(container, inject_specs, overrides) do
+      {:ok, injects, new_container} -> {:ok, injects, new_container}
+      {:error, _} = err -> err
+    end
   end
 
   # ---------------------------------------------------------------------------

@@ -1,6 +1,5 @@
 defmodule Tonka.Core.Container.Service do
   alias __MODULE__
-  alias Tonka.Core.Injector
   alias Tonka.Core.Container.InjectSpec
   alias Tonka.Core.Container
   use TODO
@@ -104,7 +103,8 @@ defmodule Tonka.Core.Container.Service do
 
     with {:ok, casted_params} <- call_cast_params(module, params),
          {:ok, %{injects: inject_specs}} <- call_configure(module, casted_params),
-         {:ok, injects, new_container} <- build_injects(container, inject_specs, overrides),
+         {:ok, injects, new_container} <-
+           Container.build_injects(container, inject_specs, overrides),
          {:ok, impl} <- init_module(module, injects, casted_params) do
       {:ok, as_built(service, impl), new_container}
     else
@@ -145,13 +145,6 @@ defmodule Tonka.Core.Container.Service do
 
       other ->
         {:error, {:bad_return, {module, :configure, [base, params]}, other}}
-    end
-  end
-
-  defp build_injects(container, inject_specs, overrides) do
-    case Injector.build_injects(container, inject_specs, overrides) do
-      {:ok, injects, new_container} -> {:ok, injects, new_container}
-      {:error, _} = err -> err
     end
   end
 

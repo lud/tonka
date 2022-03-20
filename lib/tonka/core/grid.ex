@@ -194,13 +194,22 @@ defmodule Tonka.Core.Grid do
            input_key: input_key
          }}
 
-      {:error, {:incompatible_types, input_type, output_type}} ->
+      {:error, {:incompatible_types, ^input_type, output_type}} ->
         {:error,
          %InvalidInputTypeError{
            action_key: act_key,
            expected_type: input_type,
            provided_type: output_type,
            input_key: input_key
+         }}
+
+      {:error, {:no_caster, ^input_type, origin}} ->
+        {:error,
+         %NoInputCasterError{
+           action_key: act_key,
+           input_key: input_key,
+           input_type: input_type,
+           origin: origin
          }}
     end
   end
@@ -218,17 +227,17 @@ defmodule Tonka.Core.Grid do
         fetch_origin_action_output_type(actions, origin_action_key)
 
       %{origin: :static, static: _data} ->
-        check_castable_input_type(input_type)
+        check_castable_input_type(input_type, :static)
 
       %{origin: :grid_input} ->
-        check_castable_input_type(input_type)
+        check_castable_input_type(input_type, :grid_input)
 
       nil ->
         {:error, :unmapped}
     end
   end
 
-  defp check_castable_input_type(input_type) do
+  defp check_castable_input_type(input_type, origin) do
     case input_type do
       {:raw, _} ->
         {:ok, input_type}
@@ -236,7 +245,7 @@ defmodule Tonka.Core.Grid do
       caster when is_atom(caster) ->
         if function_exported?(input_type, :cast_input, 1),
           do: {:ok, input_type},
-          else: {:error, {:no_caster, input_type}}
+          else: {:error, {:no_caster, input_type, origin}}
     end
   end
 

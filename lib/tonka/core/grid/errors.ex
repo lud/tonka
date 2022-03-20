@@ -7,15 +7,18 @@ defmodule Tonka.Core.Grid.InvalidInputTypeError do
         expected_type: input_type,
         provided_type: provided_type
       }) do
-    "invalid input type for action #{inspect(action_key)} at input #{inspect(input_key)}," <>
+    "invalid input type for action '#{action_key}' at input #{inspect(input_key)}," <>
       " expected: #{inspect(input_type)} but got #{inspect(provided_type)}"
   end
 end
 
 defmodule Tonka.Core.Grid.NoInputCasterError do
-  defexception []
+  defexception [:origin, :action_key, :input_key, :input_type]
 
-  def message(_), do: "the type grid has no input caster defined"
+  def message(%{origin: ori, action_key: act, input_key: ik, input_type: type}),
+    do:
+      "invalid input origin #{inspect(ori)} for action #{act} at input #{inspect(ik)}," <>
+        " type #{inspect(type)} has no caster defined"
 end
 
 defmodule Tonka.Core.Grid.UndefinedOriginActionError do

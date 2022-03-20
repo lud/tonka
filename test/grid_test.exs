@@ -4,6 +4,7 @@ defmodule Tonka.GridTest do
   alias Tonka.Core.Container
   alias Tonka.Core.Grid.InvalidInputTypeError
   alias Tonka.Core.Grid.NoInputCasterError
+  alias Tonka.Core.Grid.UnmappedInputError
 
   use ExUnit.Case, async: true
 
@@ -207,27 +208,107 @@ defmodule Tonka.GridTest do
 
     input = "some raw string"
 
+    expected_error = %InvalidInputTypeError{
+      action_key: "consumer",
+      expected_type: {:raw, :binary},
+      input_key: :mytext,
+      provided_type: ProvidesAnInt.return_type()
+    }
+
     assert match?(
-             {:error, {:invalid_inputs, [%InvalidInputTypeError{}]}},
+             {:error, {:invalid_inputs, [^expected_error]}},
              Grid.prepare_and_validate(grid)
            )
 
     assert match?(
-             {:error, {:invalid_inputs, [%InvalidInputTypeError{}]}, %Grid{}},
+             {:error, {:invalid_inputs, [^expected_error]}, %Grid{}},
              Grid.run(grid, input)
            )
   end
 
-  @tag :skip
   test "the grid will verify that every input is mapped" do
     grid =
       Grid.new()
-      |> Grid.set_input(NoCaster.for_type({:raw, :pid}))
       # here we do not map the input :mytext for RequiresAText
       |> Grid.add_action("consumer", RequiresAText)
 
-    assert_raise Grid.UnmappedInputError, fn ->
-      assert {:ok, _} = Grid.run(grid, :some_input)
+    expected_error = %UnmappedInputError{action_key: "consumer", input_key: :mytext}
+
+    assert match?(
+             {
+               :error,
+               {:invalid_inputs, [^expected_error]},
+               %Grid{}
+             },
+             Grid.run(grid, :some_input)
+           )
+  end
+
+  defmodule UncastableType do
+  end
+
+  defmodule RequiresAnUncastableType do
+    @behaviour Action
+
+    def cast_params(it), do: {:ok, it}
+
+    def configure(config, _) do
+      config
+      |> Action.use_input(:mykey, UncastableType)
     end
+
+    def call(_, _, _) do
+      raise "not called"
+    end
+  end
+
+  defmodule RequiresAnUnknownType do
+    @behaviour Action
+
+    def cast_params(it), do: {:ok, it}
+
+    def configure(config, _) do
+      config
+      |> Action.use_input(:mykey, ModuleThatDoesNotExist)
+    end
+
+    def call(_, _, _) do
+      raise "not called"
+    end
+  end
+
+  test "the grid will verify that every input can be casted" do
+    grid =
+      Grid.new()
+      # here we do not map the input :mytext for RequiresAText
+      |> Grid.add_action(
+        "use_unknown",
+        RequiresAnUnknownType,
+        inputs: %{} |> Grid.pipe_grid_input(:mykey)
+      )
+      |> Grid.add_action(
+        "use_uncastable",
+        RequiresAnUncastableType,
+        inputs: %{} |> Grid.pipe_static(:mykey, :this_term_not_used)
+      )
+
+    expected_errors = [
+      %NoInputCasterError{
+        action_key: "use_unknown",
+        input_key: :mykey,
+        input_type: ModuleThatDoesNotExist,
+        origin: :grid_input
+      },
+      %NoInputCasterError{
+        action_key: "use_uncastable",
+        input_key: :mykey,
+        input_type: UncastableType,
+        origin: :static
+      }
+    ]
+
+    assert {:error, {:invalid_inputs, found_errors}} = Grid.prepare_and_validate(grid)
+
+    assert Enum.sort(expected_errors) == Enum.sort(found_errors)
   end
 end

@@ -27,9 +27,9 @@ defmodule Tonka.Core.Action do
   end
 
   @type params :: term
-  @type op_in :: map
-  @type op_out :: op_out(term)
-  @type op_out(output) :: {:ok, output} | {:error, term} | {:async, Task.t()}
+  @type action_in :: map
+  @type action_out :: action_out(term)
+  @type action_out(output) :: {:ok, output} | {:error, term} | {:async, Task.t()}
 
   @type input_mapping :: %{
           binary => %{
@@ -52,7 +52,7 @@ defmodule Tonka.Core.Action do
   @callback configure(config, params) :: config
   @callback return_type() :: Tonka.Core.Container.typespec()
 
-  @callback call(op_in, params, injects :: map) :: op_out
+  @callback call(action_in, injects :: map, params) :: action_out
 
   defmacro __using__(_) do
     quote location: :keep do

@@ -156,6 +156,12 @@ defmodule Tonka.GridTest do
 
     def cast_params(it), do: {:ok, it}
 
+    def return_type, do: {:raw, :integer}
+
+    def configure(config, _) do
+      config
+    end
+
     def call(_, _, _) do
       :erlang.system_time()
     end
@@ -177,24 +183,22 @@ defmodule Tonka.GridTest do
     assert_receive {^ref, text} when is_binary(text)
   end
 
-  @tag :skip
   test "the grid will verify that the actions are compatible - error" do
     ref = make_ref()
 
     grid =
       Grid.new()
-      |> Grid.set_input(NoCaster.for_type({:raw, :pid}))
       |> Grid.add_action("consumer", RequiresAText,
-        inputs: %{mytext: "provider"},
+        inputs: %{} |> Grid.pipe_action(:mytext, "provider"),
         params: %{parent: self(), tag: ref}
       )
-      # Here we provide and integer to the consumer, which cannt work
-      |> Grid.add_action("provider", ProvidesAnInt, inputs: %{_: :incast})
+      # Here we provide and integer to the consumer, which cannot work
+      |> Grid.add_action("provider", ProvidesAnInt)
 
     # At this point everything is fine. But when we will try to build the grid
     # it will fail. It must not fail because of the guard in:
     #
-    #     def call(%{mytext: mytext}, %{parent: parent, tag: tag}, _)
+    #     def call(%{mytext: mytext}, _, %{parent: parent, tag: tag})
     #         when is_binary(mytext)
     #
     # But rather raise an exception regarding the control of inputs
@@ -203,12 +207,13 @@ defmodule Tonka.GridTest do
 
     assert match?(
              {:error, {:invalid_inputs, [%InvalidInputTypeError{}]}},
-             Grid.validate(grid)
+             Grid.prepare_and_validate(grid)
            )
 
-    assert_raise InvalidInputTypeError, fn ->
-      assert {:ok, _} = Grid.run(grid, input)
-    end
+    assert match?(
+             {:error, {:invalid_inputs, [%InvalidInputTypeError{}]}, %Grid{}},
+             Grid.run(grid, input)
+           )
   end
 
   @tag :skip

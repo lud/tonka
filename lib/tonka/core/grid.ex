@@ -132,16 +132,9 @@ defmodule Tonka.Core.Grid do
   #  Grid Validation
   # ---------------------------------------------------------------------------
 
-  def validate(%Grid{} = grid) do
+  defp validate(%Grid{} = grid) do
     with :ok <- validate_all_inputs(grid) do
       {:ok, grid}
-    end
-  end
-
-  def validate!(grid) do
-    case validate(grid) do
-      {:ok, grid} -> grid
-      {:error, {_tag, [%_{} = err | _]}} -> raise err
     end
   end
 
@@ -172,11 +165,11 @@ defmodule Tonka.Core.Grid do
     input_specs
     |> Enum.map(fn {_input_key, input_spec} ->
       validate_action_input(input_spec, act_key, mapping, actions)
+      |> IO.inspect(label: "---------------validate_action_input")
     end)
     |> Enum.filter(fn
       :ok -> false
       {:error, _} -> true
-      other -> raise "got other: #{inspect(other)}"
     end)
     |> case do
       [] -> :ok
@@ -202,12 +195,13 @@ defmodule Tonka.Core.Grid do
          }}
 
       {:error, {:incompatible_types, input_type, output_type}} ->
-        %InvalidInputTypeError{
-          action_key: act_key,
-          expected_type: input_type,
-          provided_type: output_type,
-          input_key: input_key
-        }
+        {:error,
+         %InvalidInputTypeError{
+           action_key: act_key,
+           expected_type: input_type,
+           provided_type: output_type,
+           input_key: input_key
+         }}
     end
   end
 
@@ -278,12 +272,21 @@ defmodule Tonka.Core.Grid do
 
     GLogger.debug("running the grid")
 
-    with {:ok, grid} <- precast_all(grid),
-         {:ok, grid} <- preconfigure_all(grid),
-         {:ok, grid} <- validate(grid) do
-      run(grid)
-    else
+    case prepare_and_validate(grid) do
+      {:ok, grid} -> run(grid)
       {:error, reason} -> {:error, reason, grid}
+    end
+  end
+
+  @doc """
+  Casts all actions parameters and calls the configuration function for all
+  actions, then runs some validation checks on the actions input and output
+  types and mappings.
+  """
+  def prepare_and_validate(%Grid{} = grid) do
+    with {:ok, grid} <- precast_all(grid),
+         {:ok, grid} <- preconfigure_all(grid) do
+      validate(grid)
     end
   end
 

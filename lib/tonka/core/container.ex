@@ -2,6 +2,7 @@ defmodule Tonka.Core.Container do
   alias Tonka.Core.Container
   alias Tonka.Core.Injector
   alias Tonka.Core.Container.Service
+  alias Tonka.Core.Container.InjectSpec
   use TODO
 
   @moduledoc """
@@ -38,7 +39,7 @@ defmodule Tonka.Core.Container do
 
   @type bind_impl_opt :: {:name, binary}
   @type bind_impl_opts :: [bind_impl_opt]
-  @type bind_opt :: {:overrides, %{typespec => override()}}
+  @type bind_opt :: {:params, term}
   @type bind_opts :: list(bind_opt | bind_impl_opt)
 
   defguard is_builder(builder) when is_atom(builder) or is_function(builder, 1)
@@ -89,14 +90,6 @@ defmodule Tonka.Core.Container do
                        Only used if the service is module-based.
                        """,
                        default: %{}
-                     ],
-                     overrides: [
-                       type: {:custom, __MODULE__, :validate_overrides, []},
-                       doc: """
-                       A map of service type to services generator functions.
-                       Genrator functions have an arity of `0`.
-                       """,
-                       default: %{}
                      ]
                    ]
                )
@@ -142,21 +135,8 @@ defmodule Tonka.Core.Container do
     |> NimbleOptions.validate!(@bind_schema)
     |> Keyword.put_new(:built, false)
     |> Keyword.put_new(:impl, nil)
-    |> Keyword.put_new(:overrides, %{})
     |> Keyword.put(:builder, builder)
     |> Service.new()
-  end
-
-  @doc false
-  def validate_overrides(overrides) do
-    if not is_map(overrides) do
-      {:error, "overrides must be a map"}
-    else
-      case Enum.reject(overrides, fn {_, v} -> is_override(v) end) do
-        [] -> {:ok, overrides}
-        [{k, v} | _] -> {:error, "invalid bind override for type #{inspect(k)}: #{inspect(v)}"}
-      end
-    end
   end
 
   @bind_impl_schema NimbleOptions.new!(@common_bind_opts)
@@ -175,7 +155,7 @@ defmodule Tonka.Core.Container do
     service =
       opts
       |> NimbleOptions.validate!(@bind_impl_schema)
-      |> Keyword.merge(impl: impl, builder: nil, built: true, overrides: %{}, params: %{})
+      |> Keyword.merge(impl: impl, builder: nil, built: true, params: %{})
       |> Service.new()
 
     put_in(c.services[utype], service)
@@ -231,10 +211,27 @@ defmodule Tonka.Core.Container do
     {:ok, %Container{c | services: services}}
   end
 
-  def build_injects(container, inject_specs, overrides) do
-    case Injector.build_injects(container, inject_specs, overrides) do
-      {:ok, injects, new_container} -> {:ok, injects, new_container}
-      {:error, _} = err -> err
+  def build_injects(container, inject_specs) do
+    Enum.reduce_while(
+      inject_specs,
+      {:ok, %{}, container},
+      fn inject_spec, {:ok, map, container} ->
+        case pull_inject(container, inject_spec, map) do
+          {:ok, _map, _container} = fine -> {:cont, fine}
+          {:error, _} = err -> {:halt, err}
+        end
+      end
+    )
+  end
+
+  defp pull_inject(container, %InjectSpec{type: utype, key: key}, map) do
+    case Container.pull(container, utype) do
+      {:ok, impl, new_container} ->
+        new_map = Map.put(map, key, impl)
+        {:ok, new_map, new_container}
+
+      {:error, _} = err ->
+        err
     end
   end
 

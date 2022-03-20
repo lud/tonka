@@ -142,7 +142,7 @@ defmodule Tonka.ContainerTest do
 
         with %{injects: inject_specs} <-
                SomeDependentStruct.configure(Service.base_config(), params),
-             {:ok, deps, c} <- Injector.build_injects(c, inject_specs),
+             {:ok, deps, c} <- Container.build_injects(c, inject_specs),
              {:ok, impl} <- SomeDependentStruct.init(deps, params) do
           {:ok, impl, c}
         else
@@ -153,13 +153,6 @@ defmodule Tonka.ContainerTest do
     assert {:ok, service, %Container{}} = Container.pull(container, SomeDependentStruct)
 
     assert is_struct(service, SomeDependentStruct)
-  end
-
-  test "a type is not overridable for builder functions" do
-    assert_raise ArgumentError, ~r/only available for module-based services/, fn ->
-      builder = fn _ -> raise "this will not be called" end
-      Container.bind(Container.new(), SomeType, builder, overrides: %{Unused => fn -> :ok end})
-    end
   end
 
   defmodule UsesStuff do
@@ -199,34 +192,6 @@ defmodule Tonka.ContainerTest do
 
   defp provide_stuff(stuff) do
     %{Stuff => fn -> {:ok, stuff} end}
-  end
-
-  test "a type is overridable for a service" do
-    container =
-      Container.new()
-      |> Container.bind(UsesStuff, UsesStuff, overrides: provide_stuff(%{stuff_name: :uses}))
-
-    assert {:ok, impl, _} = Container.pull(container, UsesStuff)
-
-    assert "UsesStuff name: uses" == impl
-
-    assert_receive {UsesStuff, :uses}
-  end
-
-  test "a type is overridable for a service and only that service" do
-    container =
-      Container.new()
-      |> Container.bind(UsesStuff, overrides: provide_stuff(%{stuff_name: :uses}))
-      # Also uses params depends on UsesStuff.  When we will pull that service,
-      # each service will send self its module name and param value as atom
-      |> Container.bind(AlsoUsesStuff, overrides: provide_stuff(%{stuff_name: :other}))
-
-    assert {:ok, impl, _} = Container.pull(container, AlsoUsesStuff)
-
-    assert "AlsoUsesStuff name: other, dep was: UsesStuff name: uses" == impl
-
-    assert_receive {UsesStuff, :uses}
-    assert_receive {AlsoUsesStuff, :other}
   end
 
   defmodule PulledService do

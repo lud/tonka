@@ -4,9 +4,7 @@ defmodule Tonka.Core.Container.Service do
   alias Tonka.Core.Container
   use TODO
 
-  @todo "overrides are not needed"
-
-  @enforce_keys [:built, :builder, :impl, :overrides, :params, :name]
+  @enforce_keys [:built, :builder, :impl, :params, :name]
   defstruct @enforce_keys
 
   @type t :: %__MODULE__{
@@ -62,9 +60,6 @@ defmodule Tonka.Core.Container.Service do
     if fun? and map_size(service.params) > 0,
       do: raise(ArgumentError, "params is only available for module-based services")
 
-    if fun? and map_size(service.overrides) > 0,
-      do: raise(ArgumentError, "overrides is only available for module-based services")
-
     service
   end
 
@@ -94,7 +89,7 @@ defmodule Tonka.Core.Container.Service do
     do: {:ok, service, container}
 
   def build(
-        %Service{params: params, builder: module, overrides: overrides} = service,
+        %Service{params: params, builder: module} = service,
         container
       )
       when is_atom(module) do
@@ -103,8 +98,7 @@ defmodule Tonka.Core.Container.Service do
 
     with {:ok, casted_params} <- call_cast_params(module, params),
          {:ok, %{injects: inject_specs}} <- call_configure(module, casted_params),
-         {:ok, injects, new_container} <-
-           Container.build_injects(container, inject_specs, overrides),
+         {:ok, injects, new_container} <- Container.build_injects(container, inject_specs),
          {:ok, impl} <- init_module(module, injects, casted_params) do
       {:ok, as_built(service, impl), new_container}
     else

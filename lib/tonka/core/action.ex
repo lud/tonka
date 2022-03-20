@@ -46,12 +46,8 @@ defmodule Tonka.Core.Action do
   Returns the action configuration:
   * The list of other services types to inject
   * The list of inputs and their configuration
-
-  The params are passed to that function as an help for development and testing.
-  The returned configuration defines the arguments of the action `call/3`
-  callback, those should not change depending on the params.
   """
-  @callback configure(config, params) :: config
+  @callback configure(config) :: config
   @callback return_type() :: Tonka.Core.Container.typespec()
   @callback cast_params(term) :: {:ok, params} | {:error, term}
   @callback call(inputs, injects :: map, params) :: action_out

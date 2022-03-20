@@ -200,6 +200,11 @@ defmodule Tonka.Core.Container do
     end
   end
 
+  def prebuild_all(%Container{services: services} = c) do
+    unbuilt_utypes = for {key, %{built: false}} <- services, do: key
+    Ark.Ok.reduce_ok(unbuilt_utypes, c, fn utype, c -> ensure_built(c, utype) end)
+  end
+
   def ensure_built(%{frozen: frozen} = c, utype) do
     case fetch_type(c, utype) do
       {:ok, %Service{built: true}} ->

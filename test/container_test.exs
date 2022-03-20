@@ -284,4 +284,58 @@ defmodule Tonka.ContainerTest do
               utype: PulledToLate
             }} = Container.pull_frozen(c1, PulledToLate)
   end
+
+  defmodule PrebuildA do
+    use Service
+    defstruct [:dummy]
+    def new, do: %__MODULE__{dummy: "hello"}
+
+    def cast_params(term), do: {:ok, term}
+    def configure(config), do: config
+
+    def init(_, _), do: {:ok, new()}
+  end
+
+  defmodule PrebuildFun do
+    defstruct [:dummy]
+    def new, do: %__MODULE__{dummy: "hello"}
+  end
+
+  defmodule DependendOnPrebuildA do
+    use Service
+    defstruct [:a]
+    def new(a), do: %__MODULE__{a: a}
+
+    def cast_params(term), do: {:ok, term}
+
+    def configure(config) do
+      config
+      |> Service.use_service(:a, PrebuildA)
+    end
+
+    def init(%{a: a}, _), do: {:ok, new(a)}
+  end
+
+  defmodule PrebuildImpl do
+    defstruct [:dummy]
+    def new, do: %__MODULE__{dummy: "hello"}
+  end
+
+  test "it is possible to build all services for a container" do
+    container =
+      Container.new()
+      |> Container.bind(PrebuildA)
+      |> Container.bind(PrebuildFun, fn c ->
+        {:ok, PrebuildFun.new(), c}
+      end)
+      |> Container.bind(DependendOnPrebuildA)
+      |> Container.bind_impl(PrebuildImpl, PrebuildImpl.new())
+
+    assert {:ok, all_built} = Container.prebuild_all(container)
+
+    assert Container.has_built?(all_built, PrebuildA)
+    assert Container.has_built?(all_built, PrebuildFun)
+    assert Container.has_built?(all_built, DependendOnPrebuildA)
+    assert Container.has_built?(all_built, PrebuildImpl)
+  end
 end

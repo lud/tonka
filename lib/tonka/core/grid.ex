@@ -262,8 +262,10 @@ defmodule Tonka.Core.Grid do
   #  Grid Running
   # ---------------------------------------------------------------------------
 
+  @deprecated "pass a container to the grid using run/3"
   def run(%Grid{} = grid, input) do
-    run(grid, Container.new(), input)
+    container = Container.new() |> Container.freeze()
+    run(grid, container, input)
   end
 
   @spec run(t, Container.t(), input :: term) :: {:ok, success_status, t} | {:error, error_info, t}

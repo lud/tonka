@@ -16,4 +16,11 @@ defmodule Tonka.GridInjectionTest do
       Grid.run(grid, container, "some input")
     end
   end
+
+  test "the grid accepts a frozen container" do
+    grid = Grid.new()
+    container = Container.new() |> Container.freeze()
+
+    assert {:ok, :done, _} = Grid.run(grid, container, "some input")
+  end
 end

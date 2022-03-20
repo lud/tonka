@@ -38,12 +38,8 @@ defmodule Tonka.Core.Container.Service do
   @doc """
   Returns the service configuration:
   * The list of other services types to inject
-
-  The params are passed to that function as an help for development and testing.
-  The returned configuration defines the arguments of the service `init/2`
-  callback, those should not change depending on the params.
   """
-  @callback configure(config, params) :: config
+  @callback configure(config) :: config
   @callback init(injects, params) :: {:ok, impl} | {:error, term}
 
   defmacro __using__(_) do
@@ -101,7 +97,7 @@ defmodule Tonka.Core.Container.Service do
     # we can just reuse the current struct by flipping the built flag to false.
 
     with {:ok, casted_params} <- call_cast_params(module, params),
-         {:ok, %{injects: inject_specs}} <- call_configure(module, casted_params),
+         {:ok, %{injects: inject_specs}} <- call_configure(module),
          {:ok, {injects, new_container}} <- Container.build_injects(container, inject_specs),
          {:ok, impl} <- init_module(module, injects, casted_params) do
       {:ok, as_built(service, impl), new_container}
@@ -134,15 +130,15 @@ defmodule Tonka.Core.Container.Service do
     end
   end
 
-  defp call_configure(module, params) do
+  defp call_configure(module) do
     base = base_config()
 
-    case module.configure(base_config(), params) do
+    case module.configure(base_config()) do
       %ServiceConfig{} = config ->
         {:ok, config}
 
       other ->
-        {:error, {:bad_return, {module, :configure, [base, params]}, other}}
+        {:error, {:bad_return, {module, :configure, [base]}, other}}
     end
   end
 

@@ -21,8 +21,8 @@ defmodule Tonka.ContainerTest do
       {:ok, term}
     end
 
-    @spec configure(Service.config(), term) :: {:ok, Service.config()} | {:error, term}
-    def configure(config, _) do
+    @spec configure(Service.config()) :: {:ok, Service.config()} | {:error, term}
+    def configure(config) do
       config
     end
 
@@ -43,8 +43,8 @@ defmodule Tonka.ContainerTest do
       {:ok, term}
     end
 
-    @spec configure(Service.config(), term) :: {:ok, Service.config()} | {:error, term}
-    def configure(config, _) do
+    @spec configure(Service.config()) :: {:ok, Service.config()} | {:error, term}
+    def configure(config) do
       config
       |> Service.use_service(:mykey, SomeStructService)
     end
@@ -153,7 +153,7 @@ defmodule Tonka.ContainerTest do
         params = %{}
 
         with %{injects: inject_specs} <-
-               SomeDependentStruct.configure(Service.base_config(), params),
+               SomeDependentStruct.configure(Service.base_config()),
              {:ok, {deps, c}} <- Container.build_injects(c, inject_specs),
              {:ok, impl} <- SomeDependentStruct.init(deps, params) do
           {:ok, impl, c}
@@ -171,8 +171,8 @@ defmodule Tonka.ContainerTest do
     def cast_params(p),
       do: {:ok, p}
 
-    @spec configure(Service.config(), term) :: {:ok, Service.config()} | {:error, term}
-    def configure(config, _) do
+    @spec configure(Service.config()) :: {:ok, Service.config()} | {:error, term}
+    def configure(config) do
       config
       |> Service.use_service(:a_stuff, Stuff)
     end
@@ -189,8 +189,8 @@ defmodule Tonka.ContainerTest do
     def cast_params(p),
       do: {:ok, p}
 
-    @spec configure(Service.config(), term) :: {:ok, Service.config()} | {:error, term}
-    def configure(config, _) do
+    @spec configure(Service.config()) :: {:ok, Service.config()} | {:error, term}
+    def configure(config) do
       config
       |> Service.use_service(:a_stuff, Stuff)
       |> Service.use_service(:user, UsesStuff)
@@ -211,7 +211,7 @@ defmodule Tonka.ContainerTest do
 
     defstruct []
     def cast_params(term), do: {:ok, term}
-    def configure(config, _), do: config
+    def configure(config), do: config
     def init(injects, params), do: {:ok, :available}
   end
 
@@ -220,7 +220,7 @@ defmodule Tonka.ContainerTest do
 
     defstruct []
     def cast_params(term), do: {:ok, term}
-    def configure(config, _), do: config
+    def configure(config), do: config
     def init(injects, params), do: raise("this should not be called")
   end
 

@@ -88,5 +88,8 @@ defmodule Tonka.Demo do
           |> YamlElixir.read_from_string!()
         )
     )
+    |> Grid.add_action("query_issues", Tonka.Actions.Queries.QueryIssuesGroups,
+      inputs: %{} |> Grid.pipe_action(:query_groups, "define_query")
+    )
   end
 end

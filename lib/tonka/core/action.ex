@@ -174,18 +174,10 @@ defmodule Tonka.Core.Action do
     opts = NimbleOptions.validate!(opts, @use_service_options_schema)
   end
 
-  # @input_schema NimbleOptions.new!([])
-
   @doc """
   Defines an input for the action.
-
-
   """
-  # ### Options
-  # {NimbleOptions.docs(@input_schema)}
-  def use_input(%ActionConfig{inputs: inputs} = config, key, utype, opts \\ [])
-      when is_atom(key) and is_list(opts) do
-    # opts = NimbleOptions.validate!(opts, @input_schema)
+  def use_input(%ActionConfig{inputs: inputs} = config, key, utype) when is_atom(key) do
     spec = %InputSpec{key: key, type: utype}
 
     if Map.has_key?(inputs, key) do

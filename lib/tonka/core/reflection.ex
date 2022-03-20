@@ -47,6 +47,10 @@ defmodule Tonka.Core.Reflection do
     function_exported?(module, function, arity)
   end
 
+  def load_function_exported_nofail?(module, function, arity) do
+    Code.ensure_loaded?(module) and function_exported?(module, function, arity)
+  end
+
   ##
 
   defp shrink_type({:type, _, t, []}),

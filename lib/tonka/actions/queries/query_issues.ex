@@ -1,7 +1,14 @@
-defmodule Tonka.Core.Action.QueryIssues do
+defmodule Tonka.Actions.Queries.QueryIssuesGroups do
   use Tonka.Core.Action
 
-  @todo "move to Tonka.Act namespace"
+  def cast_params(term) do
+    {:ok, term}
+  end
+
+  def configure(config, params) do
+    config
+    |> Action.use_input(:query_groups, Tonka.Actions.Queries.CompileMQLGroups.Return)
+  end
 
   # input mql in Tonka.Data.MqlQuery
 
@@ -11,7 +18,7 @@ defmodule Tonka.Core.Action.QueryIssues do
   #   |> Action.use_input(My.Input.Type, :other_key, required: false)
   # end
 
-  def call(inputs, params, injects) do
+  def call(inputs, injects, params) do
     {:ok, []}
   end
 end

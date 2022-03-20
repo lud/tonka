@@ -13,6 +13,8 @@ defmodule Tonka.Actions.Queries.CompileMQLGroups do
     |> Action.use_input(:query_groups, Tonka.T.MQLGroups)
   end
 
+  def return_type, do: __MODULE__.Return
+
   def call(%{query_groups: groups}, _, params) do
     with {:ok, as_atoms} <- list_keys_for_atoms(params.data_type) do
       Ark.Ok.map_ok(groups, fn group ->

@@ -235,7 +235,7 @@ defmodule Tonka.Core.Grid do
         {:ok, input_type}
 
       caster when is_atom(caster) ->
-        if Tonka.Core.Reflection.load_function_exported?(input_type, :cast_input, 1),
+        if Tonka.Core.Reflection.load_function_exported_nofail?(input_type, :cast_input, 1),
           do: {:ok, input_type},
           else: {:error, {:no_caster, origin}}
     end

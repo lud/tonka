@@ -84,8 +84,8 @@ defmodule Tonka.ActionTest do
   end
 
   test "adding services to action config" do
-    config =
-      Action.base_config()
-      |> Action.use_service(:mykey, SomeInput)
+    # config =
+    # Action.base_config()
+    # |> Action.use_service(:mykey, SomeInput)
   end
 end

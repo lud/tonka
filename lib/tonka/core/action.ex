@@ -170,7 +170,8 @@ defmodule Tonka.Core.Action do
 
   @use_service_options_schema NimbleOptions.new!([])
 
-  def use_service(%ActionConfig{} = config, key, opts) when is_atom(key) do
+  def use_service(%ActionConfig{} = config, key, utype, opts)
+      when is_atom(key) and is_list(opts) do
     opts = NimbleOptions.validate!(opts, @use_service_options_schema)
   end
 

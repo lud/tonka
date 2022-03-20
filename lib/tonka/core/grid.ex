@@ -40,7 +40,7 @@ defmodule Tonka.Core.Grid do
                 params: [
                   doc: """
                   The raw data structure that will be passed to the action
-                  module as params. Defaults to an empty map
+                  module as params.
                   """,
                   default: %{}
                 ],

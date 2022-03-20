@@ -58,24 +58,38 @@ defmodule Tonka.Core.Container do
     %Container{c | frozen: true}
   end
 
-  @bind_options_schema NimbleOptions.new!(
-                         params: [
-                           type: :any,
-                           doc: """
-                           Params to be passed to the service `c:Tonka.Core.Container.Service.cast_params/1` callback.
-                           Only used if the service is module-based.
-                           """,
-                           default: %{}
-                         ],
-                         overrides: [
-                           type: {:custom, __MODULE__, :validate_overrides, []},
-                           doc: """
-                           A map of service type to services generator functions.
-                           Genrator functions have an arity of `0`.
-                           """,
-                           default: %{}
-                         ]
-                       )
+  @common_bind_opts [
+    name: [
+      type: {:or, [{:in, [nil]}, :string]},
+      doc: """
+      When set, defines a named service that can be found
+      by its name.
+      """,
+      default: nil
+    ]
+  ]
+
+  @bind_schema NimbleOptions.new!(
+                 @common_bind_opts ++
+                   [
+                     params: [
+                       type: :any,
+                       doc: """
+                       Params to be passed to the service `c:Tonka.Core.Container.Service.cast_params/1` callback.
+                       Only used if the service is module-based.
+                       """,
+                       default: %{}
+                     ],
+                     overrides: [
+                       type: {:custom, __MODULE__, :validate_overrides, []},
+                       doc: """
+                       A map of service type to services generator functions.
+                       Genrator functions have an arity of `0`.
+                       """,
+                       default: %{}
+                     ]
+                   ]
+               )
 
   # TODO doc binding with a single utype with default opts, accepts only atoms and expects that
   # the utype is also a module.
@@ -96,11 +110,11 @@ defmodule Tonka.Core.Container do
     do: bind(c, utype, builder, [])
 
   @doc """
-  Registers a new service in the container.
+  Registers a new service builder in the container.
 
   ### Options
 
-  #{NimbleOptions.docs(@bind_options_schema)}
+  #{NimbleOptions.docs(@bind_schema)}
   """
   @spec bind(t, typespec, builder(), bind_opts) :: t
   def bind(%Container{frozen: true}, _, _, _) do
@@ -115,7 +129,7 @@ defmodule Tonka.Core.Container do
 
   defp opts_to_service(options, builder) do
     options
-    |> NimbleOptions.validate!(@bind_options_schema)
+    |> NimbleOptions.validate!(@bind_schema)
     |> Keyword.put_new(:built, false)
     |> Keyword.put_new(:impl, nil)
     |> Keyword.put_new(:overrides, %{})
@@ -135,9 +149,23 @@ defmodule Tonka.Core.Container do
     end
   end
 
-  def bind_impl(%Container{} = c, utype, value) when is_utype(utype) do
-    options = [builder: :lol, impl: value, builder: nil, built: true, overrides: %{}, params: %{}]
-    service = Service.new(options)
+  @bind_impl_schema NimbleOptions.new!(@common_bind_opts)
+
+  @doc """
+  Registers a new service implementation in the container.
+
+  ### Options
+
+  #{NimbleOptions.docs(@bind_impl_schema)}
+  """
+  def bind_impl(%Container{} = c, utype, impl, opts \\ [])
+      when is_utype(utype) and is_list(opts) do
+    service =
+      opts
+      |> NimbleOptions.validate!(@bind_impl_schema)
+      |> Keyword.merge(impl: impl, builder: nil, built: true, overrides: %{}, params: %{})
+      |> Service.new()
+
     put_in(c.services[utype], service)
   end
 
@@ -179,8 +207,8 @@ defmodule Tonka.Core.Container do
       {:ok, %Service{built: true} = new_service, %Container{} = new_c} ->
         replace_service(new_c, utype, service, new_service)
 
-      {:error, _} = err ->
-        err
+      {:error, reason} ->
+        {:error, {:service_build_failure, service.name || utype, reason}}
     end
   end
 

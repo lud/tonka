@@ -3,13 +3,15 @@ defmodule Tonka.Core.Container.Service do
   alias Tonka.Core.Injector
   alias Tonka.Core.Container.InjectSpec
   alias Tonka.Core.Container
+  use TODO
 
   @todo "overrides are not needed"
 
-  @enforce_keys [:built, :builder, :impl, :overrides, :params]
+  @enforce_keys [:built, :builder, :impl, :overrides, :params, :name]
   defstruct @enforce_keys
 
   @type t :: %__MODULE__{
+          name: nil | binary,
           built: boolean,
           builder: module,
           impl: term,

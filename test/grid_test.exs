@@ -43,7 +43,7 @@ defmodule Tonka.GridTest do
   defmodule MessageParamSender do
     def cast_params(it), do: {:ok, it}
 
-    def configure(config, _) do
+    def configure(config) do
       config
       |> Action.use_input(:parent, {:raw, :pid})
     end
@@ -77,7 +77,7 @@ defmodule Tonka.GridTest do
 
     def return_type, do: {:raw, :binary}
 
-    def configure(config, _) do
+    def configure(config) do
       config
       |> Action.use_input(:text, {:raw, :binary})
     end
@@ -90,7 +90,7 @@ defmodule Tonka.GridTest do
   defmodule InputMessageSender do
     def cast_params(it), do: {:ok, it}
 
-    def configure(config, _) do
+    def configure(config) do
       config
       |> Action.use_input(:message, {:raw, :binary})
     end
@@ -126,7 +126,7 @@ defmodule Tonka.GridTest do
 
     def cast_params(it), do: {:ok, it}
 
-    def configure(config, _) do
+    def configure(config) do
       config
       |> Action.use_input(:mytext, {:raw, :binary})
     end
@@ -146,7 +146,7 @@ defmodule Tonka.GridTest do
 
     def return_type, do: {:raw, :binary}
 
-    def configure(config, _) do
+    def configure(config) do
       config
     end
 
@@ -162,7 +162,7 @@ defmodule Tonka.GridTest do
 
     def return_type, do: {:raw, :integer}
 
-    def configure(config, _) do
+    def configure(config) do
       config
     end
 
@@ -275,7 +275,7 @@ defmodule Tonka.GridTest do
 
     def cast_params(it), do: {:ok, it}
 
-    def configure(config, _) do
+    def configure(config) do
       config
       |> Action.use_input(:mykey, UncastableType)
     end
@@ -290,7 +290,7 @@ defmodule Tonka.GridTest do
 
     def cast_params(it), do: {:ok, it}
 
-    def configure(config, _) do
+    def configure(config) do
       config
       |> Action.use_input(:mykey, ModuleThatDoesNotExist)
     end

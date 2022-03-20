@@ -52,23 +52,21 @@ defmodule Tonka.ActionTest do
       {:ok, :my_params}
     end
 
-    def configure(config, :my_params) do
+    def configure(config) do
       send(self(), {__MODULE__, :configured})
       config
     end
   end
 
-  test "it is possible to get an action config" do
+  test "it is possible to preconfigure an action" do
     act = Action.new(ConfigurableOp)
 
     assert {:ok, act} = Action.preconfigure(act)
-    assert_receive {ConfigurableOp, :params_casted}
     assert_receive {ConfigurableOp, :configured}
 
     # on the second call we will not receive the message from the cast_params
     # callback
     assert {:ok, _op} = Action.preconfigure(act)
-    refute_receive {ConfigurableOp, :params_casted}
     refute_receive {ConfigurableOp, :configured}
   end
 

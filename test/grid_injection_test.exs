@@ -32,7 +32,7 @@ defmodule Tonka.GridInjectionTest do
 
     def cast_params(term), do: {:ok, term}
 
-    def configure(config, params) do
+    def configure(config) do
       config
       |> Action.use_service(:myserv, MissingService)
     end
@@ -55,7 +55,7 @@ defmodule Tonka.GridInjectionTest do
 
     def cast_params(term), do: {:ok, term}
 
-    def configure(config, params) do
+    def configure(config) do
       config
       |> Action.use_service(:myserv, StringProvider)
     end

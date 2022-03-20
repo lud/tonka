@@ -140,25 +140,20 @@ defmodule Tonka.Core.Action do
   end
 
   def preconfigure(%Action{module: module} = act) do
-    with {:ok, %{casted_params: casted_params} = act} <- ensure_params(act),
-         {:ok, config} <- call_configure(module, casted_params) do
+    with {:ok, config} <- call_configure(module) do
       {:ok, %Action{act | config: config, config_called: true}}
     end
   end
 
-  defp ensure_params(act) do
-    precast_params(act)
-  end
-
-  defp call_configure(module, params) do
+  defp call_configure(module) do
     base = base_config()
 
-    case module.configure(base_config(), params) do
+    case module.configure(base_config()) do
       %ActionConfig{} = config ->
         {:ok, config}
 
       other ->
-        {:error, {:bad_return, {module, :configure, [base, params]}, other}}
+        {:error, {:bad_return, {module, :configure, [base]}, other}}
     end
   end
 

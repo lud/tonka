@@ -33,20 +33,13 @@ defmodule Tonka.Demo do
 
     container =
       new()
-      |> bind(Tonka.Service.Credentials, fn c ->
-        store =
-          File.cwd!()
-          |> Path.join("var/projects/dev/credentials.json")
-          |> Tonka.Service.Credentials.JsonFileCredentials.from_path!()
-
-        {:ok, store, c}
-      end)
+      |> bind(Tonka.Service.Credentials, &build_credentials/1, name: "credentials")
       |> bind(Tonka.Service.IssuesSource, Tonka.Ext.Gitlab.Issues,
-        overrides:
-          provide_params(Tonka.Ext.Gitlab.Issues, %{
-            "projects" => ["company-agilap/r-d/agislack"],
-            "credentials" => "gitlab.private_token"
-          })
+        name: "issues",
+        params: %{
+          "projects" => ["company-agilap/r-d/agislack"],
+          "credentials" => "gitlab.private_token"
+        }
       )
 
     {:ok, creds, container} = pull(container, Tonka.Service.Credentials)
@@ -54,6 +47,16 @@ defmodule Tonka.Demo do
     {:ok, issues_source, container} = pull(container, Tonka.Service.IssuesSource)
 
     container
+  end
+
+  @spec build_credentials(Container.t()) :: {:ok, Tonka.Service.Credentials.t(), Container.t()}
+  defp build_credentials(c) do
+    store =
+      File.cwd!()
+      |> Path.join("var/projects/dev/credentials.json")
+      |> Tonka.Service.Credentials.JsonFileCredentials.from_path!()
+
+    {:ok, store, c}
   end
 
   defp provide_params(overrides \\ %{}, module, params) do

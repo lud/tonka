@@ -51,6 +51,7 @@ defmodule Tonka.Core.Container.Service do
 
   defmacro __using__(_) do
     quote location: :keep do
+      alias unquote(__MODULE__)
       @behaviour unquote(__MODULE__)
     end
   end

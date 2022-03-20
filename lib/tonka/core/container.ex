@@ -35,8 +35,10 @@ defmodule Tonka.Core.Container do
   @type builder :: module | (t -> {:ok, term, t} | {:error, term})
   @type override :: module | (() -> {:ok, term} | {:error, term})
 
+  @type bind_impl_opt :: {:name, binary}
+  @type bind_impl_opts :: [bind_impl_opt]
   @type bind_opt :: {:overrides, %{typespec => override()}}
-  @type bind_opts :: [bind_opt]
+  @type bind_opts :: list(bind_opt | bind_impl_opt)
 
   defguard is_builder(builder) when is_atom(builder) or is_function(builder, 1)
   defguard is_override(override) when is_function(override, 0)
@@ -50,10 +52,12 @@ defmodule Tonka.Core.Container do
           frozen: boolean
         }
 
+  @spec new :: t()
   def new do
     struct!(Container, services: %{}, frozen: false)
   end
 
+  @spec freeze(t) :: t()
   def freeze(%Container{} = c) do
     %Container{c | frozen: true}
   end
@@ -116,7 +120,7 @@ defmodule Tonka.Core.Container do
 
   #{NimbleOptions.docs(@bind_schema)}
   """
-  @spec bind(t, typespec, builder(), bind_opts) :: t
+  @spec bind(t, typespec, builder(), bind_opts()) :: t
   def bind(%Container{frozen: true}, _, _, _) do
     raise "the container is frozen"
   end
@@ -158,6 +162,8 @@ defmodule Tonka.Core.Container do
 
   #{NimbleOptions.docs(@bind_impl_schema)}
   """
+
+  @spec bind_impl(t, typespec, term, bind_impl_opts) :: t
   def bind_impl(%Container{} = c, utype, impl, opts \\ [])
       when is_utype(utype) and is_list(opts) do
     service =

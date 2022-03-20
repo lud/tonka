@@ -306,8 +306,14 @@ defmodule Tonka.Core.Grid do
       {:ok, key} ->
         GLogger.debug("action '#{key}' is runnable")
 
-        with {:ok, new_grid} <- call_action(grid, key) do
-          run(new_grid)
+        case call_action(grid, key) do
+          {:ok, new_grid} ->
+            GLogger.info("✓ action '#{key}' completed successfully")
+            run(new_grid)
+
+          {:error, reason} = err ->
+            GLogger.error("action '#{key}' failed with reason: #{inspect(reason)}")
+            err
         end
 
       :done ->

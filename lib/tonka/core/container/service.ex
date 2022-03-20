@@ -20,11 +20,11 @@ defmodule Tonka.Core.Container.Service do
     defstruct @enforce_keys
 
     @type t :: %__MODULE__{
-            injects: [InjectSpec.t()]
+            injects: %{atom => InjectSpec.t()}
           }
 
     def new do
-      %__MODULE__{injects: []}
+      %__MODULE__{injects: %{}}
     end
   end
 
@@ -76,8 +76,12 @@ defmodule Tonka.Core.Container.Service do
 
   def use_service(%ServiceConfig{injects: injects} = cfg, key, utype) when is_atom(key) do
     spec = %InjectSpec{key: key, type: utype}
-    injects = [spec | injects]
-    %ServiceConfig{cfg | injects: injects}
+
+    if Map.has_key?(injects, key) do
+      raise ArgumentError, "service #{inspect(key)} is already configured"
+    end
+
+    %ServiceConfig{cfg | injects: Map.put(injects, key, spec)}
   end
 
   # ---------------------------------------------------------------------------
@@ -98,7 +102,7 @@ defmodule Tonka.Core.Container.Service do
 
     with {:ok, casted_params} <- call_cast_params(module, params),
          {:ok, %{injects: inject_specs}} <- call_configure(module, casted_params),
-         {:ok, injects, new_container} <- Container.build_injects(container, inject_specs),
+         {:ok, {injects, new_container}} <- Container.build_injects(container, inject_specs),
          {:ok, impl} <- init_module(module, injects, casted_params) do
       {:ok, as_built(service, impl), new_container}
     else

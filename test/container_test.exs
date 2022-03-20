@@ -142,7 +142,7 @@ defmodule Tonka.ContainerTest do
 
         with %{injects: inject_specs} <-
                SomeDependentStruct.configure(Service.base_config(), params),
-             {:ok, deps, c} <- Container.build_injects(c, inject_specs),
+             {:ok, {deps, c}} <- Container.build_injects(c, inject_specs),
              {:ok, impl} <- SomeDependentStruct.init(deps, params) do
           {:ok, impl, c}
         else

@@ -182,7 +182,7 @@ defmodule Tonka.Core.Action do
     spec = %InputSpec{key: key, type: utype}
 
     if Map.has_key?(inputs, key) do
-      raise ArgumentError, "input #{inspect(key)} is already defined"
+      raise ArgumentError, "input #{inspect(key)} is already configured"
     end
 
     %ActionConfig{config | inputs: Map.put(inputs, key, spec)}

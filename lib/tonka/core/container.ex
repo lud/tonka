@@ -212,23 +212,14 @@ defmodule Tonka.Core.Container do
   end
 
   def build_injects(container, inject_specs) do
-    Enum.reduce_while(
-      inject_specs,
-      {:ok, %{}, container},
-      fn inject_spec, {:ok, map, container} ->
-        case pull_inject(container, inject_spec, map) do
-          {:ok, _map, _container} = fine -> {:cont, fine}
-          {:error, _} = err -> {:halt, err}
-        end
-      end
-    )
+    Ark.Ok.reduce_ok(inject_specs, {%{}, container}, &pull_inject/2)
   end
 
-  defp pull_inject(container, %InjectSpec{type: utype, key: key}, map) do
+  defp pull_inject({inject_key, %InjectSpec{type: utype, key: key}}, {map, container}) do
     case Container.pull(container, utype) do
       {:ok, impl, new_container} ->
         new_map = Map.put(map, key, impl)
-        {:ok, new_map, new_container}
+        {:ok, {new_map, new_container}}
 
       {:error, _} = err ->
         err

@@ -21,11 +21,10 @@ defmodule Tonka.Ext.Gitlab.Issues do
   end
 
   def init(%{credentials: credentials}, %{credentials: path, projects: projects}) do
-    {:ok,
-     new(
-       private_token: Tonka.Service.Credentials.get_string(credentials, path),
-       projects: projects
-     )}
+    case Tonka.Service.Credentials.get_string(credentials, path) do
+      {:ok, token} -> {:ok, new(private_token: token, projects: projects)}
+      {:error, _} = err -> err
+    end
   end
 
   @params_caster Hugs.build_props()

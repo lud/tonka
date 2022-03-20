@@ -45,6 +45,7 @@ defmodule Tonka.Demo do
     {:ok, creds, container} = pull(container, Tonka.Service.Credentials)
     creds |> IO.inspect(label: "creds", pretty: true)
     {:ok, issues_source, container} = pull(container, Tonka.Service.IssuesSource)
+    issues_source |> IO.inspect(label: "issues_source")
 
     container
   end

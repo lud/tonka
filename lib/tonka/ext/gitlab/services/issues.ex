@@ -1,6 +1,6 @@
 defmodule Tonka.Ext.Gitlab.Services.Issues do
   use Tonka.Core.Container.Service
-  alias Tonka.Service.IssuesSource
+  alias Tonka.Services.IssuesSource
 
   @enforce_keys [:projects, :private_token]
   @derive IssuesSource
@@ -17,11 +17,11 @@ defmodule Tonka.Ext.Gitlab.Services.Issues do
 
   def configure(config, _params) do
     config
-    |> Service.use_service(:credentials, Tonka.Service.Credentials)
+    |> Service.use_service(:credentials, Tonka.Services.Credentials)
   end
 
   def init(%{credentials: credentials}, %{credentials: path, projects: projects}) do
-    case Tonka.Service.Credentials.get_string(credentials, path) do
+    case Tonka.Services.Credentials.get_string(credentials, path) do
       {:ok, token} -> {:ok, new(private_token: token, projects: projects)}
       {:error, _} = err -> err
     end

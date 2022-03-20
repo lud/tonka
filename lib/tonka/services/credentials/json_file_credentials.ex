@@ -1,6 +1,6 @@
-defmodule Tonka.Service.Credentials.JsonFileCredentials do
+defmodule Tonka.Services.Credentials.JsonFileCredentials do
   @enforce_keys [:data]
-  @derive Tonka.Service.Credentials
+  # @derive Tonka.Services.Credentials
   defstruct @enforce_keys
 
   @type level :: binary | %{optional(binary) => level}

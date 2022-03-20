@@ -29,11 +29,11 @@ defmodule Tonka.Raw do
   defp build_credentials do
     File.cwd!()
     |> Path.join("var/projects/dev/credentials.json")
-    |> Tonka.Service.Credentials.JsonFileCredentials.from_path!()
+    |> Tonka.Services.Credentials.JsonFileCredentials.from_path!()
   end
 
   defp build_issues_store(credentials, creds_path, projects) do
-    token = Tonka.Service.Credentials.get_string(credentials, creds_path)
+    token = Tonka.Services.Credentials.get_string(credentials, creds_path)
     Tonka.Ext.Gitlab.Issues.new(projects: projects, private_token: token)
   end
 

@@ -1,6 +1,6 @@
 defmodule Tonka.CredentialsTest do
-  alias Tonka.Service.Credentials
-  alias Tonka.Service.Credentials.JsonFileCredentials
+  alias Tonka.Services.Credentials
+  alias Tonka.Services.Credentials.JsonFileCredentials
   use ExUnit.Case, async: true
 
   @fixture "test/fixtures/creds.json"
@@ -9,7 +9,7 @@ defmodule Tonka.CredentialsTest do
   defp fixture_json, do: File.read!(fixture_path())
   defp fixture_data, do: Jason.decode!(fixture_json())
 
-  test "assert Tonka.Service.Credentials is a protocol" do
+  test "assert Tonka.Services.Credentials is a protocol" do
     case Credentials.__protocol__(:impls) do
       {:consolidated, _} -> assert true
       :not_consolidated -> assert true

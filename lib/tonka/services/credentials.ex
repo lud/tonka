@@ -1,6 +1,6 @@
 import Ark.Interface
 
-definterface Tonka.Service.Credentials do
+definterface Tonka.Services.Credentials do
   @doc """
   Returns the credentials value stored under `path`.
   """

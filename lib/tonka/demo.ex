@@ -33,8 +33,8 @@ defmodule Tonka.Demo do
 
     container =
       new()
-      |> bind(Tonka.Service.Credentials, &build_credentials/1, name: "credentials")
-      |> bind(Tonka.Service.IssuesSource, Tonka.Ext.Gitlab.Issues,
+      |> bind(Tonka.Services.Credentials, &build_credentials/1, name: "credentials")
+      |> bind(Tonka.Services.IssuesSource, Tonka.Ext.Gitlab.Services.Issues,
         name: "issues",
         params: %{
           "projects" => ["company-agilap/r-d/agislack"],
@@ -42,20 +42,20 @@ defmodule Tonka.Demo do
         }
       )
 
-    {:ok, creds, container} = pull(container, Tonka.Service.Credentials)
+    {:ok, creds, container} = pull(container, Tonka.Services.Credentials)
     creds |> IO.inspect(label: "creds", pretty: true)
-    {:ok, issues_source, container} = pull(container, Tonka.Service.IssuesSource)
+    {:ok, issues_source, container} = pull(container, Tonka.Services.IssuesSource)
     issues_source |> IO.inspect(label: "issues_source")
 
     container
   end
 
-  @spec build_credentials(Container.t()) :: {:ok, Tonka.Service.Credentials.t(), Container.t()}
+  @spec build_credentials(Container.t()) :: {:ok, Tonka.Services.Credentials.t(), Container.t()}
   defp build_credentials(c) do
     store =
       File.cwd!()
       |> Path.join("var/projects/dev/credentials.json")
-      |> Tonka.Service.Credentials.JsonFileCredentials.from_path!()
+      |> Tonka.Services.Credentials.JsonFileCredentials.from_path!()
 
     {:ok, store, c}
   end
@@ -73,5 +73,6 @@ defmodule Tonka.Demo do
     Grid.new()
 
     # |> Grid.add_action("define_query", )
+    |> Grid.add_action("define_query", Tonka.Actions.Queries.CompileMql)
   end
 end

@@ -193,11 +193,15 @@ defmodule Tonka.Core.Container do
     end
   end
 
-  def pull_frozen(%Container{} = c, utype) when is_atom(utype) do
-    case pull(freeze(c), utype) do
+  def pull_frozen(%Container{frozen: true} = c, utype) when is_atom(utype) do
+    case pull(c, utype) do
       {:ok, value, _} -> {:ok, value}
       {:error, _} = err -> err
     end
+  end
+
+  def pull_frozen(%Container{frozen: false} = c, utype) when is_atom(utype) do
+    c |> freeze() |> pull_frozen(utype)
   end
 
   def prebuild_all(%Container{services: services} = c) do
@@ -239,8 +243,8 @@ defmodule Tonka.Core.Container do
       {:ok, %Service{built: true} = new_service, %Container{} = new_c} ->
         replace_service(new_c, utype, service, new_service)
 
-      {:error, reason} ->
-        {:error, {:service_build_failure, service.name || utype, reason}}
+      {:error, _} = err ->
+        err
     end
   end
 
@@ -251,8 +255,8 @@ defmodule Tonka.Core.Container do
     {:ok, %Container{c | services: services}}
   end
 
-  def build_injects(container, inject_specs) do
-    Ark.Ok.reduce_ok(inject_specs, {%{}, container}, &pull_inject/2)
+  def build_injects(%Container{} = c, inject_specs) do
+    Ark.Ok.reduce_ok(inject_specs, {%{}, c}, &pull_inject/2)
   end
 
   defp pull_inject({key, %InjectSpec{type: utype, key: key}}, {map, container}) do
@@ -264,6 +268,19 @@ defmodule Tonka.Core.Container do
       {:error, _} = err ->
         err
     end
+  end
+
+  def build_injects_frozen(%Container{frozen: true} = c, inject_specs) do
+    Ark.Ok.reduce_ok(
+      inject_specs,
+      %{},
+      fn {key, %InjectSpec{type: utype, key: key}}, map ->
+        case Container.pull(c, utype) do
+          {:ok, impl, ^c} -> {:ok, Map.put(map, key, impl)}
+          {:error, _} = err -> err
+        end
+      end
+    )
   end
 
   # ---------------------------------------------------------------------------

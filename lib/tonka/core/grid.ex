@@ -14,6 +14,7 @@ defmodule Tonka.Core.Grid do
   }
 
   alias Tonka.Core.Container
+  alias Tonka.Core.Container.InjectSpec
   alias Tonka.Core.Container.Service
   alias Tonka.Core.Action
   alias __MODULE__
@@ -166,18 +167,12 @@ defmodule Tonka.Core.Grid do
   end
 
   defp validate_action_inject(%{key: inject_key, type: utype} = inject_spec, act_key, container) do
+    Container.pull_frozen(container, utype)
+
     # we will fetch the type to get a meaningful error from the container
     case Container.pull_frozen(container, utype) do
-      {:ok, _} ->
-        :ok
-
-      {:error, reason} ->
-        {:error,
-         %UnavailableServiceError{
-           action_key: act_key,
-           inject_key: inject_key,
-           container_error: reason
-         }}
+      {:ok, _} -> :ok
+      {:error, reason} -> cast_error({:service_resolve, inject_key, reason}, act_key)
     end
   end
 
@@ -226,41 +221,10 @@ defmodule Tonka.Core.Grid do
          actions
        ) do
     with {:ok, output_type} <- fetch_mapped_input_type(mapping, input_spec, actions),
-         :ok <- validate_type_compat(input_type, output_type) do
+         :ok <- validate_type_compat(input_type, output_type, input_key) do
       :ok
     else
-      {:error, :unmapped} ->
-        {:error,
-         %UnmappedInputError{
-           action_key: act_key,
-           input_key: input_key
-         }}
-
-      {:error, {:incompatible_type, output_type}} ->
-        {:error,
-         %InvalidInputTypeError{
-           action_key: act_key,
-           expected_type: input_type,
-           provided_type: output_type,
-           input_key: input_key
-         }}
-
-      {:error, {:no_caster, origin}} ->
-        {:error,
-         %NoInputCasterError{
-           action_key: act_key,
-           input_key: input_key,
-           input_type: input_type,
-           origin: origin
-         }}
-
-      {:error, {:undef_origin_action, origin_act}} ->
-        {:error,
-         %UndefinedOriginActionError{
-           action_key: act_key,
-           input_key: input_key,
-           origin_action_key: origin_act
-         }}
+      {:error, reason} -> cast_error(reason, act_key)
     end
   end
 
@@ -271,20 +235,20 @@ defmodule Tonka.Core.Grid do
 
     case mapping[input_key] do
       %{origin: :action, action: origin_action_key} ->
-        fetch_origin_action_output_type(actions, origin_action_key)
+        fetch_origin_action_output_type(actions, origin_action_key, input_key)
 
       %{origin: :static, static: _data} ->
-        check_castable_input_type(input_type, :static)
+        check_castable_input_type(input_type, :static, input_key)
 
       %{origin: :grid_input} ->
-        check_castable_input_type(input_type, :grid_input)
+        check_castable_input_type(input_type, :grid_input, input_key)
 
       nil ->
-        {:error, :unmapped}
+        {:error, {:unmapped, input_key}}
     end
   end
 
-  defp check_castable_input_type(input_type, origin) do
+  defp check_castable_input_type(input_type, origin, input_key) do
     case input_type do
       {:raw, _} ->
         {:ok, input_type}
@@ -292,22 +256,22 @@ defmodule Tonka.Core.Grid do
       caster when is_atom(caster) ->
         if Tonka.Core.Reflection.load_function_exported_nofail?(input_type, :cast_input, 1),
           do: {:ok, input_type},
-          else: {:error, {:no_caster, origin}}
+          else: {:error, {:no_caster, input_key, input_type, origin}}
     end
   end
 
-  defp fetch_origin_action_output_type(actions, origin_action_key) do
+  defp fetch_origin_action_output_type(actions, origin_action_key, input_key) do
     case Map.fetch(actions, origin_action_key) do
       {:ok, %{module: module}} -> {:ok, module.return_type()}
-      :error -> {:error, {:undef_origin_action, origin_action_key}}
+      :error -> {:error, {:undef_origin_action, input_key, origin_action_key}}
     end
   end
 
-  defp validate_type_compat(input_type, output_type) do
+  defp validate_type_compat(input_type, output_type, input_key) do
     if input_type == output_type do
       :ok
     else
-      {:error, {:incompatible_type, output_type}}
+      {:error, {:incompatible_type, input_key, input_type, output_type}}
     end
   end
 
@@ -329,10 +293,7 @@ defmodule Tonka.Core.Grid do
              action_key: binary
 
   def run(%Grid{} = grid, %Container{} = container, input) do
-    if not Container.frozen?(container) do
-      raise ArgumentError, "expected the passed container to be frozen"
-    end
-
+    ensure_container_frozen(container)
     outputs = %{input: input}
     statuses = start_statuses(grid.actions)
     grid = %Grid{grid | outputs: outputs, statuses: statuses}
@@ -340,7 +301,7 @@ defmodule Tonka.Core.Grid do
     GLogger.debug("running the grid")
 
     case prepare_and_validate(grid, container) do
-      {:ok, grid} -> run(grid)
+      {:ok, grid} -> run_loop(grid, container)
       {:error, reason} -> {:error, reason, grid}
     end
   end
@@ -359,6 +320,8 @@ defmodule Tonka.Core.Grid do
   """
 
   def prepare_and_validate(%Grid{} = grid, %Container{} = container) do
+    ensure_container_frozen(container)
+
     with {:ok, grid} <- precast_all(grid),
          {:ok, grid} <- preconfigure_all(grid),
          :ok <- validate_all_injects(grid, container),
@@ -367,27 +330,35 @@ defmodule Tonka.Core.Grid do
     end
   end
 
-  @spec run(t) :: {:ok, success_status, term} | {:error, error_info, term}
+  defp ensure_container_frozen(container) do
+    if not Container.frozen?(container) do
+      raise ArgumentError, "expected the passed container to be frozen"
+    end
+
+    container
+  end
+
+  @spec run_loop(t, Container.t()) :: {:ok, success_status, term} | {:error, error_info, term}
         when success_status: :done,
              error_info: :noavail | {:action_failed, action_key, reason},
              reason: term,
              action_key: binary
 
-  defp run(grid) do
+  defp run_loop(grid, container) do
     runnable = find_runnable(grid)
 
     case runnable do
       {:ok, key} ->
         GLogger.debug("action '#{key}' is runnable")
 
-        case call_action(grid, key) do
+        case call_action(grid, key, container) do
           {:ok, new_grid} ->
             GLogger.info("✓ action '#{key}' completed successfully")
-            run(new_grid)
+            run_loop(new_grid, container)
 
-          {:error, {:action_failed, key, reason}, _grid} = err ->
+          {:error, reason, failed_grid} ->
             GLogger.error("action '#{key}' failed with reason: #{inspect(reason)}")
-            err
+            {:error, reason, failed_grid}
         end
 
       :done ->
@@ -446,13 +417,18 @@ defmodule Tonka.Core.Grid do
     end
   end
 
-  @spec call_action(t, binary) :: {:ok, t} | {:error, {:action_failed, binary, term}, t}
+  @spec call_action(t, binary, Container.t()) :: {:ok, t} | {:error, term, t}
 
-  defp call_action(%{actions: actions, outputs: outputs, statuses: statuses} = grid, key) do
-    action = Map.fetch!(actions, key)
+  defp call_action(grid, key, container) do
+    %{actions: actions, outputs: outputs, statuses: statuses} = grid
+    %{config: %{injects: inject_specs}} = action = Map.fetch!(actions, key)
 
-    with {:ok, inputs} <- build_input(grid, key),
-         {:ok, output} <- do_call_action(action, inputs, %{}, key) do
+    inject_specs |> IO.inspect(label: "inject_specs")
+
+    with {:ok, injects} <- build_injects(container, inject_specs, key),
+         injects |> IO.inspect(label: "injects"),
+         {:ok, inputs} <- build_inputs(grid, key),
+         {:ok, output} <- do_call_action(action, inputs, injects, key) do
       grid = %Grid{
         grid
         | statuses: Map.put(statuses, key, :called),
@@ -461,13 +437,20 @@ defmodule Tonka.Core.Grid do
 
       {:ok, grid}
     else
-      {:error, reason} -> {:error, {:action_failed, key, reason}, grid}
+      # Do not cast error here to preserve stacktraces if we want a process flag
+      # to raise on cast_error for debugging.
+      # Each step of the `with` pipeline above must cast its errors
+      {:error, reason} -> {:error, reason, grid}
     end
   end
 
   defp do_call_action(action, inputs, injects, key) do
     GLogger.debug("calling action '#{key}'")
-    Action.call(action, inputs, injects)
+
+    case Action.call(action, inputs, injects) do
+      {:ok, _} = fine -> fine
+      {:error, reason} -> cast_error({:action_failed, reason}, key)
+    end
   end
 
   defp find_runnable(%Grid{actions: actions, outputs: outputs, statuses: statuses}) do
@@ -486,6 +469,21 @@ defmodule Tonka.Core.Grid do
     end
   end
 
+  defp build_injects(container, inject_specs, act_key) do
+    # this code is kinda the same as in container, but we reimplement it because
+    # we want to know which inject key fails.
+    Ark.Ok.reduce_ok(
+      inject_specs,
+      %{},
+      fn {key, %InjectSpec{type: utype, key: key}}, map ->
+        case Container.pull_frozen(container, utype) do
+          {:ok, impl} -> {:ok, Map.put(map, key, impl)}
+          {:error, reason} -> cast_error({:service_resolve, key, reason}, act_key)
+        end
+      end
+    )
+  end
+
   defp all_inputs_ready?(%{config_called: true, input_mapping: mapping}, outputs) do
     # This function can only be called if the mapping has been verified, as we
     # will not look into the input specs again but only consider the mapping.
@@ -497,16 +495,16 @@ defmodule Tonka.Core.Grid do
     end)
   end
 
-  defp build_input(%{outputs: outputs, actions: actions}, key) do
-    GLogger.debug("building inputs for action '#{key}'")
-    action = Map.fetch!(actions, key)
+  defp build_inputs(%{outputs: outputs, actions: actions}, act_key) do
+    GLogger.debug("building inputs for action '#{act_key}'")
+    action = Map.fetch!(actions, act_key)
     %{input_mapping: mapping, config: %{inputs: input_specs}} = action
 
     inputs_result = Ark.Ok.map_ok(mapping, &fetch_input(&1, input_specs, outputs))
 
     case inputs_result do
       {:ok, inputs} -> {:ok, Map.new(inputs)}
-      {:error, _} = err -> err
+      {:error, reason} -> cast_error(reason, act_key)
     end
   end
 
@@ -556,4 +554,51 @@ defmodule Tonka.Core.Grid do
   end
 
   def format_error(%{__exception__: true} = e), do: Exception.message(e)
+
+  defp cast_error({:error, reason}, act_key) do
+    cast_error(reason, act_key)
+  end
+
+  defp cast_error(reason, act_key) do
+    mapped =
+      case reason do
+        {:unmapped, input_key} ->
+          %UnmappedInputError{
+            action_key: act_key,
+            input_key: input_key
+          }
+
+        {:incompatible_type, input_key, input_type, output_type} ->
+          %InvalidInputTypeError{
+            action_key: act_key,
+            expected_type: input_type,
+            provided_type: output_type,
+            input_key: input_key
+          }
+
+        {:no_caster, input_key, input_type, origin} ->
+          %NoInputCasterError{
+            action_key: act_key,
+            input_key: input_key,
+            input_type: input_type,
+            origin: origin
+          }
+
+        {:undef_origin_action, input_key, origin_act} ->
+          %UndefinedOriginActionError{
+            action_key: act_key,
+            input_key: input_key,
+            origin_action_key: origin_act
+          }
+
+        {:service_resolve, inject_key, container_error} ->
+          %UnavailableServiceError{
+            action_key: act_key,
+            container_error: container_error,
+            inject_key: inject_key
+          }
+      end
+
+    {:error, mapped}
+  end
 end

@@ -117,15 +117,22 @@ defmodule Tonka.GridInjectionTest do
              ]}, _} = Grid.run(grid, container, "some_input")
   end
 
-  # test "the grid will pull services from the container when calling actions" do
-  #   grid =
-  #     Grid.new()
-  #     |> Grid.add_action("my_action", UsesService)
+  test "the grid will pull services from the container when calling actions" do
+    grid =
+      Grid.new()
+      |> Grid.add_action("my_action", UsesService)
 
-  #   container =
-  #     Container.new()
-  #     |> Container.freeze()
+    string = Base.encode64(:crypto.strong_rand_bytes(10))
 
-  #   assert {:ok, :done, _} = Grid.run(grid, container, "some_input")
-  # end
+    container =
+      Container.new()
+      |> Container.bind_impl(StringProvider, StringProvider.new(string))
+      |> Container.prebuild_all()
+      |> Ark.Ok.uok!()
+      |> Container.freeze()
+
+    assert {:ok, :done, _} = Grid.run(grid, container, "some_input")
+
+    assert_receive {:got_string, ^string}
+  end
 end

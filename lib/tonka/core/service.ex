@@ -40,7 +40,7 @@ defmodule Tonka.Core.Service do
   * The list of other services types to inject
   """
   @callback configure(config) :: config
-  @callback init(injects, params) :: {:ok, impl} | {:error, term}
+  @callback build(injects, params) :: {:ok, impl} | {:error, term}
 
   defmacro __using__(_) do
     quote location: :keep do
@@ -99,7 +99,7 @@ defmodule Tonka.Core.Service do
     with {:ok, casted_params} <- call_cast_params(module, params),
          {:ok, %{injects: inject_specs}} <- call_configure(module),
          {:ok, {injects, new_container}} <- Container.build_injects(container, inject_specs),
-         {:ok, impl} <- init_module(module, injects, casted_params) do
+         {:ok, impl} <- call_build(module, injects, casted_params) do
       {:ok, as_built(service, impl), new_container}
     else
       {:error, _} = err -> err
@@ -142,8 +142,8 @@ defmodule Tonka.Core.Service do
     end
   end
 
-  defp init_module(module, injects, params) when is_atom(module) do
-    case module.init(injects, params) do
+  defp call_build(module, injects, params) when is_atom(module) do
+    case module.build(injects, params) do
       {:ok, impl} -> {:ok, impl}
       {:error, _} = err -> err
       other -> {:error, {:bad_return, {module, :init, [injects]}, other}}

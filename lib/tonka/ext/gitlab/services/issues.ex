@@ -20,7 +20,7 @@ defmodule Tonka.Ext.Gitlab.Services.Issues do
     |> Service.use_service(:credentials, Tonka.Services.Credentials)
   end
 
-  def init(%{credentials: credentials}, %{credentials: path, projects: projects}) do
+  def build(%{credentials: credentials}, %{credentials: path, projects: projects}) do
     case Tonka.Services.Credentials.get_string(credentials, path) do
       {:ok, token} -> {:ok, new(private_token: token, projects: projects)}
       {:error, _} = err -> err

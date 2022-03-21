@@ -26,8 +26,8 @@ defmodule Tonka.ContainerTest do
       config
     end
 
-    @spec init(map, term) :: {:ok, struct} | {:error, term}
-    def init(injects, params) do
+    @spec build(map, term) :: {:ok, struct} | {:error, term}
+    def build(injects, params) do
       send(self(), {:init_called, __MODULE__})
       {:ok, %__MODULE__{val: :set_in_init}}
     end
@@ -49,8 +49,8 @@ defmodule Tonka.ContainerTest do
       |> Service.use_service(:mykey, SomeStructService)
     end
 
-    @spec init(map, term) :: {:ok, struct} | {:error, term}
-    def init(injects, params) do
+    @spec build(map, term) :: {:ok, struct} | {:error, term}
+    def build(injects, params) do
       {:ok, %__MODULE__{}}
     end
   end
@@ -155,7 +155,7 @@ defmodule Tonka.ContainerTest do
         with %{injects: inject_specs} <-
                SomeDependentStruct.configure(Service.base_config()),
              {:ok, {deps, c}} <- Container.build_injects(c, inject_specs),
-             {:ok, impl} <- SomeDependentStruct.init(deps, params) do
+             {:ok, impl} <- SomeDependentStruct.build(deps, params) do
           {:ok, impl, c}
         else
           {:error, _} = err -> err
@@ -177,7 +177,7 @@ defmodule Tonka.ContainerTest do
       |> Service.use_service(:a_stuff, Stuff)
     end
 
-    def init(%{a_stuff: %{stuff_name: stuff_name}}, _) when is_atom(stuff_name) do
+    def build(%{a_stuff: %{stuff_name: stuff_name}}, _) when is_atom(stuff_name) do
       send(self, {__MODULE__, stuff_name})
       {:ok, "UsesStuff name: #{stuff_name}"}
     end
@@ -196,7 +196,7 @@ defmodule Tonka.ContainerTest do
       |> Service.use_service(:user, UsesStuff)
     end
 
-    def init(%{a_stuff: %{stuff_name: stuff_name}, user: dep}, _) when is_atom(stuff_name) do
+    def build(%{a_stuff: %{stuff_name: stuff_name}, user: dep}, _) when is_atom(stuff_name) do
       send(self, {__MODULE__, stuff_name})
       {:ok, "AlsoUsesStuff name: #{stuff_name}, dep was: #{dep}"}
     end
@@ -212,7 +212,7 @@ defmodule Tonka.ContainerTest do
     defstruct []
     def cast_params(term), do: {:ok, term}
     def configure(config), do: config
-    def init(injects, params), do: {:ok, :available}
+    def build(injects, params), do: {:ok, :available}
   end
 
   defmodule PulledToLate do
@@ -221,7 +221,7 @@ defmodule Tonka.ContainerTest do
     defstruct []
     def cast_params(term), do: {:ok, term}
     def configure(config), do: config
-    def init(injects, params), do: raise("this should not be called")
+    def build(injects, params), do: raise("this should not be called")
   end
 
   test "a container can be frozen" do
@@ -293,7 +293,7 @@ defmodule Tonka.ContainerTest do
     def cast_params(term), do: {:ok, term}
     def configure(config), do: config
 
-    def init(_, _), do: {:ok, new()}
+    def build(_, _), do: {:ok, new()}
   end
 
   defmodule PrebuildFun do
@@ -313,7 +313,7 @@ defmodule Tonka.ContainerTest do
       |> Service.use_service(:a, PrebuildA)
     end
 
-    def init(%{a: a}, _), do: {:ok, new(a)}
+    def build(%{a: a}, _), do: {:ok, new(a)}
   end
 
   defmodule PrebuildImpl do

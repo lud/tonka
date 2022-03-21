@@ -79,30 +79,8 @@ defmodule Tonka.Core.Container do
     !!frozen?
   end
 
-  @common_bind_opts [
-    name: [
-      type: {:or, [{:in, [nil]}, :string]},
-      doc: """
-      When set, defines a named service that can be found
-      by its name.
-      """,
-      default: nil
-    ]
-  ]
-
-  @bind_schema NimbleOptions.new!(
-                 @common_bind_opts ++
-                   [
-                     params: [
-                       type: :any,
-                       doc: """
-                       Params to be passed to the service `c:Tonka.Core.Service.cast_params/1` callback.
-                       Only used if the service is module-based.
-                       """,
-                       default: %{}
-                     ]
-                   ]
-               )
+  @bind_schema Service.new_opts_schema()
+  @service_new_opts_keys Service.new_opts_keys()
 
   # TODO doc binding with a single utype with default opts, accepts only atoms and expects that
   # the utype is also a module.
@@ -136,37 +114,25 @@ defmodule Tonka.Core.Container do
 
   def bind(%Container{} = c, utype, builder, opts)
       when is_utype(utype) and is_builder(builder) and is_list(opts) do
-    service = opts_to_service(opts, builder)
+    service = new_service(builder, opts)
     put_in(c.services[utype], service)
   end
 
-  defp opts_to_service(options, builder) do
-    options
-    |> NimbleOptions.validate!(@bind_schema)
-    |> Keyword.put_new(:built, false)
-    |> Keyword.put_new(:impl, nil)
-    |> Keyword.put(:builder, builder)
-    |> Service.new()
-  end
+  defp new_service(builder, opts) do
+    opts =
+      opts
+      |> NimbleOptions.validate!(@bind_schema)
+      |> Keyword.take(@service_new_opts_keys)
 
-  @bind_impl_schema NimbleOptions.new!(@common_bind_opts)
+    Service.new(builder, opts)
+  end
 
   @doc """
   Registers a new service implementation in the container.
-
-  ### Options
-
-  #{NimbleOptions.docs(@bind_impl_schema)}
   """
-
-  @spec bind_impl(t, typespec, term, bind_impl_opts) :: t
-  def bind_impl(%Container{} = c, utype, impl, opts \\ [])
-      when is_utype(utype) and is_list(opts) do
-    service =
-      opts
-      |> NimbleOptions.validate!(@bind_impl_schema)
-      |> Keyword.merge(impl: impl, builder: nil, built: true, params: %{})
-      |> Service.new()
+  @spec bind_impl(t, typespec, term) :: t
+  def bind_impl(%Container{} = c, utype, impl) when is_utype(utype) do
+    service = Service.from_impl(impl)
 
     put_in(c.services[utype], service)
   end

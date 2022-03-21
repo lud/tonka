@@ -4,11 +4,10 @@ defmodule Tonka.Core.Service do
   alias Tonka.Core.Container
   use TODO
 
-  @enforce_keys [:built, :builder, :impl, :params, :name]
+  @enforce_keys [:built, :builder, :impl, :params]
   defstruct @enforce_keys
 
   @type t :: %__MODULE__{
-          name: nil | binary,
           built: boolean,
           builder: module,
           impl: term,
@@ -42,6 +41,22 @@ defmodule Tonka.Core.Service do
   @callback configure(config) :: config
   @callback build(injects, params) :: {:ok, impl} | {:error, term}
 
+  @new_opts [
+    params: [
+      type: :any,
+      doc: """
+      Params to be passed to the service `c:Tonka.Core.Service.cast_params/1` callback.
+      Only used if the service is module-based.
+      """,
+      default: %{}
+    ]
+  ]
+  @new_opts_schema NimbleOptions.new!(@new_opts)
+  @new_opts_keys Keyword.keys(@new_opts)
+
+  def new_opts_schema, do: @new_opts_schema
+  def new_opts_keys, do: @new_opts_keys
+
   defmacro __using__(_) do
     quote location: :keep do
       alias unquote(__MODULE__)
@@ -49,7 +64,18 @@ defmodule Tonka.Core.Service do
     end
   end
 
-  def new(vars) do
+  def new(builder, opts \\ []) do
+    vars =
+      opts
+      |> NimbleOptions.validate!(@new_opts_schema)
+      |> Keyword.put(:built, false)
+      |> Keyword.put(:impl, nil)
+      |> Keyword.put(:builder, builder)
+
+    struct!(__MODULE__, vars)
+  end
+
+  def _new(vars) do
     service = struct!(__MODULE__, vars)
     fun? = is_function(service.builder)
 
@@ -57,6 +83,10 @@ defmodule Tonka.Core.Service do
       do: raise(ArgumentError, "params is only available for module-based services")
 
     service
+  end
+
+  def from_impl(impl) do
+    %__MODULE__{impl: impl, builder: nil, built: true, params: %{}}
   end
 
   @doc false

@@ -8,7 +8,7 @@ defmodule Tonka.Actions.Queries.CompileMQLGroups do
     Hugs.denormalize(term, @params)
   end
 
-  def configure(config, params) do
+  def configure(config) do
     config
     |> Action.use_input(:query_groups, Tonka.T.MQLGroups)
   end
@@ -18,8 +18,6 @@ defmodule Tonka.Actions.Queries.CompileMQLGroups do
   def call(%{query_groups: groups}, _, params) do
     with {:ok, as_atoms} <- list_keys_for_atoms(params.data_type) do
       Ark.Ok.map_ok(groups, fn group ->
-        group |> IO.inspect(label: "group")
-
         with {:ok, compiled} <- Tonka.Core.Query.MQL.compile(group.query, as_atoms: as_atoms) do
           {:ok, Map.put(group, :query, compiled)}
         end

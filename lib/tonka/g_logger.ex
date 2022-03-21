@@ -17,6 +17,7 @@ defmodule Tonka.GLogger do
 
       quote do
         Logger.unquote(level)(unquote(message), unquote(meta))
+        :ok
       end
     end
   end)

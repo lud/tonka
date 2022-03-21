@@ -15,7 +15,7 @@ defmodule Tonka.Ext.Gitlab.Services.Issues do
     struct!(__MODULE__, opts)
   end
 
-  def configure(config, _params) do
+  def configure(config) do
     config
     |> Service.use_service(:credentials, Tonka.Services.Credentials)
   end

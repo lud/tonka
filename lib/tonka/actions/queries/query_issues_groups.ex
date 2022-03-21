@@ -5,7 +5,7 @@ defmodule Tonka.Actions.Queries.QueryIssuesGroups do
     {:ok, term}
   end
 
-  def configure(config, params) do
+  def configure(config) do
     config
     |> Action.use_input(:query_groups, Tonka.Actions.Queries.CompileMQLGroups.Return)
   end

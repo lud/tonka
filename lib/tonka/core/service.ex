@@ -1,4 +1,4 @@
-defmodule Tonka.Core.Container.Service do
+defmodule Tonka.Core.Service do
   alias __MODULE__
   alias Tonka.Core.Container.InjectSpec
   alias Tonka.Core.Container

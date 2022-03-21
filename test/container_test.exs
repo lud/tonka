@@ -1,7 +1,7 @@
 defmodule Tonka.ContainerTest do
   alias Tonka.Core.Container
   alias Tonka.Core.Container.ServiceResolutionError
-  alias Tonka.Core.Container.Service
+  alias Tonka.Core.Service
   alias Tonka.Core.Injector
   alias Tonka.Core.Container.Params
   use ExUnit.Case, async: true

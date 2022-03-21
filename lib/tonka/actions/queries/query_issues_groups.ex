@@ -13,7 +13,9 @@ defmodule Tonka.Actions.Queries.QueryIssuesGroups do
 
   def call(inputs, injects, params) do
     injects |> IO.inspect(label: "injects")
+
+    raise "do not use the issues sources here. Use an issue store on top of the issues source"
+
     issues = Tonka.Services.IssuesSource.fetch_all_issues(injects.issues_store)
-    raise "inject issues store"
   end
 end

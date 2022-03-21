@@ -16,7 +16,7 @@ defmodule Tonka.Core.Grid do
 
   alias Tonka.Core.Container
   alias Tonka.Core.Container.InjectSpec
-  alias Tonka.Core.Container.Service
+  alias Tonka.Core.Service
   alias Tonka.Core.Action
   alias __MODULE__
 

@@ -1,7 +1,7 @@
 defmodule Tonka.Core.Container do
   alias Tonka.Core.Container
   alias Tonka.Core.Injector
-  alias Tonka.Core.Container.Service
+  alias Tonka.Core.Service
   alias Tonka.Core.Container.InjectSpec
   use TODO
 
@@ -96,7 +96,7 @@ defmodule Tonka.Core.Container do
                      params: [
                        type: :any,
                        doc: """
-                       Params to be passed to the service `c:Tonka.Core.Container.Service.cast_params/1` callback.
+                       Params to be passed to the service `c:Tonka.Core.Service.cast_params/1` callback.
                        Only used if the service is module-based.
                        """,
                        default: %{}

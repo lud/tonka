@@ -1,5 +1,5 @@
 defmodule Tonka.Ext.Gitlab.Services.Issues do
-  use Tonka.Core.Container.Service
+  use Tonka.Core.Service
   alias Tonka.Services.IssuesSource
 
   @enforce_keys [:projects, :private_token]

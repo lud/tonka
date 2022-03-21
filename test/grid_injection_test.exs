@@ -3,7 +3,7 @@ defmodule Tonka.GridInjectionTest do
   alias Tonka.Core.Action
   alias Tonka.Core.Container
   alias Tonka.Core.Container.ServiceResolutionError
-  alias Tonka.Core.Container.Service
+  alias Tonka.Core.Service
   alias Tonka.Core.Grid.InvalidInputTypeError
   alias Tonka.Core.Grid.UnavailableServiceError
   alias Tonka.Core.Grid.NoInputCasterError

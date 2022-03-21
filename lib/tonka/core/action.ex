@@ -8,7 +8,7 @@ defmodule Tonka.Core.Action do
   alias Tonka.Core.Action.InputSpec
   alias Tonka.Core.Container.ReturnSpec
   alias Tonka.Core.Container.InjectSpec
-  alias Tonka.Core.Container.Service.ServiceConfig
+  alias Tonka.Core.Service.ServiceConfig
   alias __MODULE__
 
   defmodule ActionConfig do

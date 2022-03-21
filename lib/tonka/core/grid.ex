@@ -551,6 +551,14 @@ defmodule Tonka.Core.Grid do
     """
   end
 
+  def format_error({:invalid_injects, list}) do
+    """
+    some services required for injection were not satisfied:
+
+    - #{Enum.map_join(list, "\n- ", &format_error/1)}
+    """
+  end
+
   def format_error(%{__exception__: true} = e), do: Exception.message(e)
 
   defp cast_error(reason, act_key) do

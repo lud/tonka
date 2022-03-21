@@ -26,7 +26,7 @@ defmodule Tonka.Demo do
     container = prepare_container()
     grid = prepare_grid()
 
-    case Grid.run(grid, "some dummy input") do
+    case Grid.run(grid, container, "some dummy input") do
       {:ok, :done, grid} ->
         # grid |> IO.inspect(label: "grid", pretty: true)
         grid.outputs |> IO.inspect(label: "grid.outputs")
@@ -56,7 +56,7 @@ defmodule Tonka.Demo do
     {:ok, issues_source, container} = pull(container, Tonka.Services.IssuesSource)
     issues_source |> IO.inspect(label: "issues_source")
 
-    container
+    Container.freeze(container)
   end
 
   @spec build_credentials(Container.t()) :: {:ok, Tonka.Services.Credentials.t(), Container.t()}

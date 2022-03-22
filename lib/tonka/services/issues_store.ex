@@ -1,8 +1,10 @@
 defmodule Tonka.Services.IssuesStore do
   use Tonka.Core.Service
+  alias Tonka.Core.Query.MQL
+  alias Tonka.Services.IssuesSource
   alias __MODULE__
-
-  defstruct []
+  @enforce_keys [:source]
+  defstruct @enforce_keys
 
   # ---------------------------------------------------------------------------
   #  Service API
@@ -17,15 +19,43 @@ defmodule Tonka.Services.IssuesStore do
     |> Service.use_service(:source, Tonka.Services.IssuesSource)
   end
 
-  def build(injects, params) do
-    {:ok, %__MODULE__{}}
+  def build(injects, _params) do
+    {:ok, %__MODULE__{source: injects.source}}
   end
 
   # ---------------------------------------------------------------------------
   #  Store API
   # ---------------------------------------------------------------------------
 
-  def query_groups(%IssuesStore{}, groups) when is_list(groups) do
-    {:ok, Enum.map(groups, fn _ -> [] end)}
+  def mql_query(store, query) do
+    mql_query(store, query, :infinity)
+  end
+
+  def mql_query(store, query, -1) do
+    mql_query(store, query, :infinity)
+  end
+
+  def mql_query(store, _, _) when not is_struct(store, IssuesStore) do
+    raise ArgumentError, "expected a store, got: #{inspect(store)}"
+  end
+
+  def mql_query(_, query, _) when not is_map(query) do
+    raise ArgumentError, "expected a map as query, got: #{inspect(query)}"
+  end
+
+  def mql_query(_, _, limit) when not (is_integer(limit) or :infinity == limit) do
+    raise ArgumentError, "expected an integer or :infinity as limit, got: #{inspect(limit)}"
+  end
+
+  def mql_query(%IssuesStore{} = store, query, limit) do
+    run_mql(store, query, limit)
+  end
+
+  def run_mql(%IssuesStore{source: source} = store, query, limit) do
+    source |> IO.inspect(label: "source")
+
+    with {:ok, issues} = IssuesSource.fetch_all_issues(source) do
+      {:ok, Enum.filter(issues, &MQL.match?(query, &1))}
+    end
   end
 end

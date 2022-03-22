@@ -10,8 +10,8 @@ defmodule Tonka.ServiceSupervisorTest do
     #   to be called from build/2 like any other service
     # - This functions does not return {:ok, pid}, but {:ok, name}, where name
     #   will be a :via tuple.
-    # - The service can still return any value, like a struct. It may not even use
-    #   the process at all.
+    # - The service can still return any value, like a struct. It may not even
+    #   use the process at all.
     IO.warn("todo define service supervision.")
   end
 end

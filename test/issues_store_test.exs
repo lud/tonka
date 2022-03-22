@@ -19,13 +19,9 @@ defmodule Tonka.IssuesStoreTest do
   end
 
   test "assert the stubber" do
-    impls = %{mql_query: fn _, q -> {:got, q} end}
+    impls = %{fetch_all_issues: fn _ -> :stubbed! end}
 
-    assert {:got, :some_query} =
-             Tonka.Services.IssuesSource.mql_query(
-               TestIssuesSources.impl(impls),
-               :some_query
-             )
+    assert :stubbed! = Tonka.Services.IssuesSource.fetch_all_issues(TestIssuesSources.impl(impls))
   end
 
   test "the issues store is a service" do
@@ -49,40 +45,63 @@ defmodule Tonka.IssuesStoreTest do
     Container.new() |> Container.bind_impl(IssuesSource, TestIssuesSources.impl(funs))
   end
 
-  defp build_store(funs) do
+  defp with_issues(issues) do
+    impls = %{fetch_all_issues: fn _ -> {:ok, issues} end}
+    container = container(impls)
     service = Service.new(IssuesStore)
-    assert {:ok, %{impl: %IssuesStore{} = store}, _} = Service.build(service, container(%{}))
+    assert {:ok, %{impl: %IssuesStore{} = store}, _} = Service.build(service, container)
     store
   end
 
-  test "the issues store can query groups of issues" do
-    store = build_store(%{})
+  defp compile_query(yaml) when is_binary(yaml) do
+    yaml
+    |> IO.inspect(label: "yaml")
+    |> YamlElixir.read_from_string!()
+    |> IO.inspect(label: "decoded")
+    |> compile_query()
+  end
 
+  @issue_keys Tonka.Util.TypeUtils.struct_binary_keys(Tonka.Data.Issue)
+
+  defp compile_query(map) when is_map(map) do
+    MQL.compile!(map, as_atoms: @issue_keys)
+  end
+
+  test "T.MQLGroups defaults to zero for limits" do
     groups =
       """
-      - title: Group with limit 1
+      - title: Lim1
         query:
           labels: 'todo'
-        limit: 1
-      - title: Group with no limit
+        limit: 22
+      - title: Nolimit
         query:
-          labels: 'doing'
+          labels: 'todo'
       """
       |> YamlElixir.read_from_string!()
+      |> IO.inspect(label: "groups")
       |> Tonka.T.MQLGroups.cast_input()
-      |> Ark.Ok.uok!()
-      |> Enum.map(fn group ->
-        query =
-          MQL.compile!(group.query,
-            as_atoms: Tonka.Util.TypeUtils.struct_binary_keys(Tonka.Data.Issue)
-          )
 
-        Map.put(group, :query, query)
-      end)
-      |> IO.inspect(label: "compiled")
+    assert {:ok, [%{limit: 22}, %{limit: -1}]} = groups
+  end
 
-    store |> IO.inspect(label: "store")
+  test "the issues store will return a list for a query" do
+    query =
+      compile_query("""
+        labels: 'todo'
+      """)
 
-    assert {:ok, [_, _]} = IssuesStore.query_groups(store, groups)
+    store = with_issues([])
+    assert {:ok, list} = IssuesStore.mql_query(store, query, :infinity)
+  end
+
+  test "the issues store will return a list of issues" do
+    query =
+      compile_query("""
+        labels: 'todo'
+      """)
+
+    store = with_issues([])
+    assert {:ok, list} = IssuesStore.mql_query(store, query)
   end
 end

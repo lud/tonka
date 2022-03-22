@@ -42,7 +42,7 @@ defmodule Tonka.Core.Query.GraphQL do
   defp s_indent(3), do: "      "
   defp s_indent(2), do: "    "
   defp s_indent(1), do: "  "
-  defp s_indent(0), do: ""
+  defp s_indent(0), do: []
   defp s_indent(n), do: String.duplicate("  ", n)
 
   defp lf(c(pretty: true)), do: ?\n
@@ -73,6 +73,16 @@ defmodule Tonka.Core.Query.GraphQL do
           close_brace(ctx)
         ]
 
+      {field, args, subs} ->
+        [
+          indent(ctx),
+          format_field(field),
+          format_args(args, ctx),
+          open_brace(ctx),
+          format_subs(subs, ctx),
+          close_brace(ctx)
+        ]
+
       other ->
         raise ArgumentError, "unexepected sub item: #{inspect(other)}"
     end)
@@ -80,6 +90,29 @@ defmodule Tonka.Core.Query.GraphQL do
 
   defp format_field(name) when is_binary(name), do: name
   defp format_field(name) when is_atom(name), do: Atom.to_string(name)
+
+  defp format_args(nil, _), do: []
+  defp format_args([], _), do: []
+
+  defp format_args(args, ctx) when is_list(args) do
+    mapped =
+      args
+      |> Enum.map(fn {k, v} -> [format_arg_key(k), format_colon(ctx), format_arg_val(v)] end)
+      |> Enum.intersperse(32)
+
+    [?(, mapped, ?)]
+  end
+
+  defp format_arg_key(key) when is_binary(key), do: key
+  defp format_arg_key(key) when is_atom(key), do: Atom.to_string(key)
+
+  # passing an atom ensures that there will be no quotes around the argument
+  # value. other values are json_encoded
+  defp format_arg_val(value) when is_atom(value), do: Atom.to_string(value)
+  defp format_arg_val(value), do: Jason.encode!(value)
+
+  defp format_colon(c(pretty: true)), do: ": "
+  defp format_colon(_), do: ?:
 
   defp sort_subs(list, c(sort: false)), do: list
 

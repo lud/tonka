@@ -58,6 +58,7 @@ defmodule Tonka.Core.Query.GraphQL do
 
   defp format_subs(list, ctx) when is_list(list) do
     ctx = indent_left(ctx)
+    list = sort_subs(list, ctx)
 
     Enum.map(list, fn
       bin when is_binary(bin) when is_atom(bin) ->
@@ -79,4 +80,14 @@ defmodule Tonka.Core.Query.GraphQL do
 
   defp format_field(name) when is_binary(name), do: name
   defp format_field(name) when is_atom(name), do: Atom.to_string(name)
+
+  defp sort_subs(list, c(sort: false)), do: list
+
+  defp sort_subs(list, c(sort: true)) do
+    Enum.sort_by(list, &sorter/1)
+  end
+
+  defp sorter(key) when is_binary(key), do: key
+  defp sorter(key) when is_atom(key), do: Atom.to_string(key)
+  defp sorter(tuple) when is_tuple(tuple), do: tuple |> elem(0) |> sorter()
 end

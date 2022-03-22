@@ -9,12 +9,9 @@ defmodule Tonka.ServiceSupervisorTest do
     # - Add a new function Service.start_child(service_supervisor, child_spec)
     #   to be called from build/2 like any other service
     # - This functions does not return {:ok, pid}, but {:ok, name}, where name
-    #   will be a :via tuple. This should be the value returned from the build/2
-    #   function. Use the process dictionary when calling that function to
-    #   ensure that the name is what is actually returned. (The process
-    #   dictionary is only used as a verification mechanism, to ensure that the
-    #   name is actually reurned.)
-    # - If the service supervisor (one in each project) dies, then
+    #   will be a :via tuple.
+    # - The service can still return any value, like a struct. It may not even use
+    #   the process at all.
     IO.warn("todo define service supervision.")
   end
 end

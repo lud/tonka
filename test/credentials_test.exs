@@ -42,8 +42,11 @@ defmodule Tonka.CredentialsTest do
   end
 
   test "JsonFileCredentials implements Credentials" do
-    {:consolidated, impls} = Credentials.__protocol__(:impls)
-    assert JsonFileCredentials in impls
+    assert Tonka.Services.Credentials.JsonFileCredentials =
+             Tonka.Services.Credentials.Tonka.Services.Credentials.JsonFileCredentials.__impl__(
+               :for
+             )
+
     store = JsonFileCredentials.new(%{"k" => "v"})
     assert JsonFileCredentials.get_string(store, "k") == Credentials.get_string(store, "k")
   end

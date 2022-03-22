@@ -8,7 +8,7 @@ defmodule Tonka.MixProject do
       elixir: "~> 1.13",
       elixirc_paths: elixirc_paths(Mix.env()),
       compilers: [:gettext] ++ Mix.compilers(),
-      # consolidate_protocols: false,
+      consolidate_protocols: Mix.env() != :test,
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
       modkit: modkit(),

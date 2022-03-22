@@ -55,7 +55,16 @@ defmodule Tonka.Services.IssuesStore do
     source |> IO.inspect(label: "source")
 
     with {:ok, issues} = IssuesSource.fetch_all_issues(source) do
-      {:ok, Enum.filter(issues, &MQL.match?(query, &1))}
+      {_, filtered} =
+        Enum.reduce_while(issues, {0, []}, fn issue, {size, acc} ->
+          cond do
+            size >= limit -> {:halt, {size, acc}}
+            MQL.match?(query, issue) -> {:cont, {size + 1, [issue | acc]}}
+            :else -> {:cont, {size, acc}}
+          end
+        end)
+
+      {:ok, filtered}
     end
   end
 end

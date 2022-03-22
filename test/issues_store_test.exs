@@ -2,6 +2,7 @@ defmodule Tonka.IssuesStoreTest do
   use ExUnit.Case, async: true
 
   alias Tonka.Core.Query.MQL
+  alias Tonka.Data.Issue
   alias Tonka.Core.Container
   alias Tonka.Core.Service
   alias Tonka.Services.IssuesStore
@@ -95,13 +96,30 @@ defmodule Tonka.IssuesStoreTest do
     assert {:ok, list} = IssuesStore.mql_query(store, query, :infinity)
   end
 
+  defp rand_sid, do: :erlang.unique_integer([:positive]) |> to_string()
+  defp rand_str, do: :crypto.strong_rand_bytes(6) |> Base.encode64()
+
+  defp issue_with_labels(labels) do
+    %Issue{labels: labels, id: rand_sid(), iid: rand_sid(), title: rand_str(), url: rand_str()}
+  end
+
   test "the issues store will return a list of issues" do
     query =
       compile_query("""
         labels: 'todo'
       """)
 
-    store = with_issues([])
-    assert {:ok, list} = IssuesStore.mql_query(store, query)
+    store = with_issues([issue_with_labels(["todo"]), issue_with_labels(["other"])])
+    assert {:ok, [%Issue{labels: ["todo"]}]} = IssuesStore.mql_query(store, query)
+  end
+
+  test "the issues store will respect the limit" do
+    query =
+      compile_query("""
+        labels: 'todo'
+      """)
+
+    store = with_issues([issue_with_labels(["todo"]), issue_with_labels(["todo"])])
+    assert {:ok, [%Issue{labels: ["todo"]}]} = IssuesStore.mql_query(store, query, 1)
   end
 end

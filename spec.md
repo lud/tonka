@@ -168,3 +168,38 @@ Gitlab, so we need a param to tell which one to use.
       report:
         origin: static
         static: {some: data}
+
+
+## Events & Webhooks
+
+Some services can ask the webhooks service for injection, and register a webhook
+listener with a suffix in their build callback.
+
+For instance, registering the `gitlab` suffix would receive webhooks sent to
+`http://<host>/webhooks/<project_slug>/gitlab`.
+
+This will be tipically done by the gitlab issues source service. But the service
+that actually needs the event is the issue store, who will then ask the issues
+sources to refetch the issue. We also want to trigger a grid when an issue is
+updated, but to prevent races conditions where the issues store would receive
+the event after the grid start and would give a stale issue, we want the store
+itself to also publish an "issue was updated" event, and that event would be the
+one who triggers the grid.
+
+Webhooks are a specific part of the application, they are not mere events
+because they use the HTTP endpoint which is shared by all projects. When
+registering a webhook, a service registers a callback that is supposed to cast
+the webhook to an event or ignore it. Webhooks are delivered to the project
+process on all nodes using `Phoenix.PubSub`.
+
+After casting the webhook to an event, the project will dispatch the event to
+the project's local `Ark.PubSub`.
+
+Other services can subscribe to the local pubsub and receive those events. Event
+listeners are process-based: if a service listens to an event in their build
+callback, that event will be handled by the project process. The project process
+only uses events to start grid, so there are chances that other events will be
+discarded as not grid pipe will be found in the project settings.
+
+Process-based services will receive the event delivered as a message to their
+process.

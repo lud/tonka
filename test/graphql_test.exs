@@ -54,21 +54,24 @@ defmodule Tonka.GraphQLTest do
     assert format({:a, []}) === "query{a}"
   end
 
-  @tag :skip
   test "list with tupes" do
-    assert format(%{:a => ["b", {:c, ["d", "e"]}]}) ===
-             "query { a { b c { d e } } }"
+    assert format(
+             {:a,
+              [
+                "b",
+                {"c", ~w(d e)}
+              ]}
+           ) ===
+             "query{a{b c{d e}}}"
 
-    assert format(%{:a => ["b", {{:c, x: 1}, ["d", "e"]}]}) ===
-             "query { a { b c(x: 1) { d e } } }"
-  end
-
-  @tag :skip
-  test "strange behaviour" do
-    expected = "query { a { b { c } } }"
-    assert expected === format(%{"a" => %{"b" => "c"}})
-    assert expected === format(%{"a" => {"b", "c"}})
-    assert expected === format(%{"a" => [{"b", "c"}]})
+    assert format(
+             {:a,
+              [
+                "b",
+                {:c, [x: 1], ~w(d e)}
+              ]}
+           ) ===
+             "query{a{b c(x:1){d e}}}"
   end
 
   defp format(query, opts \\ []) do

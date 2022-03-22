@@ -34,7 +34,7 @@ defmodule Tonka.Core.Query.GraphQL do
   defp open_brace(c(pretty: true) = ctx), do: [" {", lf(ctx)]
   defp open_brace(c(pretty: false) = ctx), do: ["{", lf(ctx)]
   defp close_brace(c(pretty: true, indent: 0) = ctx), do: [indent(ctx), "}"]
-  defp close_brace(c(pretty: true) = ctx), do: [indent(ctx), "}", lf(ctx)]
+  defp close_brace(c(pretty: true) = ctx), do: [lf(ctx), indent(ctx), "}", lf(ctx)]
   defp close_brace(c(pretty: false)), do: "}"
 
   defp indent(c(pretty: true, indent: n)), do: s_indent(n)
@@ -68,8 +68,6 @@ defmodule Tonka.Core.Query.GraphQL do
     ctx = indent_left(ctx)
     list = sort_subs(list, ctx)
 
-    list |> IO.inspect(label: "list")
-
     list
     |> Stream.scan(nil, fn
       sub, prev ->
@@ -82,7 +80,6 @@ defmodule Tonka.Core.Query.GraphQL do
         [sep, format_sub(sub, ctx)]
     end)
     |> Enum.to_list()
-    |> IO.inspect(label: "scan")
   end
 
   defp requires_separator_after(nil) do

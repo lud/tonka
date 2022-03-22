@@ -17,7 +17,6 @@ defmodule Tonka.GraphQLTest do
              expected
   end
 
-  @tag :skip
   test "basic queries 2" do
     expected =
       """
@@ -30,7 +29,7 @@ defmodule Tonka.GraphQLTest do
       """
       |> String.trim()
 
-    assert format(%{a: ["b", :c]}, pretty: true) === expected
+    assert format([{:a, ~w(b c)}], pretty: true) === expected
   end
 
   @tag :skip

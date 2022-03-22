@@ -28,8 +28,8 @@ defmodule Tonka.Core.Query.GraphQL do
   defp open_brace(c(pretty: true) = ctx), do: [" {", lf(ctx)]
   defp open_brace(c(pretty: false) = ctx), do: ["{", lf(ctx)]
   defp close_brace(c(pretty: true, indent: 0) = ctx), do: [indent(ctx), "}"]
-  defp close_brace(c(pretty: true) = ctx), do: [indent(ctx), "}", lf(ctx)]
-  defp close_brace(c(pretty: false) = ctx), do: "}"
+  defp close_brace(c(pretty: true, indent: n) = ctx) when n > 0, do: [indent(ctx), "}", lf(ctx)]
+  defp close_brace(c(pretty: false)), do: "}"
 
   defp indent(c(pretty: true, indent: n)), do: s_indent(n)
   defp indent(c(pretty: false)), do: ""
@@ -56,11 +56,11 @@ defmodule Tonka.Core.Query.GraphQL do
     c(ctx, indent: n - 1)
   end
 
-  defp format_subs(list, ctx) do
+  defp format_subs(list, ctx) when is_list(list) do
     ctx = indent_left(ctx)
 
     Enum.map(list, fn
-      bin when is_binary(bin) ->
+      bin when is_binary(bin) when is_atom(bin) ->
         [indent(ctx), format_field(bin), lf(ctx)]
 
       {field, subs} ->
@@ -71,8 +71,12 @@ defmodule Tonka.Core.Query.GraphQL do
           format_subs(subs, ctx),
           close_brace(ctx)
         ]
+
+      other ->
+        raise ArgumentError, "unexepected sub item: #{inspect(other)}"
     end)
   end
 
-  defp format_field(name), do: name
+  defp format_field(name) when is_binary(name), do: name
+  defp format_field(name) when is_atom(name), do: Atom.to_string(name)
 end

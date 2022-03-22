@@ -7,6 +7,8 @@ defmodule Tonka.Core.Query.GraphQL do
   require Record
   Record.defrecordp(:c, indent: 0, pretty: false, sort: false)
 
+  def format_query(query, opts \\ [])
+
   def format_query(query, opts) when is_list(query) do
     ctx =
       opts
@@ -19,6 +21,10 @@ defmodule Tonka.Core.Query.GraphQL do
     |> tap(&IO.puts/1)
   end
 
+  def format_query(query, opts) when is_tuple(query) do
+    format_query([query], opts)
+  end
+
   defp base_context(opts) do
     c(pretty: !!opts[:pretty], sort: !!opts[:sort], indent: 0)
   end
@@ -28,11 +34,11 @@ defmodule Tonka.Core.Query.GraphQL do
   defp open_brace(c(pretty: true) = ctx), do: [" {", lf(ctx)]
   defp open_brace(c(pretty: false) = ctx), do: ["{", lf(ctx)]
   defp close_brace(c(pretty: true, indent: 0) = ctx), do: [indent(ctx), "}"]
-  defp close_brace(c(pretty: true, indent: n) = ctx) when n > 0, do: [indent(ctx), "}", lf(ctx)]
+  defp close_brace(c(pretty: true) = ctx), do: [indent(ctx), "}", lf(ctx)]
   defp close_brace(c(pretty: false)), do: "}"
 
   defp indent(c(pretty: true, indent: n)), do: s_indent(n)
-  defp indent(c(pretty: false)), do: ""
+  defp indent(c(pretty: false)), do: []
 
   defp s_indent(8), do: "                "
   defp s_indent(7), do: "              "
@@ -46,7 +52,9 @@ defmodule Tonka.Core.Query.GraphQL do
   defp s_indent(n), do: String.duplicate("  ", n)
 
   defp lf(c(pretty: true)), do: ?\n
-  defp lf(c(pretty: false)), do: 32
+  defp lf(c(pretty: false)), do: []
+  defp separator(c(pretty: true)), do: ?\n
+  defp separator(c(pretty: false)), do: 32
 
   defp indent_left(c(indent: n) = ctx) do
     c(ctx, indent: n + 1)
@@ -60,32 +68,57 @@ defmodule Tonka.Core.Query.GraphQL do
     ctx = indent_left(ctx)
     list = sort_subs(list, ctx)
 
-    Enum.map(list, fn
-      bin when is_binary(bin) when is_atom(bin) ->
-        [indent(ctx), format_field(bin), lf(ctx)]
+    list |> IO.inspect(label: "list")
 
-      {field, subs} ->
-        [
-          indent(ctx),
-          format_field(field),
-          open_brace(ctx),
-          format_subs(subs, ctx),
-          close_brace(ctx)
-        ]
+    list
+    |> Stream.scan(nil, fn
+      sub, prev ->
+        sep =
+          case requires_separator_after(prev) do
+            true -> [separator(ctx)]
+            false -> []
+          end
 
-      {field, args, subs} ->
-        [
-          indent(ctx),
-          format_field(field),
-          format_args(args, ctx),
-          open_brace(ctx),
-          format_subs(subs, ctx),
-          close_brace(ctx)
-        ]
-
-      other ->
-        raise ArgumentError, "unexepected sub item: #{inspect(other)}"
+        [sep, format_sub(sub, ctx)]
     end)
+    |> Enum.to_list()
+    |> IO.inspect(label: "scan")
+  end
+
+  defp requires_separator_after(nil) do
+    false
+  end
+
+  defp requires_separator_after(prev) do
+    not is_tuple(prev)
+  end
+
+  defp format_sub(sub, ctx) when is_binary(sub) when is_atom(sub),
+    do: [indent(ctx), format_field(sub)]
+
+  defp format_sub({field, []}, ctx) do
+    format_sub(field, ctx)
+  end
+
+  defp format_sub({field, subs}, ctx) do
+    [
+      indent(ctx),
+      format_field(field),
+      open_brace(ctx),
+      format_subs(subs, ctx),
+      close_brace(ctx)
+    ]
+  end
+
+  defp format_sub({field, args, subs}, ctx) do
+    [
+      indent(ctx),
+      format_field(field),
+      format_args(args, ctx),
+      open_brace(ctx),
+      format_subs(subs, ctx),
+      close_brace(ctx)
+    ]
   end
 
   defp format_field(name) when is_binary(name), do: name
@@ -93,8 +126,13 @@ defmodule Tonka.Core.Query.GraphQL do
 
   defp format_args(nil, _), do: []
   defp format_args([], _), do: []
+  defp format_args(map, _) when map_size(map) == 0, do: []
 
-  defp format_args(args, ctx) when is_list(args) do
+  defp format_args(args, ctx) when is_list(args) or is_map(args) do
+    if is_list(args) and not Keyword.keyword?(args) do
+      raise ArgumentError, "invalid args: #{inspect(args)}"
+    end
+
     mapped =
       args
       |> Enum.map(fn {k, v} -> [format_arg_key(k), format_colon(ctx), format_arg_val(v)] end)

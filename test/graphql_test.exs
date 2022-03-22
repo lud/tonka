@@ -47,12 +47,11 @@ defmodule Tonka.GraphQLTest do
     assert format([{"a", [sort: :desc], ~w(b c)}], pretty: true) === expected
   end
 
-  @tag :skip
   test "empty args or bodies" do
-    assert format(%{{:a, nil} => ["b", :c]}) === "query { a { b c } }"
-    assert format(%{{:a, []} => ["b", :c]}) === "query { a { b c } }"
-    assert format(%{{:a, %{}} => ["b", :c]}) === "query { a { b c } }"
-    assert format(%{:a => []}) === "query { a }"
+    assert format({:a, nil, ~w(b c)}) === "query{a{b c}}"
+    assert format({:a, [], ~w(b c)}) === "query{a{b c}}"
+    assert format({:a, %{}, ~w(b c)}) === "query{a{b c}}"
+    assert format({:a, []}) === "query{a}"
   end
 
   @tag :skip

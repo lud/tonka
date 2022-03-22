@@ -1,3 +1,5 @@
+alias Tonka.Core.Grid
+
 defmodule Tonka.Core.Grid.InvalidInputTypeError do
   defexception [:action_key, :input_key, :expected_type, :provided_type]
 
@@ -25,7 +27,7 @@ defmodule Tonka.Core.Grid.ActionFailureError do
   defexception [:action_key, :reason]
 
   def message(%{action_key: act, reason: reason}),
-    do: "action #{act} failed with reason: #{inspect(reason)}"
+    do: "action #{act} failed with reason: #{Grid.format_error(reason)}"
 end
 
 defmodule Tonka.Core.Grid.UndefinedOriginActionError do

@@ -358,7 +358,7 @@ defmodule Tonka.Core.Grid do
             run_loop(new_grid, container)
 
           {:error, reason, failed_grid} ->
-            GLogger.error("action '#{key}' failed with reason: #{inspect(reason)}")
+            GLogger.error(format_error(reason))
             {:error, reason, failed_grid}
         end
 
@@ -543,6 +543,10 @@ defmodule Tonka.Core.Grid do
   #  Error Formatting
   # ---------------------------------------------------------------------------
 
+  def format_error({:error, reason}) do
+    format_error(reason)
+  end
+
   def format_error({:invalid_inputs, list}) do
     """
     some inputs were invalid:
@@ -559,7 +563,30 @@ defmodule Tonka.Core.Grid do
     """
   end
 
+  def format_error({:bad_return, call, result}) do
+    """
+    invalid value returned
+
+    call:
+    #{format_call(call)}:
+
+    returned:
+    #{inspect(result)}"
+
+    """
+  end
+
   def format_error(%{__exception__: true} = e), do: Exception.message(e)
+  def format_error(message) when is_binary(message), do: message
+  def format_error(other), do: other
+
+  def format_call({fun, args}) do
+    "#{inspect(fun)}(#{Enum.map(args, &inspect/1)})"
+  end
+
+  def format_call({m, f, args}) do
+    "#{inspect(m)}.#{f}(#{Enum.map(args, &inspect/1)})"
+  end
 
   defp cast_error(reason, act_key) do
     mapped =

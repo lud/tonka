@@ -42,20 +42,19 @@ defmodule Tonka.Demo do
 
     container =
       new()
-      |> bind(Tonka.Services.Credentials, &build_credentials/1, name: "credentials")
+      |> bind(Tonka.Services.Credentials, &build_credentials/1)
       |> bind(Tonka.Services.IssuesSource, Tonka.Ext.Gitlab.Services.Issues,
-        name: "issues",
         params: %{
           "projects" => ["company-agilap/r-d/agislack"],
           "credentials" => "gitlab.private_token"
         }
       )
+      |> bind(Tonka.Services.IssuesStore)
 
-    {:ok, creds, container} = pull(container, Tonka.Services.Credentials)
-    creds |> IO.inspect(label: "creds", pretty: true)
     {:ok, issues_source, container} = pull(container, Tonka.Services.IssuesSource)
     issues_source |> IO.inspect(label: "issues_source")
 
+    {:ok, container} = Container.prebuild_all(container)
     Container.freeze(container)
   end
 

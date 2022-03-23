@@ -1,6 +1,6 @@
 defmodule Tonka.RichTextTest do
   use ExUnit.Case, async: true
-  alias Tonka.Core.Booklet.Block.RichText
+  alias Tonka.Core.Booklet.Blocks.RichText
 
   test "can validate a richtext" do
     valids = [

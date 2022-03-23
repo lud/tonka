@@ -1,6 +1,6 @@
 defmodule Tonka.Core.Booklet.Block do
   defmacro __using__(_) do
-    quote do
+    quote location: :keep do
       Module.register_attribute(__MODULE__, :__prop, accumulate: true)
       @before_compile unquote(__MODULE__)
       import unquote(__MODULE__),
@@ -29,7 +29,7 @@ defmodule Tonka.Core.Booklet.Block do
   defmacro __before_compile__(env) do
     properties = Module.get_attribute(env.module, :__prop)
 
-    {keys_opts, defacceptors} =
+    {keys_opts, acceptors} =
       properties
       |> Enum.map(fn {definition, options} ->
         {key, quoted} = defun(definition)
@@ -40,8 +40,9 @@ defmodule Tonka.Core.Booklet.Block do
     {keys, _} = Enum.unzip(keys_opts)
 
     [
-      defacceptors,
-      defacceptors_fallback(),
+      def_new(),
+      acceptors,
+      acceptors_fallback(),
       keys_lists(keys),
       # We could build our own __struct__ implementation based on properties
       # requirements, but we will rather keep the default elixir behaviour. The
@@ -51,8 +52,16 @@ defmodule Tonka.Core.Booklet.Block do
     ]
   end
 
+  defp def_new() do
+    quote location: :keep do
+      def new(props \\ []) do
+        Tonka.Core.Booklet.Block.cast_block!({__MODULE__, props})
+      end
+    end
+  end
+
   defp keys_lists(keys) do
-    quote do
+    quote location: :keep do
       def __props__() do
         unquote(keys)
       end
@@ -66,7 +75,7 @@ defmodule Tonka.Core.Booklet.Block do
       {:assigns, Macro.escape(%{})} | Enum.map(keys_opts, &as_defstruct_field/1)
     ]
 
-    quote do
+    quote location: :keep do
       @enforce_keys unquote(enforce_keys)
       defstruct unquote(kv_defaults)
     end
@@ -90,7 +99,7 @@ defmodule Tonka.Core.Booklet.Block do
     defun = {:when, whenloc, [{:_accept_prop, [], args} | guards]}
 
     quoted =
-      quote do
+      quote location: :keep do
         # Define the function with the guard. If the guard passes, we pass to
         # validate_prop/2.
         def unquote(defun) do
@@ -113,7 +122,7 @@ defmodule Tonka.Core.Booklet.Block do
   # Define a property acceptor without guard. We just pass to the validator.
   defp defun(key) when is_atom(key) do
     quoted =
-      quote do
+      quote location: :keep do
         def _accept_prop(unquote(key), value) do
           validate_prop(unquote(key), value)
         end
@@ -122,14 +131,14 @@ defmodule Tonka.Core.Booklet.Block do
     {key, quoted}
   end
 
-  defp defacceptors_fallback do
-    quote do
+  defp acceptors_fallback do
+    quote location: :keep do
       def _accept_prop(key, value) when is_atom(key) do
-        {:error, {:unknown_prop, __MODULE__, key, value}}
+        {:error, %Tonka.Core.Booklet.CastError{reason: {:unknown_prop, __MODULE__, key, value}}}
       end
 
       def _accept_prop(key, value) do
-        {:error, {:bad_key, __MODULE__, key, value}}
+        {:error, %Tonka.Core.Booklet.CastError{reason: {:bad_key, __MODULE__, key, value}}}
       end
     end
   end
@@ -159,6 +168,19 @@ defmodule Tonka.Core.Booklet.Block do
       reduce_props(props, module, [])
     else
       {:ok, struct!(module, props)}
+    end
+  end
+
+  def cast_block!(block) do
+    case cast_block(block) do
+      {:ok, block} ->
+        block
+
+      {:error, %{__exception__: true} = e} ->
+        raise e
+
+      {:error, reason} ->
+        raise "could not build block: #{inspect(reason)}"
     end
   end
 

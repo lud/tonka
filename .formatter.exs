@@ -4,16 +4,8 @@
   subdirectories: ["priv/*/migrations"],
   force_do_end_blocks: false,
   locals_without_parens: [
-    # action macros
-    input: 1,
-    output: 1,
-    call: 1,
 
-    # service macros
-    inject: 1,
-    provides: 1,
-    provides: 2,
-    init: 1,
-    defdispatch: 2
+    # blocks
+    prop: 1, prop: 2
   ]
 ]

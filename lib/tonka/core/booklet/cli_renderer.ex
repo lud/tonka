@@ -8,6 +8,7 @@ defmodule Tonka.Core.Booklet.CliRenderer do
   alias Tonka.Core.Booklet.Blocks.Section
 
   require IO.ANSI.Sequence
+  IO.ANSI.Sequence.defsequence(:not_crossed_out, 29)
 
   # "rc" (Rich Context) record to represent the wrapping of elements like strong, to known when to
   # reset brightness/color
@@ -63,15 +64,15 @@ defmodule Tonka.Core.Booklet.CliRenderer do
   end
 
   defp rich({:strong, sub}, ctx) do
-    ansi_wrap(sub, ctx, &start_strong/1, &stop_strong/1)
+    ansi_wrap(sub, ctx, &wrap_strong/1)
   end
 
   defp rich({:em, sub}, ctx) do
-    ansi_wrap(sub, ctx, &start_em/1, &stop_em/1)
+    ansi_wrap(sub, ctx, &wrap_em/1)
   end
 
   defp rich({:strike, sub}, ctx) do
-    ansi_wrap(sub, ctx, &start_strike/1, &stop_strike/1)
+    ansi_wrap(sub, ctx, &wrap_strike/1)
   end
 
   defp rich(other, _) do
@@ -87,65 +88,45 @@ defmodule Tonka.Core.Booklet.CliRenderer do
     []
   end
 
-  defp ansi_wrap(sub, ctx, start, stop) do
-    {tag, ctx} = start.(ctx)
-    main = rich(sub, ctx)
-    {end_tag, _ctx} = stop.(ctx)
-    [tag, main, end_tag]
+  # defp ansi_wrap(sub, ctx, start, stop) do
+  #   {tag, ctx} = start.(ctx)
+  #   main = rich(sub, ctx)
+  #   {end_tag, _ctx} = stop.(ctx)
+  #   [tag, main, end_tag]
+  # end
+
+  defp ansi_wrap(sub, ctx, start_stop) do
+    {start_tag, end_tag, sub_ctx} = start_stop.(ctx)
+    main = rich(sub, sub_ctx)
+    [start_tag, main, end_tag]
   end
 
-  defp start_strong(%{strong: 0} = ctx) do
-    {IO.ANSI.bright(), incr(ctx, :strong)}
+  defp wrap_strong(%{strong: 0, colors: []} = ctx) do
+    {IO.ANSI.bright(), IO.ANSI.normal(), incr(ctx, :strong)}
   end
 
-  defp start_strong(ctx) do
-    {[], incr(ctx, :strong)}
+  defp wrap_strong(%{strong: 0, colors: [color | _]} = ctx) do
+    {IO.ANSI.bright(), [IO.ANSI.normal(), apply(IO.ANSI, color, [])], incr(ctx, :strong)}
   end
 
-  defp stop_strong(%{strong: 1, colors: []} = ctx) do
-    {IO.ANSI.normal(), decr(ctx, :strong)}
+  defp wrap_strong(ctx) do
+    {[], [], incr(ctx, :strong)}
   end
 
-  defp stop_strong(%{strong: 1, colors: [color | _]} = ctx) do
-    {IO.ANSI.normal(), apply(IO.ANSI, color, []), decr(ctx, :strong)}
+  defp wrap_em(%{em: 0} = ctx) do
+    {IO.ANSI.italic(), IO.ANSI.not_italic(), incr(ctx, :em)}
   end
 
-  defp stop_strong(%{strong: n} = ctx) when n > 1 do
-    {[], decr(ctx, :strong)}
+  defp wrap_em(ctx) do
+    {[], [], incr(ctx, :em)}
   end
 
-  defp start_em(%{em: 0} = ctx) do
-    {IO.ANSI.italic(), incr(ctx, :em)}
+  defp wrap_strike(%{strike: 0} = ctx) do
+    {IO.ANSI.crossed_out(), not_crossed_out(), incr(ctx, :strike)}
   end
 
-  defp start_em(ctx) do
-    {[], incr(ctx, :em)}
-  end
-
-  defp stop_em(%{em: 1} = ctx) do
-    {IO.ANSI.not_italic(), decr(ctx, :em)}
-  end
-
-  defp stop_em(%{em: n} = ctx) when n > 1 do
-    {[], decr(ctx, :em)}
-  end
-
-  IO.ANSI.Sequence.defsequence(:not_crossed_out, 29)
-
-  defp start_strike(%{strike: 0} = ctx) do
-    {IO.ANSI.crossed_out(), incr(ctx, :strike)}
-  end
-
-  defp start_strike(ctx) do
-    {[], incr(ctx, :strike)}
-  end
-
-  defp stop_strike(%{strike: 1} = ctx) do
-    {not_crossed_out(), decr(ctx, :strike)}
-  end
-
-  defp stop_strike(%{strike: n} = ctx) when n > 1 do
-    {[], decr(ctx, :strike)}
+  defp wrap_strike(ctx) do
+    {[], [], incr(ctx, :strike)}
   end
 
   defp rc do

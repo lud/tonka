@@ -25,9 +25,9 @@ defmodule TonkaWeb.ErrorHelpers do
     # should be written to the errors.po file. The :count option is
     # set by Ecto and indicates we should also apply plural rules.
     if count = opts[:count] do
-      Gettext.dngettext(TonkaWeb.Gettext, "errors", msg, msg, count, opts)
+      Gettext.dngettext(Tonka.Gettext, "errors", msg, msg, count, opts)
     else
-      Gettext.dgettext(TonkaWeb.Gettext, "errors", msg, opts)
+      Gettext.dgettext(Tonka.Gettext, "errors", msg, opts)
     end
   end
 end

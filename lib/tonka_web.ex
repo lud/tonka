@@ -22,7 +22,7 @@ defmodule TonkaWeb do
       use Phoenix.Controller, namespace: TonkaWeb
 
       import Plug.Conn
-      import TonkaWeb.Gettext
+      import Tonka.Gettext
       alias TonkaWeb.Router.Helpers, as: Routes
     end
   end
@@ -54,7 +54,7 @@ defmodule TonkaWeb do
   def channel do
     quote do
       use Phoenix.Channel
-      import TonkaWeb.Gettext
+      import Tonka.Gettext
     end
   end
 
@@ -64,7 +64,7 @@ defmodule TonkaWeb do
       import Phoenix.View
 
       import TonkaWeb.ErrorHelpers
-      import TonkaWeb.Gettext
+      import Tonka.Gettext
       alias TonkaWeb.Router.Helpers, as: Routes
     end
   end

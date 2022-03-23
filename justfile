@@ -76,4 +76,3 @@ clean-dep dep:
     rm -rvf _build/prod/lib/{{dep}}
 
 clean: (clean-dep "tonka")
-

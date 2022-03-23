@@ -3,17 +3,12 @@ defmodule Tonka.Test.Stubber do
     quote bind_quoted: binding() do
       defs = protocol.__protocol__(:functions)
 
-      defs |> IO.inspect(label: "defs")
-
       Enum.each(defs, fn {function, arity} when arity >= 1 ->
         args =
           case arity do
             1 -> []
             n -> 1..(arity - 1) |> Enum.map(&Macro.var(:"arg#{&1}", nil))
           end
-
-        arity |> IO.inspect(label: "artiy")
-        args |> IO.inspect(label: "args")
 
         def unquote(function)(%{funs: funs} = state, unquote_splicing(args)) do
           Tonka.Test.Stubber.call_fun(funs, unquote(function), [state, unquote_splicing(args)])

@@ -16,9 +16,7 @@ defmodule Tonka.Core.Query.GraphQL do
       |> base_context()
 
     [open_query(ctx), open_brace(ctx), format_subs(query, ctx), close_brace(ctx)]
-    |> IO.inspect(label: "tokens")
     |> :erlang.iolist_to_binary()
-    |> tap(&IO.puts/1)
   end
 
   def format_query(query, opts) when is_tuple(query) do
@@ -33,8 +31,7 @@ defmodule Tonka.Core.Query.GraphQL do
 
   defp open_brace(c(pretty: true) = ctx), do: [" {", lf(ctx)]
   defp open_brace(c(pretty: false) = ctx), do: ["{", lf(ctx)]
-  defp close_brace(c(pretty: true, indent: 0) = ctx), do: [indent(ctx), "}"]
-  defp close_brace(c(pretty: true) = ctx), do: [lf(ctx), indent(ctx), "}", lf(ctx)]
+  defp close_brace(c(pretty: true) = ctx), do: [lf(ctx), indent(ctx), "}"]
   defp close_brace(c(pretty: false)), do: "}"
 
   defp indent(c(pretty: true, indent: n)), do: s_indent(n)
@@ -60,30 +57,34 @@ defmodule Tonka.Core.Query.GraphQL do
     c(ctx, indent: n + 1)
   end
 
-  defp indent_right(c(indent: n) = ctx) do
-    c(ctx, indent: n - 1)
-  end
-
   defp format_subs(list, ctx) when is_list(list) do
     ctx = indent_left(ctx)
     list = sort_subs(list, ctx)
 
     list
-    |> Stream.scan(nil, fn
-      sub, prev ->
+    |> Stream.scan({nil, nil}, fn
+      sub, {_, prev} ->
         sep =
-          case requires_separator_after(prev) do
+          case requires_separator_after(prev, ctx) do
             true -> [separator(ctx)]
             false -> []
           end
 
-        [sep, format_sub(sub, ctx)]
+        {[sep, format_sub(sub, ctx)], sub}
     end)
-    |> Enum.to_list()
+    |> Enum.map(&elem(&1, 0))
   end
 
-  defp requires_separator_after(nil) do
+  defp requires_separator_after(nil, _) do
     false
+  end
+
+  defp requires_separator_after(_, c(pretty: true)) do
+    true
+  end
+
+  defp requires_separator_after(prev, _) do
+    requires_separator_after(prev)
   end
 
   defp requires_separator_after(prev) do

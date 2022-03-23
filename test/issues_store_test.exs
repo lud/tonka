@@ -56,9 +56,7 @@ defmodule Tonka.IssuesStoreTest do
 
   defp compile_query(yaml) when is_binary(yaml) do
     yaml
-    |> IO.inspect(label: "yaml")
     |> YamlElixir.read_from_string!()
-    |> IO.inspect(label: "decoded")
     |> compile_query()
   end
 
@@ -80,7 +78,6 @@ defmodule Tonka.IssuesStoreTest do
           labels: 'todo'
       """
       |> YamlElixir.read_from_string!()
-      |> IO.inspect(label: "groups")
       |> Tonka.T.MQLGroups.cast_input()
 
     assert {:ok, [%{limit: 22}, %{limit: -1}]} = groups

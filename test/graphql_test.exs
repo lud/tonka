@@ -78,37 +78,38 @@ defmodule Tonka.GraphQLTest do
     _v = GraphQL.format_query(query, opts)
   end
 
-  @tag :skip
   test "can format a query" do
-    query = %{
-      # tuple-keys allow to put arguments. Map body allows to have children
-      # query objects
-      {:project, fullPath: "company-agilap/r-d/agislack"} => %{
-        # atom values will not be quoted
-        {:issues, sort: :updated_desc} => %{
-          # simple keys will not have arguments
-          # lists can be used if no child has children or arguments.
-          # atom or string names will never be quoted
-          pageInfo: ["endCursor", :startCursor, "hasNextPage"],
-          # If mixing with leaves and sub-objects, an empty list can be used to
-          # mark a child a a leaf.
-          edges: %{
-            node: %{
-              :title => [],
-              :id => [],
-              :timeEstimate => [],
-              :webUrl => [],
-              :userNotesCount => [],
-              {:notes, first: 1} => %{
-                edges: %{
-                  node: %{id: [], body: [], system: [], author: ["username"]}
-                }
-              }
-            }
-          }
-        }
-      }
-    }
+    # tuple-keys allow to put arguments. Map body allows to have children
+    # query objects
+    query =
+      {:project, [fullPath: "company-agilap/r-d/agislack"],
+       [
+         # atom values will not be quoted
+         {:issues, [sort: :updated_desc],
+          [
+            # simple keys will not have arguments
+            # lists can be used if no child has children or arguments.
+            # atom or string names will never be quoted
+            pageInfo: ["endCursor", :startCursor, "hasNextPage"],
+            # If mixing with leaves and sub-objects, an empty list can be used to
+            # mark a child a a leaf.
+            edges: [
+              node: [
+                {:title, []},
+                {:id, []},
+                {:timeEstimate, []},
+                {:webUrl, []},
+                {:userNotesCount, []},
+                {:notes, [first: 1],
+                 [
+                   edges: [
+                     node: [id: [], body: [], system: [], author: ["username"]]
+                   ]
+                 ]}
+              ]
+            ]
+          ]}
+       ]}
 
     expected = """
     query {

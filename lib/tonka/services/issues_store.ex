@@ -52,9 +52,7 @@ defmodule Tonka.Services.IssuesStore do
   end
 
   def run_mql(%IssuesStore{source: source} = store, query, limit) do
-    source |> IO.inspect(label: "source")
-
-    with {:ok, issues} = IssuesSource.fetch_all_issues(source) do
+    with {:ok, issues} <- IssuesSource.fetch_all_issues(source) do
       {_, filtered} =
         Enum.reduce_while(issues, {0, []}, fn issue, {size, acc} ->
           cond do

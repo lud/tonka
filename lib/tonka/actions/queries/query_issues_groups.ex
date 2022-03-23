@@ -13,11 +13,18 @@ defmodule Tonka.Actions.Queries.QueryIssuesGroups do
     |> Action.use_service(:store, IssuesStore)
   end
 
-  def call(inputs, injects, params) do
-    Ark.Ok.map_ok(inputs.query_groups, fn group ->
-      with {:ok, issues} <- IssuesStore.mql_query(injects.store, group.query, group.limit) do
-        {:ok, IssueGroup.new(issues: issues, title: group.title)}
-      end
-    end)
+  def call(%{query_groups: query_groups}, %{store: store}, params) do
+    Ark.Ok.map_ok(query_groups, fn group -> query_to_group(store, group) end)
+  end
+
+  defp query_to_group(store, %{query: query, limit: limit, title: title}) do
+    # we will actually select all the issues, but only take the limit number, so
+    # we can tell how much more there are
+    with {:ok, issues} <- IssuesStore.mql_query(store, query, :infinity) do
+      len = length(issues)
+      issues = Enum.take(issues, limit)
+      remain = len - limit
+      {:ok, IssueGroup.new(issues: issues, title: title, remain: remain)}
+    end
   end
 end

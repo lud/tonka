@@ -53,12 +53,27 @@ defmodule Tonka.Services.IssuesStore do
 
   def run_mql(%IssuesStore{source: source} = store, query, limit) do
     with {:ok, issues} <- IssuesSource.fetch_all_issues(source) do
+      issues |> IO.inspect(label: "issues")
+
       {_, filtered} =
         Enum.reduce_while(issues, {0, []}, fn issue, {size, acc} ->
+          IO.puts("---------------------------------------")
+          query |> IO.inspect(label: "query")
+          issue |> IO.inspect(label: "issue")
+          MQL.match?(query, issue) |> IO.inspect(label: "MQL.match?(query, issue)")
+
           cond do
-            size >= limit -> {:halt, {size, acc}}
-            MQL.match?(query, issue) -> {:cont, {size + 1, [issue | acc]}}
-            :else -> {:cont, {size, acc}}
+            size >= limit ->
+              size |> IO.inspect(label: "limit reached")
+              {:halt, {size, acc}}
+
+            MQL.match?(query, issue) ->
+              issue |> IO.inspect(label: "matched")
+              {:cont, {size + 1, [issue | acc]}}
+
+            :else ->
+              "nomatch" |> IO.inspect(label: "nomatch")
+              {:cont, {size, acc}}
           end
         end)
 

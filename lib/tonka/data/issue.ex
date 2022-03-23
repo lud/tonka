@@ -7,7 +7,7 @@ defmodule Tonka.Data.Issue do
   |> Hugs.field(:title, type: :binary, required: true)
   |> Hugs.field(:iid, type: :binary, required: true)
   |> Hugs.field(:url, type: :binary, required: true)
-  |> Hugs.field(:last_ext_username, type: :binary)
+  |> Hugs.field(:last_ext_username, type: :binary, required: false)
   |> Hugs.field(:last_member, type: :binary)
   |> Hugs.field(:last_team, type: :binary)
   |> Hugs.field(:labels, type: {:list, :binary})

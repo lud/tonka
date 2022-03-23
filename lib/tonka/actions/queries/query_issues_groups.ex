@@ -16,7 +16,7 @@ defmodule Tonka.Actions.Queries.QueryIssuesGroups do
   def call(inputs, injects, params) do
     Ark.Ok.map_ok(inputs.query_groups, fn group ->
       with {:ok, issues} <- IssuesStore.mql_query(injects.store, group.query, group.limit) do
-        IssueGroup.new(issues: issues, title: group.title)
+        {:ok, IssueGroup.new(issues: issues, title: group.title)}
       end
     end)
   end

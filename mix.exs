@@ -32,11 +32,14 @@ defmodule Tonka.MixProject do
       # App
 
       {:ark, "~> 0.7.3", runtime: false},
-      # {:hugs, path: "~/src/hugs", runtime: false},
-      {:hugs, "~> 0.1.11", runtime: false},
+      {:hugs, path: "~/src/hugs", runtime: false},
+      # {:hugs, "~> 0.1.11", runtime: false},
       {:yaml_elixir, "~> 2.5"},
       {:bbmustache, "~> 1.12"},
       {:nimble_options, "~> 0.4.0"},
+      {:tesla, "~> 1.4"},
+      {:hackney, "~> 1.17"},
+
       # {:ark, path: "~/src/ark", runtime: false},
       # {:type_check, "~> 0.10.0"},
 

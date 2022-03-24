@@ -30,4 +30,8 @@ defmodule Tonka.Core.Booklet.InputCaster do
   defp cast_block(%{"plaintext" => plaintext}) do
     PlainText.cast(text: plaintext)
   end
+
+  defp cast_block(%{"header" => text}) when is_binary(text) do
+    Header.cast(text: text)
+  end
 end

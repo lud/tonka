@@ -4,6 +4,7 @@ defmodule Tonka.GridTest do
   alias Tonka.Core.Container
   alias Tonka.Core.Grid.InvalidInputTypeError
   alias Tonka.Core.Grid.UndefinedOriginActionError
+  alias Tonka.Core.Grid.CastError
   alias Tonka.Core.Grid.NoInputCasterError
   alias Tonka.Core.Grid.UnmappedInputError
 
@@ -333,5 +334,46 @@ defmodule Tonka.GridTest do
     assert {:error, {:invalid_inputs, found_errors}} = Grid.prepare_and_validate(grid)
 
     assert Enum.sort(expected_errors) == Enum.sort(found_errors)
+  end
+
+  defmodule WillFailToCastType do
+    def cast_input(_), do: {:error, "failed on purpose"}
+  end
+
+  defmodule UsesCastFailureInput do
+    @behaviour Action
+
+    def cast_params(it), do: {:ok, it}
+
+    def configure(config) do
+      config
+      |> Action.use_input(:mykey, WillFailToCastType)
+    end
+
+    def call(_, _, _) do
+      raise "not called"
+    end
+  end
+
+  test "a failure to cast an input is properly reported" do
+    grid =
+      Grid.new()
+      # here we do not map the input :mytext for RequiresAText
+      |> Grid.add_action(
+        "use_failed_cast",
+        UsesCastFailureInput,
+        inputs: %{} |> Grid.pipe_grid_input(:mykey)
+      )
+
+    expected_error = %CastError{
+      action_key: "use_failed_cast",
+      input_key: :mykey,
+      input_type: WillFailToCastType,
+      reason: "failed on purpose"
+    }
+
+    assert {:error, found_error, _} = Grid.run(grid, :some_input)
+
+    assert expected_error == found_error
   end
 end

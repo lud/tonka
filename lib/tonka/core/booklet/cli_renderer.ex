@@ -47,6 +47,10 @@ defmodule Tonka.Core.Booklet.CliRenderer do
     text
   end
 
+  defp render_block(%Mrkdwn{mrkdwn: mrkdwn}, _) do
+    mrkdwn
+  end
+
   defp render_block(%Section{content: content, footer: footer, header: header}, ctx) do
     header = rich(header, ctx)
     content = rich(content, ctx)

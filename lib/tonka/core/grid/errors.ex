@@ -23,6 +23,15 @@ defmodule Tonka.Core.Grid.NoInputCasterError do
         " type #{inspect(type)} has no caster defined"
 end
 
+defmodule Tonka.Core.Grid.CastError do
+  defexception [:action_key, :input_key, :input_type, :reason]
+
+  def message(%{action_key: act, input_key: ik, input_type: type, reason: reason}) do
+    "error when casting input #{inspect(ik)} of type #{inspect(type)} for action #{act}: " <>
+      inspect(reason)
+  end
+end
+
 defmodule Tonka.Core.Grid.ActionFailureError do
   defexception [:action_key, :reason]
 

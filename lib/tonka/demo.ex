@@ -94,9 +94,13 @@ defmodule Tonka.Demo do
       inputs:
         %{}
         |> Grid.pipe_action(:content, "issues_booklet")
-        |> Grid.pipe_static(:before, """
+        |> Grid.pipe_static(
+          :before,
+          yaml!("""
+          - header:
 
-        """)
+          """)
+        )
         |> Grid.pipe_static(:after, """
 
         """)

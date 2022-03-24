@@ -44,13 +44,14 @@ defmodule Tonka.BookletTest do
   test "casting a list of blocks" do
     booklet =
       """
-      - mrkdwn: >-
-          Hello, this is nice.
+      - header: Hello!
+      - mrkdwn: |-
+          This is *nice*.
 
           Though I'd rather not use embedded YAML for those tests!
-      - plaintext: |
+      - plaintext: >
           This is some plaintext
-          and it has newlines
+          but it does'nt have newlines
       """
       |> yaml!
       |> IO.inspect(label: "yaml")
@@ -59,6 +60,8 @@ defmodule Tonka.BookletTest do
 
     booklet |> IO.inspect(label: "booklet")
 
-    assert [%Mrkdwn{}, %PlainText{}] = booklet.blocks
+    CliRenderer.render!(booklet) |> IO.puts()
+
+    assert [%Header{}, %Mrkdwn{}, %PlainText{}] = booklet.blocks
   end
 end

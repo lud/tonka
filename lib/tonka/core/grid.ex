@@ -8,6 +8,7 @@ defmodule Tonka.Core.Grid do
   alias Tonka.Core.Grid.{
     InvalidInputTypeError,
     NoInputCasterError,
+    CastError,
     UnmappedInputError,
     UndefinedOriginActionError,
     UnavailableServiceError,
@@ -533,7 +534,7 @@ defmodule Tonka.Core.Grid do
       caster when is_atom(caster) ->
         case caster.cast_input(rawvalue) do
           {:ok, value} -> {:ok, {input_key, value}}
-          {:error, reason} -> {:error, {:input_cast_error, reason}}
+          {:error, reason} -> {:error, {:input_cast_error, input_key, input_type, reason}}
           other -> {:error, {:invalid_input_cast, other}}
         end
     end
@@ -611,6 +612,14 @@ defmodule Tonka.Core.Grid do
             input_key: input_key,
             input_type: input_type,
             origin: origin
+          }
+
+        {:input_cast_error, input_key, input_type, reason} ->
+          %CastError{
+            action_key: act_key,
+            input_key: input_key,
+            input_type: input_type,
+            reason: reason
           }
 
         {:undef_origin_action, input_key, origin_act} ->

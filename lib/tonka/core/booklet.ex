@@ -6,7 +6,7 @@ defmodule Tonka.Core.Booklet do
 
   @type t :: %Booklet{}
 
-  @spec from_blocks(list) :: {:ok, %Booklet{}} | {:error, term}
+  @spec from_blocks(list) :: {:ok, Booklet.t()} | {:error, term}
   def from_blocks(blocks) when is_list(blocks) do
     blocks
     |> splat_list()

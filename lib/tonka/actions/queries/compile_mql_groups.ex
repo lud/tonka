@@ -16,15 +16,6 @@ defmodule Tonka.Actions.Queries.CompileMQLGroups do
   def return_type, do: __MODULE__.Return
 
   def call(%{query_groups: groups}, _, params) do
-    IO.puts("------call----- xx")
-
-    params.data_type |> IO.inspect(label: "params.data_type")
-
-    list_keys_for_atoms(params.data_type)
-    |> IO.inspect(label: "list_keys_for_atoms(params.data_type)")
-
-    IO.puts("------call----- 22")
-
     with {:ok, as_atoms} <- list_keys_for_atoms(params.data_type) do
       Ark.Ok.map_ok(groups, fn group ->
         with {:ok, compiled} <- Tonka.Core.Query.MQL.compile(group.query, as_atoms: as_atoms) do

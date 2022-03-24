@@ -29,7 +29,7 @@ defmodule Tonka.Demo do
     case Grid.run(grid, container, "some dummy input") do
       {:ok, :done, grid} ->
         # grid |> IO.inspect(label: "grid", pretty: true)
-        grid.outputs |> IO.inspect(label: "grid.outputs")
+        # grid.outputs |> IO.inspect(label: "grid.outputs")
         IO.puts("OK")
 
       {:error, detail, grid} ->
@@ -80,7 +80,7 @@ defmodule Tonka.Demo do
           - title: TODO List
             query:
               labels: 'todo'
-            limit: 1
+            limit: 2
           """
           |> YamlElixir.read_from_string!()
         )

@@ -23,7 +23,7 @@ defmodule Tonka.Core.Booklet.CliRenderer do
   end
 
   def render!(booklet) do
-    ctx = Map.new()
+    ctx = base_context()
 
     booklet.blocks
     |> Enum.intersperse(:block_separator)
@@ -35,6 +35,10 @@ defmodule Tonka.Core.Booklet.CliRenderer do
     "\n\n"
   end
 
+  defp render_block(raw, _) when is_binary(raw) do
+    raw
+  end
+
   defp render_block(%Header{text: text}, _) do
     "# #{text}"
   end
@@ -43,8 +47,24 @@ defmodule Tonka.Core.Booklet.CliRenderer do
     text
   end
 
-  defp render_block(%RichText{data: data}, _) do
-    rich(data, rc())
+  defp render_block(%Section{content: content, footer: footer, header: header}, ctx) do
+    header = rich(header, ctx)
+    content = rich(content, ctx)
+    footer = rich(footer, ctx)
+
+    [
+      "-----------------------------------------------\n",
+      header,
+      ?\n,
+      content,
+      ?\n,
+      footer,
+      "\n-----------------------------------------------"
+    ]
+  end
+
+  defp render_block(%RichText{data: data}, ctx) do
+    rich(data, ctx)
   end
 
   defp incr(map, key) do
@@ -87,6 +107,10 @@ defmodule Tonka.Core.Booklet.CliRenderer do
   defp rich({:link, href, sub}, ctx) do
     link = ansi_wrap(href, ctx, &wrap_color(&1, @link_color))
     [rich(sub, ctx), " ", ?(, link, ?)]
+  end
+
+  defp rich({:ul, sub}, ctx) do
+    Enum.map(sub, fn sub -> ["* ", rich(sub, ctx), ?\n] end)
   end
 
   defp rich(other, _) do
@@ -143,7 +167,7 @@ defmodule Tonka.Core.Booklet.CliRenderer do
     {apply(IO.ANSI, color, []), restart_tags(ctx), put_color(ctx, color)}
   end
 
-  defp rc do
+  defp base_context do
     %{strong: 0, colors: [], em: 0, strike: 0}
   end
 

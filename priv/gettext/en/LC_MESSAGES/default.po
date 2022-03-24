@@ -1,0 +1,19 @@
+## "msgid"s in this file come from POT (.pot) files.
+##
+## Do not add, change, or remove "msgid"s manually here as
+## they're tied to the ones in the corresponding POT file
+## (with the same domain).
+##
+## Use "mix gettext.extract --merge" or "mix gettext.merge"
+## to merge POT files into PO files.
+msgid ""
+msgstr ""
+"Language: en\n"
+"Plural-Forms: nplurals=2\n"
+
+#, elixir-autogen, elixir-format
+#: lib/tonka/actions/render/booklet_from_issues_groups.ex:47
+msgid "tonka.BookletFromIssuesGroups.remaining_issue"
+msgid_plural "tonka.BookletFromIssuesGroups.remaining_issues"
+msgstr[0] "And another issue"
+msgstr[1] "And %{count} other issues"

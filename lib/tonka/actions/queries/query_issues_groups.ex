@@ -7,7 +7,7 @@ defmodule Tonka.Actions.Queries.QueryIssuesGroups do
     {:ok, term}
   end
 
-  def return_type, do: IssuesGroup
+  def return_type, do: {:list, IssuesGroup}
 
   def configure(config) do
     config
@@ -15,7 +15,7 @@ defmodule Tonka.Actions.Queries.QueryIssuesGroups do
     |> Action.use_service(:store, IssuesStore)
   end
 
-  def call(%{query_groups: query_groups}, %{store: store}, params) do
+  def call(%{query_groups: query_groups}, %{store: store}, _params) do
     Ark.Ok.map_ok(query_groups, fn group -> query_to_group(store, group) end)
   end
 
@@ -26,7 +26,7 @@ defmodule Tonka.Actions.Queries.QueryIssuesGroups do
       len = length(issues)
       issues = Enum.take(issues, limit)
       remain = len - limit
-      {:ok, IssueGroup.new(issues: issues, title: title, remain: remain)}
+      {:ok, IssuesGroup.new(issues: issues, title: title, remain: remain)}
     end
   end
 end

@@ -39,7 +39,7 @@ defmodule Tonka.Core.Container do
 
   @type typespec ::
           typealias
-          | {:collection, typespec}
+          | {:list, typespec}
           | {:remote_type, module, atom}
           | {:type, atom}
   @type typealias :: module
@@ -269,8 +269,8 @@ defmodule Tonka.Core.Container do
     terminal
   end
 
-  def expand_type({:collection, type}) do
-    {:collection, expand_type(type)}
+  def expand_type({:list, type}) do
+    {:list, expand_type(type)}
   end
 
   def to_quoted_type({:remote_type, module, type})
@@ -292,7 +292,7 @@ defmodule Tonka.Core.Container do
     end
   end
 
-  def to_quoted_type({:collection, type}) do
+  def to_quoted_type({:list, type}) do
     quote do
       [unquote(to_quoted_type(type))]
     end

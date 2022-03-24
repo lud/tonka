@@ -1,10 +1,9 @@
 defmodule Tonka.Demo do
   alias Tonka.Core.Container
-  alias Tonka.Core.Container.Params
   alias Tonka.Core.Grid
-  require Logger
-  alias Tonka.Core.Action
   import Container
+  import Tonka.Utils
+  require Logger
 
   def run do
     # -----------------------------------------------------------------------------
@@ -82,7 +81,7 @@ defmodule Tonka.Demo do
               labels: 'todo'
             limit: 2
           """
-          |> YamlElixir.read_from_string!()
+          |> yaml!()
         )
     )
     |> Grid.add_action("query_issues", Tonka.Actions.Queries.QueryIssuesGroups,
@@ -90,6 +89,17 @@ defmodule Tonka.Demo do
     )
     |> Grid.add_action("issues_booklet", Tonka.Actions.Render.BookletFromIssuesGroups,
       inputs: %{} |> Grid.pipe_action(:issues_groups, "query_issues")
+    )
+    |> Grid.add_action("report_booklet", Tonka.Actions.Render.WrapBooklet,
+      inputs:
+        %{}
+        |> Grid.pipe_action(:content, "issues_booklet")
+        |> Grid.pipe_static(:before, """
+
+        """)
+        |> Grid.pipe_static(:after, """
+
+        """)
     )
   end
 end

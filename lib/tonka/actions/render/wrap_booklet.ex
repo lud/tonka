@@ -1,4 +1,4 @@
-defmodule Tonka.Actions.Render.BookletFromIssuesGroups do
+defmodule Tonka.Actions.Render.WrapBooklet do
   use Tonka.Core.Action
   alias Tonka.Data.IssuesGroup
   alias Tonka.Core.Booklet
@@ -19,7 +19,9 @@ defmodule Tonka.Actions.Render.BookletFromIssuesGroups do
 
   def configure(config) do
     config
-    |> Action.use_input(:issues_groups, {:list, IssuesGroup})
+    |> Action.use_input(:content, Booklet)
+    |> Action.use_input(:before, Booklet)
+    |> Action.use_input(:after, Booklet)
   end
 
   def call(%{issues_groups: issues_groups}, _, _params) do

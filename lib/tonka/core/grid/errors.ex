@@ -19,7 +19,7 @@ defmodule Tonka.Core.Grid.NoInputCasterError do
 
   def message(%{origin: ori, action_key: act, input_key: ik, input_type: type}),
     do:
-      "invalid input origin #{inspect(ori)} for action #{act} at input #{inspect(ik)}," <>
+      "unsupported input origin #{inspect(ori)} for action #{act} at input #{inspect(ik)}," <>
         " type #{inspect(type)} has no caster defined"
 end
 

@@ -25,7 +25,7 @@ defmodule Tonka.Actions.Queries.CompileMQLGroups do
     end
   end
 
-  @issue_binkeys Tonka.Util.TypeUtils.struct_binary_keys(Tonka.Data.Issue)
+  @issue_binkeys Tonka.Utils.struct_binary_keys(Tonka.Data.Issue)
 
   defp list_keys_for_atoms("issue"), do: {:ok, @issue_binkeys}
   defp list_keys_for_atoms("issues"), do: {:ok, @issue_binkeys}

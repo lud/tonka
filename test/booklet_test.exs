@@ -1,7 +1,8 @@
 defmodule Tonka.BookletTest do
   use ExUnit.Case, async: true
-
+  import Tonka.Utils
   alias Tonka.Core.Booklet
+  alias Tonka.Core.Booklet.InputCaster
   alias Tonka.Core.Booklet.Blocks.Header
   alias Tonka.Core.Booklet.Blocks.Mrkdwn
   alias Tonka.Core.Booklet.Blocks.PlainText
@@ -33,10 +34,10 @@ defmodule Tonka.BookletTest do
       ])
 
     assert expected == wrapper
+  end
 
-    rendered = CliRenderer.render!(wrapper)
-
-    IO.puts(rendered)
-    IO.puts("")
+  test "casting empty elements as booklets" do
+    assert {:ok, []} == InputCaster.cast_input([])
+    assert {:ok, []} == InputCaster.cast_input(nil)
   end
 end

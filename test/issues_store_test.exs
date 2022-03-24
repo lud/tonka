@@ -60,7 +60,7 @@ defmodule Tonka.IssuesStoreTest do
     |> compile_query()
   end
 
-  @issue_keys Tonka.Util.TypeUtils.struct_binary_keys(Tonka.Data.Issue)
+  @issue_keys Tonka.Utils.struct_binary_keys(Tonka.Data.Issue)
 
   defp compile_query(map) when is_map(map) do
     MQL.compile!(map, as_atoms: @issue_keys)

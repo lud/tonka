@@ -30,6 +30,10 @@ defmodule Tonka.Core.Booklet do
     end
   end
 
+  def cast_input(input) do
+    Tonka.Core.Booklet.InputCaster.cast_input(input)
+  end
+
   defmodule CastError do
     defexception [:reason]
 

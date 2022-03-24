@@ -70,8 +70,6 @@ defmodule Tonka.Demo do
 
   def prepare_grid do
     Grid.new()
-
-    # |> Grid.add_action("define_query", )
     |> Grid.add_action("define_query", Tonka.Actions.Queries.CompileMQLGroups,
       params: %{"data_type" => "issue"},
       inputs:

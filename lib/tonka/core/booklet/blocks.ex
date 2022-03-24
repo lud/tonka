@@ -7,6 +7,7 @@ defmodule Tonka.Core.Booklet.Blocks do
     use Block
 
     prop text when is_binary(text), required: true
+    prop level when is_integer(level) and level > 0, default: 1
   end
 
   defmodule Section do

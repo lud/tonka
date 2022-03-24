@@ -49,6 +49,10 @@ defmodule Tonka.Core.Booklet do
   """
   def splat_list(list) when is_list(list) do
     list
+    |> Enum.map(fn
+      %Booklet{} = nested -> nested.blocks
+      other -> other
+    end)
     |> :lists.flatten()
     |> Enum.reject(fn
       nil -> true

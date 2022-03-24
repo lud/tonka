@@ -25,18 +25,18 @@ defmodule Tonka.Core.Booklet.CliRenderer do
   def render!(booklet) do
     ctx = Map.new()
 
-    [
-      Enum.map(booklet.blocks, &render_block(&1, ctx))
-    ]
-    |> Booklet.splat_list()
+    booklet.blocks
+    |> Enum.intersperse(:block_separator)
+    |> Enum.map(&render_block(&1, ctx))
     |> :erlang.iolist_to_binary()
   end
 
-  defp render_block(%Header{text: text}, _) do
-    """
-    # #{text}
+  defp render_block(:block_separator, _) do
+    "\n\n"
+  end
 
-    """
+  defp render_block(%Header{text: text}, _) do
+    "# #{text}"
   end
 
   defp render_block(%PlainText{text: text}, _) do
@@ -86,7 +86,7 @@ defmodule Tonka.Core.Booklet.CliRenderer do
 
   defp rich({:link, href, sub}, ctx) do
     link = ansi_wrap(href, ctx, &wrap_color(&1, @link_color))
-    [?(, link, ?), rich(sub, ctx)]
+    [rich(sub, ctx), " ", ?(, link, ?)]
   end
 
   defp rich(other, _) do

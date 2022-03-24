@@ -44,7 +44,14 @@ defmodule Tonka.BookletCliTest do
             "hello ",
             {:strong, "this is important "},
             {:em, "this is noticeable "},
+            "\n",
             ["this is a date: ", {:datetime, DateTime.utc_now()}, ", "],
+            "\n",
+            [
+              "this also in italics: ",
+              {:em, [DateTime.utc_now(), ", I ", {:strong, "love"}, " italics!"]},
+              ", "
+            ],
             {:strike, "this is wrong"},
             ", ",
             {:link, "http://example.com", "Here Is Some link, "},

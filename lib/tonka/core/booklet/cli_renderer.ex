@@ -10,6 +10,9 @@ defmodule Tonka.Core.Booklet.CliRenderer do
   require IO.ANSI.Sequence
   IO.ANSI.Sequence.defsequence(:not_crossed_out, 29)
 
+  @date_color :magenta
+  @link_color :blue
+
   # "rc" (Rich Context) record to represent the wrapping of elements like strong, to known when to
   # reset brightness/color
 
@@ -44,15 +47,12 @@ defmodule Tonka.Core.Booklet.CliRenderer do
     rich(data, rc())
   end
 
-  defp incr(map, key) when is_map_key(map, key) do
+  defp incr(map, key) do
     Map.update!(map, key, &(&1 + 1))
   end
 
-  defp decr(map, key) when is_map_key(map, key) do
-    Map.update!(map, key, fn n ->
-      true = n > 0
-      n - 1
-    end)
+  defp put_color(map, color) do
+    Map.update!(map, :colors, &[color | &1])
   end
 
   defp rich(list, ctx) when is_list(list) do
@@ -73,6 +73,20 @@ defmodule Tonka.Core.Booklet.CliRenderer do
 
   defp rich({:strike, sub}, ctx) do
     ansi_wrap(sub, ctx, &wrap_strike/1)
+  end
+
+  defp rich({:datetime, %DateTime{} = dt}, ctx) do
+    rich(dt, ctx)
+  end
+
+  defp rich(%DateTime{} = dt, ctx) do
+    sub = DateTime.to_string(dt)
+    ansi_wrap(sub, ctx, &wrap_color(&1, @date_color))
+  end
+
+  defp rich({:link, href, sub}, ctx) do
+    link = ansi_wrap(href, ctx, &wrap_color(&1, @link_color))
+    [?(, link, ?), rich(sub, ctx)]
   end
 
   defp rich(other, _) do
@@ -101,12 +115,8 @@ defmodule Tonka.Core.Booklet.CliRenderer do
     [start_tag, main, end_tag]
   end
 
-  defp wrap_strong(%{strong: 0, colors: []} = ctx) do
-    {IO.ANSI.bright(), IO.ANSI.normal(), incr(ctx, :strong)}
-  end
-
-  defp wrap_strong(%{strong: 0, colors: [color | _]} = ctx) do
-    {IO.ANSI.bright(), [IO.ANSI.normal(), apply(IO.ANSI, color, [])], incr(ctx, :strong)}
+  defp wrap_strong(%{strong: 0} = ctx) do
+    {IO.ANSI.bright(), restart_tags(ctx), incr(ctx, :strong)}
   end
 
   defp wrap_strong(ctx) do
@@ -129,7 +139,33 @@ defmodule Tonka.Core.Booklet.CliRenderer do
     {[], [], incr(ctx, :strike)}
   end
 
+  defp wrap_strike(ctx) do
+    {[], [], incr(ctx, :strike)}
+  end
+
+  defp wrap_color(%{colors: [], strong: 0} = ctx, color) do
+    {apply(IO.ANSI, color, []), restart_tags(ctx), put_color(ctx, color)}
+  end
+
   defp rc do
     %{strong: 0, colors: [], em: 0, strike: 0}
+  end
+
+  defp restart_tags(%{strong: strong, colors: colors, em: em}) do
+    [
+      IO.ANSI.reset(),
+      case strong do
+        0 -> []
+        _ -> IO.ANSI.bright()
+      end,
+      case colors do
+        [] -> []
+        [col] -> apply(IO.ANSI, col, [])
+      end,
+      case em do
+        0 -> []
+        _ -> IO.ANSI.italic()
+      end
+    ]
   end
 end

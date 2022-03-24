@@ -85,6 +85,10 @@ defmodule Tonka.Core.Booklet.Blocks do
       {:ok, data}
     end
 
+    def validate_data(%DateTime{} = data) do
+      {:ok, data}
+    end
+
     def validate_data({:link, url, sub}) do
       if is_binary(url),
         do: validate_data(sub),

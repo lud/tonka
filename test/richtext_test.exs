@@ -9,6 +9,7 @@ defmodule Tonka.RichTextTest do
       {:strong, "this is important"},
       {:em, "this is noticeable"},
       {:datetime, DateTime.utc_now()},
+      DateTime.utc_now(),
       {:strike, "this is wrong"},
       {:link, "http://example.com", "Some link"},
       [

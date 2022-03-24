@@ -1,11 +1,13 @@
 defmodule Tonka.Actions.Queries.QueryIssuesGroups do
   use Tonka.Core.Action
   alias Tonka.Services.IssuesStore
-  alias Tonka.Data.IssueGroup
+  alias Tonka.Data.IssuesGroup
 
   def cast_params(term) do
     {:ok, term}
   end
+
+  def return_type, do: IssuesGroup
 
   def configure(config) do
     config

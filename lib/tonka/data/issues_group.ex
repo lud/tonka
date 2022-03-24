@@ -1,4 +1,4 @@
-defmodule Tonka.Data.IssueGroup do
+defmodule Tonka.Data.IssuesGroup do
   require Hugs
   use Tonka.Core.Container.Type
 

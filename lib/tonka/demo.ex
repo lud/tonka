@@ -88,5 +88,8 @@ defmodule Tonka.Demo do
     |> Grid.add_action("query_issues", Tonka.Actions.Queries.QueryIssuesGroups,
       inputs: %{} |> Grid.pipe_action(:query_groups, "define_query")
     )
+    |> Grid.add_action("issues_booklet", Tonka.Actions.Render.BookletFromIssuesGroups,
+      inputs: %{} |> Grid.pipe_action(:issues_groups, "query_issues")
+    )
   end
 end

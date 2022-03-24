@@ -37,7 +37,28 @@ defmodule Tonka.BookletTest do
   end
 
   test "casting empty elements as booklets" do
-    assert {:ok, []} == InputCaster.cast_input([])
-    assert {:ok, []} == InputCaster.cast_input(nil)
+    assert {:ok, %Booklet{blocks: []}} = InputCaster.cast_input([])
+    assert {:ok, %Booklet{blocks: []}} = InputCaster.cast_input(nil)
+  end
+
+  test "casting a list of blocks" do
+    booklet =
+      """
+      - mrkdwn: >-
+          Hello, this is nice.
+
+          Though I'd rather not use embedded YAML for those tests!
+      - plaintext: |
+          This is some plaintext
+          and it has newlines
+      """
+      |> yaml!
+      |> IO.inspect(label: "yaml")
+      |> InputCaster.cast_input()
+      |> Ark.Ok.uok!()
+
+    booklet |> IO.inspect(label: "booklet")
+
+    assert [%Mrkdwn{}, %PlainText{}] = booklet.blocks
   end
 end

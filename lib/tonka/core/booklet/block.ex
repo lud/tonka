@@ -40,7 +40,7 @@ defmodule Tonka.Core.Booklet.Block do
     {keys, _} = Enum.unzip(keys_opts)
 
     [
-      def_new(),
+      def_new_cast(),
       acceptors,
       acceptors_fallback(),
       keys_lists(keys),
@@ -52,10 +52,14 @@ defmodule Tonka.Core.Booklet.Block do
     ]
   end
 
-  defp def_new() do
+  defp def_new_cast() do
     quote location: :keep do
       def new(props \\ []) do
         Tonka.Core.Booklet.Block.cast_block!({__MODULE__, props})
+      end
+
+      def cast(props \\ []) do
+        Tonka.Core.Booklet.Block.cast_block({__MODULE__, props})
       end
     end
   end

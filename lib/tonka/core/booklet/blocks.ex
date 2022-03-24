@@ -17,7 +17,7 @@ defmodule Tonka.Core.Booklet.Blocks do
     prop content, required: true
     prop footer
 
-    def validate_prop(:header, text) when is_binary(text) when is_tuple(text) do
+    def validate_prop(:header, text) when is_binary(text) do
       {:ok, text}
     end
 

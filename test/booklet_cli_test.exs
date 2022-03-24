@@ -54,7 +54,7 @@ defmodule Tonka.BookletCliTest do
             ],
             {:strike, "this is wrong"},
             ", ",
-            {:link, "http://example.com", "Here Is Some link, "},
+            {:strong, {:link, "http://example.com", {:strong, {:strong, "Here Is Some link, "}}}},
             [
               "some ",
               {:strong, ["NESTED ", {:em, "data "}]},

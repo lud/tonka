@@ -139,11 +139,7 @@ defmodule Tonka.Core.Booklet.CliRenderer do
     {[], [], incr(ctx, :strike)}
   end
 
-  defp wrap_strike(ctx) do
-    {[], [], incr(ctx, :strike)}
-  end
-
-  defp wrap_color(%{colors: [], strong: 0} = ctx, color) do
+  defp wrap_color(ctx, color) do
     {apply(IO.ANSI, color, []), restart_tags(ctx), put_color(ctx, color)}
   end
 
@@ -151,20 +147,16 @@ defmodule Tonka.Core.Booklet.CliRenderer do
     %{strong: 0, colors: [], em: 0, strike: 0}
   end
 
-  defp restart_tags(%{strong: strong, colors: colors, em: em}) do
+  defp restart_tags(%{strong: strong, colors: colors}) do
     [
-      IO.ANSI.reset(),
+      IO.ANSI.normal(),
       case strong do
         0 -> []
         _ -> IO.ANSI.bright()
       end,
       case colors do
-        [] -> []
+        [] -> IO.ANSI.default_color()
         [col] -> apply(IO.ANSI, col, [])
-      end,
-      case em do
-        0 -> []
-        _ -> IO.ANSI.italic()
       end
     ]
   end

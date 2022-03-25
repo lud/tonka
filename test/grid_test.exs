@@ -340,7 +340,7 @@ defmodule Tonka.GridTest do
     def cast_input(_), do: {:error, "failed on purpose"}
   end
 
-  defmodule UsesCastFailureInput do
+  defmodule UsesWillFailToCastType do
     @behaviour Action
 
     def cast_params(it), do: {:ok, it}
@@ -355,13 +355,29 @@ defmodule Tonka.GridTest do
     end
   end
 
-  test "a failure to cast an input is properly reported" do
+  defmodule ProvidesWillFailToCastType do
+    @behaviour Action
+
+    def cast_params(it), do: {:ok, it}
+
+    def return_type, do: WillFailToCastType
+
+    def configure(config) do
+      config
+    end
+
+    def call(_, _, _) do
+      {:ok, :some_output}
+    end
+  end
+
+  test "a failure to cast an input is properly reported – grid input" do
     grid =
       Grid.new()
       # here we do not map the input :mytext for RequiresAText
       |> Grid.add_action(
         "use_failed_cast",
-        UsesCastFailureInput,
+        UsesWillFailToCastType,
         inputs: %{} |> Grid.pipe_grid_input(:mykey)
       )
 
@@ -373,6 +389,55 @@ defmodule Tonka.GridTest do
     }
 
     assert {:error, found_error, _} = Grid.run(grid, :some_input)
+
+    assert expected_error == found_error
+  end
+
+  test "a failure to cast an input is properly reported – static input" do
+    grid =
+      Grid.new()
+      # here we do not map the input :mytext for RequiresAText
+      |> Grid.add_action(
+        "use_failed_cast",
+        UsesWillFailToCastType,
+        inputs: %{} |> Grid.pipe_static(:mykey, :some_static)
+      )
+
+    expected_error = %CastError{
+      action_key: "use_failed_cast",
+      input_key: :mykey,
+      input_type: WillFailToCastType,
+      reason: "failed on purpose"
+    }
+
+    assert {:error, found_error, _} = Grid.run(grid, :stuff)
+
+    assert expected_error == found_error
+  end
+
+  test "a failure to cast an input is properly reported – action output" do
+    grid =
+      Grid.new()
+      # here we do not map the input :mytext for RequiresAText
+      |> Grid.add_action(
+        "use_failed_cast",
+        UsesWillFailToCastType,
+        inputs: %{} |> Grid.pipe_static(:mykey, :some_static)
+      )
+      |> Grid.add_action(
+        "provider",
+        ProvidesWillFailToCastType,
+        inputs: %{}
+      )
+
+    expected_error = %CastError{
+      action_key: "use_failed_cast",
+      input_key: :mykey,
+      input_type: WillFailToCastType,
+      reason: "failed on purpose"
+    }
+
+    assert {:error, found_error, _} = Grid.run(grid, :stuff)
 
     assert expected_error == found_error
   end

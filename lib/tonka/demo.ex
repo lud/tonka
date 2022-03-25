@@ -95,15 +95,26 @@ defmodule Tonka.Demo do
         %{}
         |> Grid.pipe_action(:content, "issues_booklet")
         |> Grid.pipe_static(
-          :before,
-          yaml!("""
-          - header:
-
-          """)
+          :above,
+          """
+          - header: Issues Report
+          - mrkdwn: |-
+              Those issues may require your attention.
+              They require some work!
+          """
+          |> yaml!
         )
-        |> Grid.pipe_static(:after, """
-
-        """)
+        |> Grid.pipe_static(
+          :below,
+          """
+          - mrkdwn: |-
+              Thank you for *reading* :ghost:
+          """
+          |> yaml!
+        )
+    )
+    |> Grid.add_action("report_to_cli", Tonka.Actions.Render.RenderBookletCli,
+      inputs: %{} |> Grid.pipe_action(:booklet, "report_booklet")
     )
   end
 end

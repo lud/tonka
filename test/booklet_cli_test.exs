@@ -10,24 +10,25 @@ defmodule Tonka.BookletCliTest do
 
   alias Tonka.Core.Booklet.CliRenderer
 
-  test "a booklet can be created" do
+  test "a booklet can be renderer" do
     assert {:ok, booklet} =
              Booklet.from_blocks([
                Header.new(text: "Hello"),
-               PlainText.new(text: "This is a simple test.")
+               PlainText.new(text: "This is a simple test."),
+               Section.new(
+                 header: "This is a section",
+                 content: [
+                   "Lorem ipsum and stuff"
+                 ],
+                 footer: "And a footer"
+               )
              ])
 
     rendered = CliRenderer.render!(booklet)
 
-    expected =
-      """
-      # Hello
-
-      This is a simple test.
-      """
-      |> String.trim()
-
-    assert expected == rendered
+    IO.puts(rendered)
+    # flush IO
+    IO.puts("")
   end
 
   test "CLI can render richtext" do

@@ -25,11 +25,36 @@ defmodule Tonka.Core.Booklet.CliRenderer do
   def render!(booklet) do
     ctx = base_context()
 
-    booklet.blocks
-    |> Enum.intersperse(:block_separator)
-    |> Enum.map(&render_block(&1, ctx))
+    content =
+      booklet.blocks
+      |> Enum.intersperse(:block_separator)
+      |> Enum.map(&render_block(&1, ctx))
+
+    [
+      headline(booklet, ctx),
+      content,
+      border_bottom()
+    ]
     |> :erlang.iolist_to_binary()
   end
+
+  defp headline(%Booklet{title: title}, ctx) do
+    len = String.length(title)
+
+    pad = 60 - 4 - len
+
+    content = [
+      "== ",
+      rich({:strong, title}, ctx),
+      " ",
+      String.duplicate("=", pad)
+    ]
+
+    [?\n, content, ?\n, ?\n]
+  end
+
+  defp border_bottom,
+    do: "\n============================================================\n"
 
   defp render_block(:block_separator, _) do
     "\n\n"
@@ -39,8 +64,8 @@ defmodule Tonka.Core.Booklet.CliRenderer do
     raw
   end
 
-  defp render_block(%Header{text: text}, _) do
-    "# #{text}"
+  defp render_block(%Header{text: text}, ctx) do
+    rich({:strong, text}, ctx)
   end
 
   defp render_block(%PlainText{text: text}, _) do
@@ -57,13 +82,14 @@ defmodule Tonka.Core.Booklet.CliRenderer do
     footer = rich(footer, ctx)
 
     [
-      "-----------------------------------------------\n",
-      header,
+      ?\n,
+      rich({:strong, header}, ctx),
+      ?\n,
       ?\n,
       content,
       ?\n,
       footer,
-      "\n-----------------------------------------------"
+      ?\n
     ]
   end
 

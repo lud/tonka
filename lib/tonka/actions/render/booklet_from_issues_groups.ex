@@ -26,10 +26,6 @@ defmodule Tonka.Actions.Render.BookletFromIssuesGroups do
     blocks = Enum.map(issues_groups, fn group -> group_to_blocks(group) end)
     booklet_result = blocks |> Booklet.splat_list() |> Booklet.from_blocks()
 
-    with {:ok, booklet} <- booklet_result do
-      Tonka.Core.Booklet.CliRenderer.render!(booklet) |> IO.puts()
-    end
-
     booklet_result
   end
 

@@ -14,7 +14,8 @@ defmodule Tonka.Ext.Gitlab.Services.Issues do
           private_token: binary
         }
 
-  @pretty_queries true
+  @print_queries true
+  @pretty_queries @print_queries
 
   @params_caster Hugs.build_props()
                  |> Hugs.field(:projects, type: {:list, :binary}, required: true)
@@ -121,11 +122,13 @@ defmodule Tonka.Ext.Gitlab.Services.Issues do
   end
 
   defp issues_page_query(project_slug, prev_cursor) do
+    issues_args = %{sort: :updated_desc}
+
     issues_args =
       if prev_cursor do
-        %{state: :opened, sort: :updated_desc, after: prev_cursor}
+        Map.put(issues_args, :after, prev_cursor)
       else
-        %{state: :opened, sort: :updated_desc}
+        issues_args
       end
 
     query =
@@ -140,7 +143,6 @@ defmodule Tonka.Ext.Gitlab.Services.Issues do
       |> Tonka.Core.Query.GraphQL.format_query(pretty: @pretty_queries)
 
     if @print_queries, do: print_query(query)
-
     query
   end
 
@@ -161,7 +163,8 @@ defmodule Tonka.Ext.Gitlab.Services.Issues do
            node: ["id", "body", "system", {"author", ["username"]}]
          ]
        ]},
-      {"labels", edges: [node: ["title"]]}
+      {"labels", edges: [node: ["title"]]},
+      {"assignees", edges: [node: ["id", "name", "username"]]}
     ]
   end
 
@@ -176,16 +179,18 @@ defmodule Tonka.Ext.Gitlab.Services.Issues do
   end
 
   defp raw_to_issue(raw) do
-    Issue.new(%{
+    [
       id: raw["id"],
       iid: "#" <> raw["iid"],
-      # last_ext_username: extract_last_username(raw),
+      last_ext_username: extract_last_username(raw),
       labels: extract_labels(raw),
       url: raw["webUrl"],
       title: raw["title"],
       updated_at: parse_date!(raw["updatedAt"]),
       status: cast_status(raw["state"])
-    })
+    ]
+    |> Keyword.filter(fn {_, v} -> v != nil end)
+    |> Issue.new()
   end
 
   defp extract_last_username(raw_issue) do

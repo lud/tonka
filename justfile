@@ -76,3 +76,6 @@ clean-dep dep:
     rm -rvf _build/prod/lib/{{dep}}
 
 clean: (clean-dep "tonka")
+
+clear-http-cache:
+    rm -rvf var/http-cache/*

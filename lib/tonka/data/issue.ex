@@ -8,9 +8,11 @@ defmodule Tonka.Data.Issue do
   |> Hugs.field(:iid, type: :binary, required: true)
   |> Hugs.field(:url, type: :binary, required: true)
   |> Hugs.field(:last_ext_username, type: :binary, required: false)
+  |> Hugs.field(:assignee_ext_username, type: :binary, required: false)
   |> Hugs.field(:last_member, type: :binary)
   |> Hugs.field(:last_team, type: :binary)
   |> Hugs.field(:labels, type: {:list, :binary})
   |> Hugs.field(:updated_at, type: DateTime, cast: &Hugs.Cast.datetime_from_iso8601/2)
+  |> Hugs.field(:status, type: {:enum, [:open, :closed]}, required: true)
   |> Hugs.inject()
 end

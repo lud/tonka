@@ -44,7 +44,7 @@ defmodule Tonka.Demo do
       |> bind(Tonka.Services.Credentials, &build_credentials/1)
       |> bind(Tonka.Services.IssuesSource, Tonka.Ext.Gitlab.Services.Issues,
         params: %{
-          "projects" => ["company-agilap/r-d/agislack"],
+          "projects" => ["company-agilap/r-d/agislack", "pleenk/suivi"],
           "credentials" => "gitlab.private_token"
         }
       )
@@ -56,6 +56,8 @@ defmodule Tonka.Demo do
     {:ok, container} = Container.prebuild_all(container)
     Container.freeze(container)
   end
+
+  # todo "rename all actions to nouns "
 
   @spec build_credentials(Container.t()) :: {:ok, Tonka.Services.Credentials.t(), Container.t()}
   defp build_credentials(c) do
@@ -78,8 +80,8 @@ defmodule Tonka.Demo do
           """
           - title: TODO List
             query:
-              labels: 'todo'
-            limit: 2
+              last_ext_username: 'lud-agi'
+            limit: 20
           """
           |> yaml!()
         )

@@ -1,6 +1,9 @@
 defmodule Tonka.Actions.Queries.CompileMQLGroups do
   use Tonka.Core.Action
 
+  # Ensure atom keys are loaded
+  require Tonka.Data.Issue
+
   @params Hugs.build_props()
           |> Hugs.field(:data_type, type: {:enum, ["issue"]}, required: true)
 

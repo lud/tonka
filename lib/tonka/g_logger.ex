@@ -16,6 +16,7 @@ defmodule Tonka.GLogger do
       level = unquote(level)
 
       quote do
+        require Logger
         Logger.unquote(level)(unquote(message), unquote(meta))
         :ok
       end

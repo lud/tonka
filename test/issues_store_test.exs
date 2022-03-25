@@ -97,7 +97,14 @@ defmodule Tonka.IssuesStoreTest do
   defp rand_str, do: :crypto.strong_rand_bytes(6) |> Base.encode64()
 
   defp issue_with_labels(labels) do
-    %Issue{labels: labels, id: rand_sid(), iid: rand_sid(), title: rand_str(), url: rand_str()}
+    %Issue{
+      labels: labels,
+      id: rand_sid(),
+      iid: rand_sid(),
+      title: rand_str(),
+      url: rand_str(),
+      status: :open
+    }
   end
 
   test "the issues store will return a list of issues" do

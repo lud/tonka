@@ -12,7 +12,7 @@ msgstr ""
 
 #, elixir-autogen, elixir-format
 #: lib/tonka/actions/render/booklet_from_issues_groups.ex:47
-msgid "tonka.BookletFromIssuesGroups.remaining_issue"
-msgid_plural "tonka.BookletFromIssuesGroups.remaining_issues"
+msgid "tonka.IssuesGroupsBookletRenderer.remaining_issue"
+msgid_plural "tonka.IssuesGroupsBookletRenderer.remaining_issues"
 msgstr[0] ""
 msgstr[1] ""

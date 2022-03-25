@@ -1,4 +1,4 @@
-defmodule Tonka.Actions.Render.BookletFromIssuesGroups do
+defmodule Tonka.Actions.Render.IssuesGroupsBookletRenderer do
   use Tonka.Core.Action
   alias Tonka.Data.IssuesGroup
   alias Tonka.Core.Booklet
@@ -44,8 +44,8 @@ defmodule Tonka.Actions.Render.BookletFromIssuesGroups do
      footer:
        if remain && remain > 0 do
          ngettext(
-           "tonka.BookletFromIssuesGroups.remaining_issue",
-           "tonka.BookletFromIssuesGroups.remaining_issues",
+           "tonka.IssuesGroupsBookletRenderer.remaining_issue",
+           "tonka.IssuesGroupsBookletRenderer.remaining_issues",
            remain
          )
        end}

@@ -1,4 +1,4 @@
-defmodule Tonka.Actions.Queries.CompileMQLGroups do
+defmodule Tonka.Actions.Queries.QueriesGroupsMQLCompiler do
   use Tonka.Core.Action
 
   # Ensure atom keys are loaded

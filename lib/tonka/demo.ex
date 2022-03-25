@@ -71,7 +71,7 @@ defmodule Tonka.Demo do
 
   def prepare_grid do
     Grid.new()
-    |> Grid.add_action("define_query", Tonka.Actions.Queries.CompileMQLGroups,
+    |> Grid.add_action("define_query", Tonka.Actions.Queries.QueriesGroupsMQLCompiler,
       params: %{"data_type" => "issue"},
       inputs:
         %{}
@@ -86,13 +86,13 @@ defmodule Tonka.Demo do
           |> yaml!()
         )
     )
-    |> Grid.add_action("query_issues", Tonka.Actions.Queries.QueryIssuesGroups,
+    |> Grid.add_action("query_issues", Tonka.Actions.Queries.IssuesGroupsReader,
       inputs: %{} |> Grid.pipe_action(:query_groups, "define_query")
     )
-    |> Grid.add_action("issues_booklet", Tonka.Actions.Render.BookletFromIssuesGroups,
+    |> Grid.add_action("issues_booklet", Tonka.Actions.Render.IssuesGroupsBookletRenderer,
       inputs: %{} |> Grid.pipe_action(:issues_groups, "query_issues")
     )
-    |> Grid.add_action("report_booklet", Tonka.Actions.Render.WrapBooklet,
+    |> Grid.add_action("report_booklet", Tonka.Actions.Render.BookletWrapper,
       inputs:
         %{}
         |> Grid.pipe_action(:content, "issues_booklet")
@@ -115,7 +115,7 @@ defmodule Tonka.Demo do
           |> yaml!
         )
     )
-    |> Grid.add_action("report_to_cli", Tonka.Actions.Render.RenderBookletCli,
+    |> Grid.add_action("report_to_cli", Tonka.Actions.Render.BookletCliRenderer,
       inputs: %{} |> Grid.pipe_action(:booklet, "report_booklet")
     )
   end

@@ -1,4 +1,4 @@
-defmodule Tonka.Actions.Queries.QueryIssuesGroups do
+defmodule Tonka.Actions.Queries.IssuesGroupsReader do
   use Tonka.Core.Action
   alias Tonka.Services.IssuesStore
   alias Tonka.Data.IssuesGroup
@@ -11,7 +11,7 @@ defmodule Tonka.Actions.Queries.QueryIssuesGroups do
 
   def configure(config) do
     config
-    |> Action.use_input(:query_groups, Tonka.Actions.Queries.CompileMQLGroups.Return)
+    |> Action.use_input(:query_groups, Tonka.Actions.Queries.QueriesGroupsMQLCompiler.Return)
     |> Action.use_service(:store, IssuesStore)
   end
 

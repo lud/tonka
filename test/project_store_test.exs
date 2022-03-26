@@ -3,8 +3,11 @@ defmodule Tonka.ProjectStoreTest do
 
   alias Tonka.Data.ProjectInfo
   alias Tonka.Services.ProjectStore
+  alias Tonka.Services.ProjectStore.Record
   alias Tonka.Services.ProjectStore.Backend
   alias Tonka.Core.Container
+
+  @component inspect(__MODULE__)
 
   test "building a project info" do
     assert %ProjectInfo{id: "test", storage_dir: "var/projects/test"} =
@@ -23,7 +26,35 @@ defmodule Tonka.ProjectStoreTest do
   end
 
   test "a new project store can be created" do
-    assert %ProjectStore{backend: %MapBackend{}} = ProjectStore.new(backend_stub(%{}))
+    store = ProjectStore.new("test", backend_stub(%{}))
+    assert is_struct(store, ProjectStore)
+  end
+
+  test "a record is passed to the backend and read from the backend" do
+    ref = make_ref
+
+    impls = %{
+      put: fn _, project_id, component, key, value ->
+        send(self(), {ref, project_id, component, key, value})
+        :ok
+      end,
+      get: fn _, project_id, component, key ->
+        case key do
+          "madeup" -> %{some: "made up value"}
+          _ -> nil
+        end
+      end
+    }
+
+    store = ProjectStore.new("test", backend_stub(impls))
+    ProjectStore.put(store, @component, "mykey", %{some: "value"})
+    assert_receive {^ref, "test", @component, "mykey", %{some: "value"}}
+
+    assert %{some: "made up value"} == ProjectStore.get(store, @component, "madeup")
+    assert nil == ProjectStore.get(store, @component, "not existing")
+
+    assert %{some: "default"} ==
+             ProjectStore.get(store, @component, "not existing", %{some: "default"})
   end
 
   defp test_info do

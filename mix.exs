@@ -39,6 +39,7 @@ defmodule Tonka.MixProject do
       {:nimble_options, "~> 0.4.0"},
       {:tesla, "~> 1.4"},
       {:hackney, "~> 1.17"},
+      {:oban, "~> 2.11"},
 
       # {:ark, path: "~/src/ark", runtime: false},
       # {:type_check, "~> 0.10.0"},

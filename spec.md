@@ -305,9 +305,9 @@ following:
 ```elixir
 {
   "my_project",
-  {CleanupStore, {action_module, full_hash}, [{expiration_ms, cleanup_data}, ...]}
+  {CleanupStore, {action_module, full_hash}, [%{exp: expiration_ms, d: cleanup_data}, ...]}
 }
 ```
 
 We cannot rely on CubDB key ordering to select ranges here. Using PostgreSQL, we
-would store a new row for each `{expiration_ms, cleanup_data}`.
+would store a new row for each `%{exp: expiration_ms, d: cleanup_data}`.

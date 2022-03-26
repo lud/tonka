@@ -18,6 +18,8 @@ defmodule Tonka.Services.ProjectStore do
 
   @enforce_keys [:project_id, :backend]
   defstruct @enforce_keys
+  @todo "struct typings"
+  @type t :: %__MODULE__{}
 
   def new(project_id, backend) do
     %ProjectStore{project_id: project_id, backend: backend}

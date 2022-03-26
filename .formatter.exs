@@ -4,8 +4,8 @@
   subdirectories: ["priv/*/migrations"],
   force_do_end_blocks: false,
   locals_without_parens: [
-
     # blocks
-    prop: 1, prop: 2
+    prop: 1,
+    prop: 2
   ]
 ]

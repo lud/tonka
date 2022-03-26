@@ -40,6 +40,7 @@ defmodule Tonka.MixProject do
       {:tesla, "~> 1.4"},
       {:hackney, "~> 1.17"},
       {:oban, "~> 2.11"},
+      {:cubdb, "~> 1.1"},
 
       # {:ark, path: "~/src/ark", runtime: false},
       # {:type_check, "~> 0.10.0"},

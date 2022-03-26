@@ -157,17 +157,19 @@ We need the params to build the inject specs, so we can select a service based
 on a name. Some project may define two issues sources, for instance Github and
 Gitlab, so we need a param to tell which one to use.
 
-    inject:
-      source: my_issues_source
-    params:
-      credentials: gitlab.token
-    inputs:
-      vars:
-        origin: action
-        action: my_other_act
-      report:
-        origin: static
-        static: {some: data}
+```yaml
+inject:
+  source: my_issues_source
+params:
+  credentials: gitlab.token
+inputs:
+  vars:
+    origin: action
+    action: my_other_act
+  report:
+    origin: static
+    static: {some: data}
+```
 
 
 ## Events & Webhooks
@@ -251,3 +253,61 @@ available:
   keys may end up truly unique and no cleanup would be done at all.  But for
   instance it makes sense to hash the target of the publication, which would be
   a username that rarely changes.
+
+
+For instance, we would have the following configuration:
+
+```yaml
+cleanup:
+  key: my_publication
+  ttl: replace
+  inputs: [target, channel]
+```
+
+To use that configuration format in all actions, a service must be available,
+the `CleanupStore`.  That service must depend on another service that is a more
+general purpose store, the `ProjectStore`.
+
+Since we may want to store multiple cleanups (say the ttl is a week but we
+publish every day, so we must have a week's publications in the cleanup store),
+the store must store a collection of cleanup data under each key. Also, the
+publisher must pass it's own identifier to the store, because a MOTD publisher
+has no idea how to delete a Slack message.
+
+We should also share the implementation of the inputs hashing, by just providing
+all inputs and interested-in keys to the store.  Any action can modify any
+acutal input before passing it to implement custom hashing (for Slack, if the
+input is a TeamMember, then just pas the slack username).
+
+While sharing implementations, the store could simply accept the whole params
+`:cleanup` map to make it even easier.
+
+The signatures of the store could then be the following:
+
+```elixir
+@spec compute_key(action_module, cleanup_params, inputs) :: key
+@spec put_cleanup(store, key, cleanup_data) :: :ok
+@spec list_cleanups(store, key) :: [{id, cleanup_data}]
+@spec delete_cleanup(store, key, id)
+```
+
+The returned `key` in the list of available cleanups is a shortcut that simply
+contains the action module and the full hash key, to not have to recompute it
+again.
+
+The `list_cleanups/2` function does only return expired cleanups according to
+the `ttl` parameter in the params.  Another function, `list_all_cleanups/2` may
+be added in the future.
+
+The final stored tuples to store the cleanups if using cubdb would be the
+following:
+
+```elixir
+{
+  "my_project",
+  {CleanupStore, {action_module, full_hash}, [{expiration_ms, cleanup_data}, ...]}
+}
+```
+
+We cannot rely on CubDB key ordering to select ranges here. Using PostgreSQL, we
+would store a new row for each `{expiration_ms, cleanup_data}`.

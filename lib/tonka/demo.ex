@@ -90,10 +90,10 @@ defmodule Tonka.Demo do
         )
     )
     |> Grid.add_action("query_issues", Tonka.Actions.Queries.IssuesGroupsReader,
-      inputs: %{} |> Grid.pipe_action(:query_groups, "define_query")
+      inputs: Grid.pipe_action(%{}, :query_groups, "define_query")
     )
     |> Grid.add_action("issues_booklet", Tonka.Actions.Render.IssuesGroupsBookletRenderer,
-      inputs: %{} |> Grid.pipe_action(:issues_groups, "query_issues")
+      inputs: Grid.pipe_action(%{}, :issues_groups, "query_issues")
     )
     |> Grid.add_action("report_booklet", Tonka.Actions.Render.BookletWrapper,
       inputs:
@@ -119,7 +119,7 @@ defmodule Tonka.Demo do
         )
     )
     |> Grid.add_action("report_to_cli", Tonka.Actions.Render.BookletCliRenderer,
-      inputs: %{} |> Grid.pipe_action(:booklet, "report_booklet")
+      inputs: Grid.pipe_action(%{}, :booklet, "report_booklet")
     )
   end
 end

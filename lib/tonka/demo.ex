@@ -39,9 +39,11 @@ defmodule Tonka.Demo do
   def prepare_container do
     # On init, the project will fill the container with services used by actions.
 
+    project_path = "var/projects/dev"
+
     container =
       new()
-      |> bind(Tonka.Services.Credentials, &build_credentials/1)
+      |> bind(Tonka.Services.Credentials, &build_credentials(&1, project_path))
       |> bind(Tonka.Services.IssuesSource, Tonka.Ext.Gitlab.Services.Issues,
         params: %{
           "projects" => ["company-agilap/r-d/agislack", "pleenk/suivi"],
@@ -59,11 +61,12 @@ defmodule Tonka.Demo do
 
   # todo "rename all actions to nouns "
 
-  @spec build_credentials(Container.t()) :: {:ok, Tonka.Services.Credentials.t(), Container.t()}
-  defp build_credentials(c) do
+  @spec build_credentials(Container.t(), binary) ::
+          {:ok, Tonka.Services.Credentials.t(), Container.t()}
+  defp build_credentials(c, project_path) do
     store =
       File.cwd!()
-      |> Path.join("var/projects/dev/credentials.json")
+      |> Path.join("#{project_path}/credentials.json")
       |> Tonka.Services.Credentials.JsonFileCredentials.from_path!()
 
     {:ok, store, c}

@@ -100,9 +100,9 @@ When starting, the application must load all defined projects and start the
 event generators of those projects.
 
 When an event generator fires, it targets a project and a grid. This project's
-grid is loaded to create a new operator (implementing a grid instance). The grid
-receives the input and executes all actions in the grid that can be executed
-from that input.
+grid configuration is loaded to create a new grid instance. The grid receives
+the input and executes all actions in the grid that can be executed from that
+input.
 
 
 ## Issues Fetching & Caching
@@ -203,3 +203,51 @@ discarded as not grid pipe will be found in the project settings.
 
 Process-based services will receive the event delivered as a message to their
 process.
+
+
+## Messages Cleanup
+
+When sending an issues report over Slack, we want the previous report to be
+deleted, so we keep the message feed clear.
+
+If cleanup is enabled for a publisher, it should know what to clean up. For
+instance, if a grid is triggered 3 times to publish the todo-list of 3 different
+developers, it should not delete the other devs publication when publishing for
+one.
+
+So we need a key to identify a publication for a given topic, but we need to get
+the same key for future publications on the same topic.
+
+Publishers will use a persistent store to read and write data that will be
+persisted over multiple runs of the same grid.
+
+Also, the storage scope will be the project, and not a particular grid, because
+we want multiple grids to clean and publish for the same topic.
+
+The cleanup capability will be defined by each publisher. For instance, it is
+possible to delete a Slack message but it is not possible to unsend an email ;
+and a "message of the day" can only be replaced.  But here we will define a
+common method that should be adopted by all publishers.
+
+The cleanup is configured with params. There are different configurations keys
+available:
+
+* `key` – Required. This parameter identifies the publication for cleanup. A
+  publisher will only delete previous publications for the same key it is
+  passed.
+* `ttl` – This can be a duration expressed in the `Tonka.Data.TimeInterval`
+  syntax (_e.g._ `3d12h`) or the magic value `replace`, meaning just `0s`. This
+  indicates a time to live for the publication to be sent. Future publications
+  may lookup for previously stored cleanup informations and run the cleanup of
+  expired publications.  Note that in the current implementation, a publication
+  must be triggered for the cleanup to happen.  The cleanup is only executed
+  right before sending a new publication.  There is no implementation of a
+  regular cleanup process.  The main goal is to allow zero or more older
+  versions of a same publication.  The default value is `0s`.
+* `inputs` – This is a list of strings that can contain any of the input names
+  of the publisher `Tonka.Core.Action` implementation. If set, the selected
+  inputs will be hashed and appended to the key to form a more unique key.  It
+  would make no sense to hash the list of issues passed to a publisher, because
+  keys may end up truly unique and no cleanup would be done at all.  But for
+  instance it makes sense to hash the target of the publication, which would be
+  a username that rarely changes.

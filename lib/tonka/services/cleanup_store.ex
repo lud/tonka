@@ -1,5 +1,6 @@
 defmodule Tonka.Services.CleanupStore do
   alias __MODULE__
+  alias Tonka.Data.TimeInterval
   alias Tonka.Services.CleanupStore.Hashable
   alias Tonka.Services.ProjectStore
 
@@ -8,7 +9,7 @@ defmodule Tonka.Services.CleanupStore do
 
     Hugs.build_struct()
     |> Hugs.field(:key, type: :binary, required: true)
-    |> Hugs.field(:ttl, type: :integer, default: 0, cast: &Tonka.Data.TimeInterval.to_ms/1)
+    |> Hugs.field(:ttl, type: :integer, default: 0, cast: &TimeInterval.to_ms/1)
     |> Hugs.field(:inputs,
       type: {:list, :atom},
       default: [],

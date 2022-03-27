@@ -371,7 +371,7 @@ defmodule Tonka.MQLTest do
       """
       |> decode_yaml!()
 
-    q = Tonka.Core.Query.MQL.compile!(query, as_atoms: ["a"])
+    q = MQL.compile!(query, as_atoms: ["a"])
 
     refute MQL.match?(q, %{"a" => 1, "b" => 2})
     refute MQL.match?(q, %{a: 1, b: 2})
@@ -432,7 +432,7 @@ defmodule Tonka.MQLTest do
 
   defp all_atoms_query(yaml) when is_binary(yaml) do
     bin_keys = decode_yaml!(yaml)
-    q = Tonka.Core.Query.MQL.compile!(bin_keys, as_atoms: :all)
+    q = MQL.compile!(bin_keys, as_atoms: :all)
 
     {:compiled, yaml, q}
   end

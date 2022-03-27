@@ -160,7 +160,7 @@
           {Credo.Check.Readability.MultiAlias, []},
           {Credo.Check.Readability.ImplTrue, []},
           {Credo.Check.Refactor.ABCSize, []},
-          {Credo.Check.Readability.SinglePipe, []}
+          {Credo.Check.Readability.SinglePipe, false}
         ],
         disabled: [
           #

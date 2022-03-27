@@ -82,21 +82,15 @@ defmodule Tonka.Core.Container do
   @bind_schema Service.new_opts_schema()
   @service_new_opts_keys Service.new_opts_keys()
 
-  # TODO doc binding with a single utype with default opts, accepts only atoms and expects that
-  # the utype is also a module.
   @spec bind(t, module) :: t
   def bind(%Container{} = c, utype) when is_atom(utype),
     do: bind(c, utype, utype, [])
 
   @spec bind(t, module, builder | bind_opts()) :: t
 
-  # TODO doc binding with a single utype with given options, accepts only atoms
-  # and expects that the utype is also a module.
   def bind(%Container{} = c, utype, opts) when is_atom(utype) and is_list(opts),
     do: bind(c, utype, utype, opts)
 
-  # TODO doc binding with a utype and a builder with default opts, accepts only
-  # atoms and expects that the utype is also a module.
   def bind(%Container{} = c, utype, builder) when is_utype(utype) and is_builder(builder),
     do: bind(c, utype, builder, [])
 

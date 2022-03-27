@@ -12,6 +12,7 @@ defmodule Tonka.Core.Booklet.Blocks do
 
   defmodule Section do
     use Block
+    alias Tonka.Core.Booklet.Blocks.RichText
 
     prop header
     prop content, required: true
@@ -26,7 +27,7 @@ defmodule Tonka.Core.Booklet.Blocks do
     end
 
     def validate_prop(name, data) when name in [:header, :content, :footer] do
-      Tonka.Core.Booklet.Blocks.RichText.validate_prop(:data, data)
+      RichText.validate_prop(:data, data)
     end
   end
 

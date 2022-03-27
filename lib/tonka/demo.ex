@@ -20,8 +20,6 @@ defmodule Tonka.Demo do
     # transport = slack(target)
     # post(transport, post)
 
-    # TODO check the rate-limiter
-    # TODO fake fetching the build container
     container = prepare_container()
     grid = prepare_grid()
 
@@ -58,8 +56,6 @@ defmodule Tonka.Demo do
     Container.freeze(container)
   end
 
-  # todo "rename all actions to nouns "
-
   @spec build_credentials(Container.t(), binary) ::
           {:ok, Tonka.Services.Credentials.t(), Container.t()}
   defp build_credentials(c, project_path) do
@@ -76,8 +72,8 @@ defmodule Tonka.Demo do
     |> Grid.add_action("define_query", Tonka.Actions.Queries.QueriesGroupsMQLCompiler,
       params: %{"data_type" => "issue"},
       inputs:
-        %{}
-        |> Grid.pipe_static(
+        Grid.pipe_static(
+          %{},
           :query_groups,
           """
           - title: TODO List

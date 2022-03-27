@@ -1,4 +1,6 @@
 defmodule Tonka.Core.Booklet.Block do
+  alias __MODULE__
+
   defmacro __using__(_) do
     quote location: :keep do
       Module.register_attribute(__MODULE__, :__prop, accumulate: true)
@@ -57,11 +59,11 @@ defmodule Tonka.Core.Booklet.Block do
   defp def_new_cast do
     quote location: :keep do
       def new(props \\ []) do
-        Tonka.Core.Booklet.Block.cast_block!({__MODULE__, props})
+        Block.cast_block!({__MODULE__, props})
       end
 
       def cast(props \\ []) do
-        Tonka.Core.Booklet.Block.cast_block({__MODULE__, props})
+        Block.cast_block({__MODULE__, props})
       end
     end
   end

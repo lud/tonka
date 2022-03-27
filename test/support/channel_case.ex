@@ -1,4 +1,6 @@
 defmodule TonkaWeb.Test.ChannelCase do
+  alias Ecto.Adapters.SQL.Sandbox
+
   @moduledoc """
   This module defines the test case to be used by
   channel tests.
@@ -29,8 +31,8 @@ defmodule TonkaWeb.Test.ChannelCase do
   end
 
   setup tags do
-    pid = Ecto.Adapters.SQL.Sandbox.start_owner!(Tonka.Repo, shared: not tags[:async])
-    on_exit(fn -> Ecto.Adapters.SQL.Sandbox.stop_owner(pid) end)
+    pid = Sandbox.start_owner!(Tonka.Repo, shared: not tags[:async])
+    on_exit(fn -> Sandbox.stop_owner(pid) end)
     :ok
   end
 end

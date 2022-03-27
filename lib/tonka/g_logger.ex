@@ -10,6 +10,14 @@ defmodule Tonka.GLogger do
     end
   end
 
+  def write_to_system_logs(enabled \\ true) do
+    Process.put({__MODULE__, :system_logger_enabled}, enabled)
+  end
+
+  def system_logger_enabled? do
+    Process.get({__MODULE__, :system_logger_enabled}, false)
+  end
+
   [:debug, :info, :warn, :error, :critical]
   |> Enum.each(fn level ->
     defmacro unquote(level)(message, meta \\ []) do
@@ -17,7 +25,11 @@ defmodule Tonka.GLogger do
 
       quote do
         require Logger
-        Logger.unquote(level)(unquote(message), unquote(meta))
+
+        if Tonka.GLogger.system_logger_enabled?() do
+          Logger.unquote(level)(unquote(message), unquote(meta))
+        end
+
         :ok
       end
     end

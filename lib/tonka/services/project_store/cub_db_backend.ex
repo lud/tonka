@@ -1,4 +1,4 @@
-defmodule Tonka.Services.ProjectStore.CubDBStore do
+defmodule Tonka.Services.ProjectStore.CubDBBackend do
   alias Tonka.Services.ProjectStore.Backend
 
   @derive Backend

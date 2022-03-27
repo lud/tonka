@@ -26,6 +26,8 @@ defmodule Tonka.Services.ProjectStore do
   alias Tonka.Services.ProjectStore.Backend
   use TODO
 
+  use Tonka.Core.Service
+
   @enforce_keys [:project_id, :backend]
   defstruct @enforce_keys
   @todo "struct typings"
@@ -35,6 +37,16 @@ defmodule Tonka.Services.ProjectStore do
 
   def new(project_id, backend) do
     %ProjectStore{project_id: project_id, backend: backend}
+  end
+
+  def cast_params(term) do
+    {:ok, term}
+  end
+
+  def configure(config) do
+    config
+    |> Service.use_service(:backend, Tonka.Services.ProjectStore.Backend)
+    |> Service.use_service(:info, Tonka.Data.ProjectInfo)
   end
 
   def put(%ProjectStore{project_id: project_id, backend: backend}, component, key, value)

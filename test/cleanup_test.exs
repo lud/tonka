@@ -2,7 +2,7 @@ defmodule Tonka.CleanupTest do
   alias Tonka.Services.CleanupStore
   alias Tonka.Services.CleanupStore.CleanupParams
   alias Tonka.Services.ProjectStore
-  alias Tonka.Services.ProjectStore.CubDBStore
+  alias Tonka.Services.ProjectStore.CubDBBackend
   use ExUnit.Case, async: false
 
   defp project_store do
@@ -15,7 +15,7 @@ defmodule Tonka.CleanupTest do
 
     CubDB.clear(cub)
 
-    backend = CubDBStore.new(cub)
+    backend = CubDBBackend.new(cub)
     _store = ProjectStore.new("test", backend)
   end
 

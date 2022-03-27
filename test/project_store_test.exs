@@ -3,7 +3,7 @@ defmodule Tonka.ProjectStoreTest do
   alias Tonka.Data.ProjectInfo
   alias Tonka.Services.ProjectStore
   alias Tonka.Services.ProjectStore.Backend
-  alias Tonka.Services.ProjectStore.CubDBStore
+  alias Tonka.Services.ProjectStore.CubDBBackend
   alias Tonka.Services.ProjectStore.Record
   use ExUnit.Case, async: true
 
@@ -97,7 +97,7 @@ defmodule Tonka.ProjectStoreTest do
   end
 
   defp get_store(cub) do
-    backend = CubDBStore.new(cub)
+    backend = CubDBBackend.new(cub)
     ProjectStore.new("test", backend)
   end
 

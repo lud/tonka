@@ -1,6 +1,6 @@
 defmodule Tonka.Ext.Slack.Actions.SlackPublisher do
   alias Tonka.Core.Booklet
-  alias Tonka.Core.Booklet.CliRenderer
+  alias Tonka.Services.CleanupStore
   alias Tonka.Ext.Slack.Data.Post
   alias Tonka.Ext.Slack.Render.BookletRenderer
   alias Tonka.Ext.Slack.Services.SlackAPI
@@ -20,6 +20,7 @@ defmodule Tonka.Ext.Slack.Actions.SlackPublisher do
     config
     |> Action.use_input(:booklet, Booklet)
     |> Action.use_service(:slack, SlackAPI)
+    |> Action.use_service(:cleanup, CleanupStore)
   end
 
   def call(%{booklet: booklet}, %{slack: slack}, %{channel: channel}) do

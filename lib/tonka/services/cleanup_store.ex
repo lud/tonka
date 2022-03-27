@@ -5,6 +5,8 @@ defmodule Tonka.Services.CleanupStore do
   alias Tonka.Services.ProjectStore
   alias Tonka.Core.Action
 
+  use Tonka.Core.Service
+
   defmodule CleanupParams do
     require Hugs
 
@@ -35,6 +37,17 @@ defmodule Tonka.Services.CleanupStore do
     %__MODULE__{pstore: pstore}
   end
 
+  @impl Service
+  def cast_params(term) do
+    {:ok, term}
+  end
+
+  @impl Service
+  def configure(config) do
+    config
+    |> Service.use_service(:pstore, ProjectStore)
+  end
+
   @spec compute_key(component, cleanup_params, inputs()) :: key
   def compute_key(component, %CleanupParams{key: topic} = params, inputs) do
     hashable_inputs = hashable_inputs(params.inputs, inputs)
@@ -63,6 +76,7 @@ defmodule Tonka.Services.CleanupStore do
   def put(%CleanupStore{pstore: ps}, key, ttl, cleanup_data)
       when is_binary(key) and is_integer(ttl) and is_map(cleanup_data) do
     expiration = now_ms() + ttl
+    ps |> IO.inspect(label: "ps")
 
     ProjectStore.get_and_update(ps, __MODULE__, key, fn cleanups ->
       new_val =
@@ -74,11 +88,20 @@ defmodule Tonka.Services.CleanupStore do
           list ->
             id = max_id(list) + 1
             [{expiration, {id, cleanup_data}} | list]
+
+          other ->
+            raise "unexpected cub result: #{inspect(other)}"
         end
 
       {nil, new_val}
     end)
-    |> case(do: ({:ok, _} -> :ok))
+    |> case do
+      {:ok, _} ->
+        :ok
+
+      other ->
+        raise "unexpected cub result: #{inspect(other)}"
+    end
   end
 
   defp max_id(entries) do
@@ -109,7 +132,9 @@ defmodule Tonka.Services.CleanupStore do
         rest -> {nil, rest}
       end
     end)
-    |> case(do: ({:ok, _} -> :ok))
+    |> case do
+      {:ok, _} -> :ok
+    end
   end
 
   defp now_ms, do: :erlang.system_time(:millisecond)

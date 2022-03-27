@@ -102,7 +102,7 @@ defmodule Tonka.Demo do
               Those issues may require your attention.
               They require some work!
           """
-          |> yaml!
+          |> yaml!()
         )
         |> Grid.pipe_static(
           :below,
@@ -110,10 +110,13 @@ defmodule Tonka.Demo do
           - mrkdwn: |-
               Thank you for *reading* :ghost:
           """
-          |> yaml!
+          |> yaml!()
         )
     )
     |> Grid.add_action("report_to_cli", Tonka.Actions.Render.BookletCliRenderer,
+      inputs: Grid.pipe_action(%{}, :booklet, "report_booklet")
+    )
+    |> Grid.add_action("report_to_slatck", Tonka.Ext.Slack.Actions.SlackPublisher,
       inputs: Grid.pipe_action(%{}, :booklet, "report_booklet")
     )
   end

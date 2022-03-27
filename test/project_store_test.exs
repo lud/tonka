@@ -82,19 +82,28 @@ defmodule Tonka.ProjectStoreTest do
     MapBackend.impl_with(Map.new(funs))
   end
 
-  test "the CubDB implementation works" do
+  defp get_cub do
     # do not set auto_compact: false, auto_file_sync: false outside of tests
-    assert {:ok, cub} =
-             CubDB.start_link(
-               data_dir: "var/projects/test/stores/project-store-test",
-               auto_compact: true,
-               auto_file_sync: true
-             )
+    cub =
+      start_supervised!(
+        {CubDB,
+         data_dir: "var/projects/test/stores/project-store-test",
+         auto_compact: true,
+         auto_file_sync: true}
+      )
 
     CubDB.clear(cub)
+    cub
+  end
 
+  defp get_store(cub) do
     backend = CubDBStore.new(cub)
-    store = ProjectStore.new("test", backend)
+    ProjectStore.new("test", backend)
+  end
+
+  test "the CubDB implementation works" do
+    cub = get_cub()
+    store = get_store(cub)
 
     value = %{this: "is", a: %{"sub" => "map"}}
     updated = %{"a new" => :VALUE}
@@ -122,5 +131,18 @@ defmodule Tonka.ProjectStoreTest do
     assert nil == ProjectStore.get(store, @component, "mykey")
 
     assert nil == CubDB.get(cub, {@component, "mykey"})
+  end
+
+  test "pop keys from the project store in CubDB" do
+    cub = get_cub()
+    store = get_store(cub)
+    value = %{my: "map"}
+    key = "poppable"
+    assert :ok = ProjectStore.put(store, @component, key, value)
+    assert ^value = ProjectStore.get(store, @component, key)
+
+    assert {:ok, ^value} = ProjectStore.get_and_update(store, @component, key, fn _ -> :pop end)
+
+    assert nil == ProjectStore.get(store, @component, key)
   end
 end

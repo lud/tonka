@@ -39,5 +39,9 @@ defmodule Tonka.CleanupTest do
 
     assert :ok = CleanupStore.delete_id(store, key, id)
     assert [] = CleanupStore.list_expired(store, key)
+
+    # Assert that when there is no ID left, the whole entry is deleted from CUB
+    cub = store.pstore.backend.cub
+    assert nil = CubDB.get(cub, {"Tonka.Services.CleanupStore", "mykey"})
   end
 end

@@ -84,5 +84,14 @@ defmodule Tonka.CleanupHashTest do
     end
   end
 
-  test "if a given input name does not exist, it will fail"
+  test "if a given input name does not exist, it will fail" do
+    key = "a_topic"
+    module = __MODULE__
+    params = CleanupParams.of(key: key, inputs: [:does_not_exist])
+    inputs = %{some: ["thing"], other: %Something{}}
+
+    assert_raise KeyError, ~r/key :does_not_exist not found/, fn ->
+      key = CleanupStore.compute_key(module, params, inputs)
+    end
+  end
 end

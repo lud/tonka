@@ -76,7 +76,6 @@ defmodule Tonka.Services.CleanupStore do
   def put(%CleanupStore{pstore: ps}, key, ttl, cleanup_data)
       when is_binary(key) and is_integer(ttl) and is_map(cleanup_data) do
     expiration = now_ms() + ttl
-    ps |> IO.inspect(label: "ps")
 
     ProjectStore.get_and_update(ps, __MODULE__, key, fn cleanups ->
       new_val =
@@ -88,9 +87,6 @@ defmodule Tonka.Services.CleanupStore do
           list ->
             id = max_id(list) + 1
             [{expiration, {id, cleanup_data}} | list]
-
-          other ->
-            raise "unexpected cub result: #{inspect(other)}"
         end
 
       {nil, new_val}

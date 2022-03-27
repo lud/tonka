@@ -1,6 +1,8 @@
 defmodule Tonka.Services.ProjectStore.CubDBBackend do
   alias Tonka.Services.ProjectStore.Backend
   use Tonka.Core.Service
+  alias Tonka.Services.ServiceSupervisor
+  use Tonka.Project.ProjectLogger, as: Logger
 
   @derive Backend
   @enforce_keys [:cub]
@@ -18,9 +20,22 @@ defmodule Tonka.Services.ProjectStore.CubDBBackend do
     {:ok, term}
   end
 
+  @impl Service
   def configure(config) do
     config
-    |> use_service(:sup, Tonka.Services.ServiceSupervisor)
+    |> use_service(:sup, ServiceSupervisor)
+    |> use_service(:info, Tonka.Data.ProjectInfo)
+  end
+
+  @impl Service
+  def build(%{sup: sup, info: %{prk: prk, storage_dir: dir}}, _params) do
+    name = Tonka.Project.ProjectRegistry.via(prk, __MODULE__, make_ref())
+    Logger.info("opening CubDB database at #{dir} as #{inspect(name)}")
+    child_spec = {CubDB, name: name, data_dir: dir, auto_compact: true, auto_file_sync: true}
+
+    with {:ok, _} <- Supervisor.start_child(sup, child_spec) do
+      {:ok, new(name)}
+    end
   end
 
   @spec put(t, Backend.prk(), Backend.component(), Backend.key(), Backend.value()) :: :ok

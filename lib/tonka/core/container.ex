@@ -2,6 +2,7 @@ defmodule Tonka.Core.Container do
   alias Tonka.Core.Container
   alias Tonka.Core.Container.InjectSpec
   alias Tonka.Core.Service
+  use Tonka.Project.ProjectLogger, as: Logger
   use TODO
 
   @moduledoc """
@@ -82,13 +83,23 @@ defmodule Tonka.Core.Container do
   @service_new_opts_keys Service.new_opts_keys()
 
   @spec bind(t, module) :: t
-  def bind(%Container{} = c, utype) when is_atom(utype),
-    do: bind(c, utype, utype, [])
+  def bind(%Container{} = c, utype) when is_atom(utype) do
+    if has?(c, utype) do
+      raise "service #{inspect(utype)} is already defined"
+    end
+
+    bind(c, utype, utype, [])
+  end
 
   @spec bind(t, module, builder | bind_opts()) :: t
 
-  def bind(%Container{} = c, utype, opts) when is_atom(utype) and is_list(opts),
-    do: bind(c, utype, utype, opts)
+  def bind(%Container{} = c, utype, opts) when is_atom(utype) and is_list(opts) do
+    if has?(c, utype) do
+      raise "service #{inspect(utype)} is already defined"
+    end
+
+    bind(c, utype, utype, opts)
+  end
 
   def bind(%Container{} = c, utype, builder) when is_utype(utype) and is_builder(builder),
     do: bind(c, utype, builder, [])
@@ -146,6 +157,8 @@ defmodule Tonka.Core.Container do
   end
 
   def pull(%Container{} = c, utype) when is_atom(utype) do
+    Logger.debug("pulling service #{inspect(utype)}")
+
     case ensure_built(c, utype) do
       {:ok, c} -> {:ok, fetch_impl!(c, utype), c}
       {:error, _} = err -> err
@@ -164,19 +177,34 @@ defmodule Tonka.Core.Container do
   end
 
   def prebuild_all(%Container{services: services} = c) do
+    Logger.info("prebuilding all services")
     unbuilt_utypes = for {key, %{built: false}} <- services, do: key
-    Ark.Ok.reduce_ok(unbuilt_utypes, c, fn utype, c -> ensure_built(c, utype) end)
+    Logger.debug("prebuilding unbuilt services: #{inspect(unbuilt_utypes)}")
+
+    case Ark.Ok.reduce_ok(unbuilt_utypes, c, fn utype, new_c -> ensure_built(new_c, utype) end) do
+      {:ok, new_c} ->
+        Logger.info("✓ successfully prebuilt all services")
+        {:ok, new_c}
+
+      {:error, _} = err ->
+        err
+    end
   end
 
   def ensure_built(%{frozen: frozen} = c, utype) do
-    case fetch_type(c, utype) do
+    service = fetch_type(c, utype)
+
+    case service do
       {:ok, %Service{built: true}} ->
+        Logger.debug("service #{inspect(utype)} is already built")
         {:ok, c}
 
       {:ok, %Service{built: false}} when frozen ->
+        Logger.error("service #{inspect(utype)} is not built but the container is frozen")
         {:error, %ServiceResolutionError{utype: utype, errkind: :build_frozen}}
 
       {:ok, %Service{built: false} = service} ->
+        Logger.debug("service #{inspect(utype)} is not built")
         build_service(c, utype, service)
 
       :error ->
@@ -198,8 +226,12 @@ defmodule Tonka.Core.Container do
   # ---------------------------------------------------------------------------
 
   defp build_service(c, utype, service) do
+    Logger.debug("building service #{inspect(utype)} with #{inspect(service.builder)}")
+
     case Service.build(service, c) do
       {:ok, %Service{built: true} = new_service, %Container{} = new_c} ->
+        Logger.info("✓ successfully built service #{inspect(utype)}")
+
         replace_service(new_c, utype, service, new_service)
 
       {:error, _} = err ->

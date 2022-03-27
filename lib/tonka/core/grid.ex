@@ -11,7 +11,7 @@ defmodule Tonka.Core.Grid do
   alias Tonka.Core.Grid.UndefinedOriginActionError
   alias Tonka.Core.Grid.UnmappedInputError
   use TODO
-  use Tonka.GLogger
+  use Tonka.Project.ProjectLogger, as: Logger
 
   @moduledoc """
   A grid is an execution context for multiple actions.
@@ -133,7 +133,7 @@ defmodule Tonka.Core.Grid do
   # Validates that all services types required by actions are defined and built
   # in the container..
   defp validate_all_injects(%{actions: actions}, container) do
-    GLogger.info("validating services for all actions")
+    Logger.info("validating services for all actions")
 
     Enum.reduce(actions, _invalids = [], fn action, invalids ->
       validated = validate_injects(action, container)
@@ -144,13 +144,13 @@ defmodule Tonka.Core.Grid do
       end
     end)
     |> case do
-      [] -> :ok = GLogger.info("✓ all actions services are valid")
+      [] -> :ok = Logger.info("✓ all actions services are valid")
       invalids -> {:error, {:invalid_injects, invalids}}
     end
   end
 
   defp validate_injects({act_key, %{config_called: true} = action}, container) do
-    GLogger.debug("validating services for action '#{act_key}'")
+    Logger.debug("validating services for action '#{act_key}'")
     %{config: %{injects: inject_specs}} = action
 
     inject_specs
@@ -182,7 +182,7 @@ defmodule Tonka.Core.Grid do
   # grid input) are validated by ensuring that the type module of the input has
   # a cast_input/1 callback.
   defp validate_all_inputs(%{actions: actions}) do
-    GLogger.info("validating inputs for all actions")
+    Logger.info("validating inputs for all actions")
 
     Enum.reduce(actions, _invalids = [], fn action, invalids ->
       validated = validate_inputs(action, actions)
@@ -193,7 +193,7 @@ defmodule Tonka.Core.Grid do
       end
     end)
     |> case do
-      [] -> :ok = GLogger.info("✓ all actions inputs are valid")
+      [] -> :ok = Logger.info("✓ all actions inputs are valid")
       invalids -> {:error, {:invalid_inputs, invalids}}
     end
   end
@@ -201,7 +201,7 @@ defmodule Tonka.Core.Grid do
   # validates the input for one action given all other actions outputs
   defp validate_inputs({act_key, %{config_called: true} = action}, actions)
        when is_map(actions) do
-    GLogger.debug("validating inputs for action '#{act_key}'")
+    Logger.debug("validating inputs for action '#{act_key}'")
     %{input_mapping: mapping, config: %{inputs: input_specs}} = action
 
     input_specs
@@ -299,7 +299,7 @@ defmodule Tonka.Core.Grid do
     statuses = start_statuses(grid.actions)
     grid = %Grid{grid | outputs: outputs, statuses: statuses}
 
-    GLogger.debug("running the grid")
+    Logger.debug("running the grid")
 
     case prepare_and_validate(grid, container) do
       {:ok, grid} -> run_loop(grid, container)
@@ -347,26 +347,26 @@ defmodule Tonka.Core.Grid do
 
     case runnable do
       {:ok, key} ->
-        GLogger.debug("action '#{key}' is runnable")
+        Logger.debug("action '#{key}' is runnable")
 
         case call_action(grid, key, container) do
           {:ok, new_grid} ->
-            GLogger.info("✓ action '#{key}' completed successfully")
+            Logger.info("✓ action '#{key}' completed successfully")
             run_loop(new_grid, container)
 
           {:error, reason, failed_grid} ->
-            GLogger.error(format_error(reason))
+            Logger.error(format_error(reason))
             {:error, reason, failed_grid}
         end
 
       :done ->
-        GLogger.info("✓ all actions have run")
+        Logger.info("✓ all actions have run")
         {:ok, :done, grid}
 
       :noavail ->
         # This clause cannot actually be called since we verify the inputs
         todo "remove this clause"
-        GLogger.error("could not find an action to run but some actions were not called")
+        Logger.error("could not find an action to run but some actions were not called")
         {:error, :noavail, grid}
     end
   end
@@ -391,7 +391,7 @@ defmodule Tonka.Core.Grid do
   end
 
   defp precast_action({k, action}) do
-    GLogger.debug("casting params for action '#{k}'")
+    Logger.debug("casting params for action '#{k}'")
 
     case Action.precast_params(action) do
       {:ok, action} -> {:ok, {k, action}}
@@ -407,7 +407,7 @@ defmodule Tonka.Core.Grid do
   end
 
   defp preconfigure_action({k, action}) do
-    GLogger.debug("calling configuration for action '#{k}'")
+    Logger.debug("calling configuration for action '#{k}'")
 
     case Action.preconfigure(action) do
       {:ok, action} -> {:ok, {k, action}}
@@ -440,7 +440,7 @@ defmodule Tonka.Core.Grid do
   end
 
   defp do_call_action(action, inputs, injects, key) do
-    GLogger.debug("calling action '#{key}'")
+    Logger.debug("calling action '#{key}'")
 
     case Action.call(action, inputs, injects) do
       {:ok, _} = fine -> fine
@@ -491,7 +491,7 @@ defmodule Tonka.Core.Grid do
   end
 
   defp build_inputs(%{outputs: outputs, actions: actions}, act_key) do
-    GLogger.debug("building inputs for action '#{act_key}'")
+    Logger.debug("building inputs for action '#{act_key}'")
     action = Map.fetch!(actions, act_key)
     %{input_mapping: mapping, config: %{inputs: input_specs}} = action
 

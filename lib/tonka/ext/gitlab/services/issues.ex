@@ -1,7 +1,7 @@
 defmodule Tonka.Ext.Gitlab.Services.Issues do
   use Tonka.Core.Service
   alias Tonka.Data.Issue
-  require Tonka.GLogger, as: Logger
+  require Tonka.Project.ProjectLogger, as: Logger
   alias Tonka.Services.IssuesSource
 
   use TODO

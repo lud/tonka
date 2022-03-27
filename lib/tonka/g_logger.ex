@@ -1,16 +1,19 @@
-defmodule Tonka.GLogger do
+defmodule Tonka.Project.ProjectLogger do
   @moduledoc """
   A grid is an execution context for multiple actions.
   """
 
-  defmacro __using__(_) do
+  defmacro __using__(opts) do
+    rename = Keyword.get(opts, :as, ProjectLogger)
+
     quote do
       require Logger
-      alias Tonka.GLogger
+
+      alias Tonka.Project.ProjectLogger, as: unquote(rename)
     end
   end
 
-  def write_to_system_logs(enabled \\ true) do
+  def enable_system_logs(enabled \\ true) do
     Process.put({__MODULE__, :system_logger_enabled}, enabled)
   end
 
@@ -26,7 +29,7 @@ defmodule Tonka.GLogger do
       quote do
         require Logger
 
-        if Tonka.GLogger.system_logger_enabled?() do
+        if Tonka.Project.ProjectLogger.system_logger_enabled?() do
           Logger.unquote(level)(unquote(message), unquote(meta))
         end
 

@@ -72,4 +72,8 @@ defmodule Tonka.Core.Booklet do
       when is_map(assigns) do
     %Booklet{bl | assigns: Enum.into(current, assigns)}
   end
+
+  def put_title(%Booklet{} = bl, title) when is_binary(title) do
+    %Booklet{bl | title: title}
+  end
 end

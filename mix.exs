@@ -12,7 +12,8 @@ defmodule Tonka.MixProject do
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
       modkit: modkit(),
-      deps: deps()
+      deps: deps(),
+      docs: docs()
     ]
   end
 
@@ -41,6 +42,7 @@ defmodule Tonka.MixProject do
       {:hackney, "~> 1.17"},
       {:oban, "~> 2.11"},
       {:cubdb, "~> 1.1"},
+      {:slack, "~> 0.23"},
 
       # {:ark, path: "~/src/ark", runtime: false},
       # {:type_check, "~> 0.10.0"},
@@ -85,5 +87,39 @@ defmodule Tonka.MixProject do
         {TonkaWeb, {:phoenix, "lib/tonka_web"}}
       ]
     ]
+  end
+
+  defp docs do
+    [
+      source_ref: git_branch(),
+      output: "doc/",
+      formatters: ["html"],
+      # assets: "priv/docs-assets",
+      # javascript_config_path: "assets/docs.js",
+      nest_modules_by_prefix: [
+        Tonka.Core,
+        Tonka.Actions.Queries,
+        Tonka.Actions.Render,
+        Tonka.Actions.Publish,
+        Tonka.Actions,
+        Tonka.Services,
+        Tonka.Data,
+        Tonka.Renderer,
+        Tonka.T,
+        Tonka.Utils,
+        Tonka.Ext.Gitlab,
+        Tonka.Ext.Slack,
+        Tonka.Ext,
+        TonkaWeb
+      ],
+      before_closing_body_tag: fn :html ->
+        nil
+        # File.read!("priv/docs-bottom.html")
+      end
+    ]
+  end
+
+  defp git_branch do
+    System.get_env("CI_COMMIT_REF_NAME", "develop")
   end
 end

@@ -3,6 +3,18 @@ defmodule Tonka.Services.Credentials.JsonFileCredentials do
   @derive Tonka.Services.Credentials
   defstruct @enforce_keys
 
+  defmodule CredentialsResolutionError do
+    defexception [:path, :kind]
+
+    def message(%{path: path, kind: :not_found}) do
+      "credentials could not be found at path #{path}"
+    end
+
+    def message(%{path: path, kind: :not_a_string}) do
+      "credentials are not a stirng at path #{path}"
+    end
+  end
+
   @type level :: binary | %{optional(binary) => level}
   @type t :: %__MODULE__{data: level}
 
@@ -51,9 +63,9 @@ defmodule Tonka.Services.Credentials.JsonFileCredentials do
     path = expand_path(path)
 
     case get_in(data, path) do
-      nil -> {:error, :not_found}
       value when is_binary(value) -> {:ok, value}
-      _ -> {:error, :not_a_string}
+      nil -> {:error, %CredentialsResolutionError{path: path, kind: :not_found}}
+      _ -> {:error, %CredentialsResolutionError{path: path, kind: :not_a_string}}
     end
   end
 

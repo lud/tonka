@@ -49,11 +49,18 @@ defmodule Tonka.Demo do
         }
       )
       |> bind(Tonka.Services.IssuesStore)
+      |> bind(Tonka.Ext.Slack.Services.SlackAPI,
+        params: %{
+          "credentials" => "slack.bot"
+        }
+      )
 
     {:ok, _issues_source, container} = pull(container, Tonka.Services.IssuesSource)
 
-    {:ok, container} = Container.prebuild_all(container)
-    Container.freeze(container)
+    case Container.prebuild_all(container) do
+      {:ok, container} -> Container.freeze(container)
+      {:error, e} -> raise e
+    end
   end
 
   @spec build_credentials(Container.t(), binary) ::
@@ -91,6 +98,7 @@ defmodule Tonka.Demo do
       inputs: Grid.pipe_action(%{}, :issues_groups, "query_issues")
     )
     |> Grid.add_action("report_booklet", Tonka.Actions.Render.BookletWrapper,
+      params: %{title: "Issues Report"},
       inputs:
         %{}
         |> Grid.pipe_action(:content, "issues_booklet")
@@ -117,7 +125,8 @@ defmodule Tonka.Demo do
       inputs: Grid.pipe_action(%{}, :booklet, "report_booklet")
     )
     |> Grid.add_action("report_to_slatck", Tonka.Ext.Slack.Actions.SlackPublisher,
-      inputs: Grid.pipe_action(%{}, :booklet, "report_booklet")
+      inputs: Grid.pipe_action(%{}, :booklet, "report_booklet"),
+      params: %{channel: "DS4SX8VPF"}
     )
   end
 end

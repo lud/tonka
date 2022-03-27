@@ -2,8 +2,13 @@ defmodule Tonka.Actions.Render.BookletWrapper do
   alias Tonka.Core.Booklet
   use Tonka.Core.Action
 
-  def cast_params(term) do
-    {:ok, term}
+  require Hugs
+
+  @params_schema Hugs.build_props()
+                 |> Hugs.field(:title, type: :binary, required: true)
+
+  def cast_params(params) do
+    Hugs.denormalize(params, @params_schema)
   end
 
   def return_type, do: Booklet
@@ -15,7 +20,9 @@ defmodule Tonka.Actions.Render.BookletWrapper do
     |> Action.use_input(:below, Booklet)
   end
 
-  def call(%{content: content, above: above, below: below}, _, _params) do
-    Booklet.from_blocks([above, content, below])
+  def call(%{content: content, above: above, below: below}, _, params) do
+    with {:ok, booklet} <- Booklet.from_blocks([above, content, below]) do
+      {:ok, Booklet.put_title(booklet, params.title)}
+    end
   end
 end

@@ -37,17 +37,17 @@ defmodule Tonka.ProjectStoreTest do
       ProjectStore.new(
         "test",
         backend_stub(
-          put: fn _, project_id, component, key, value ->
-            send(self(), {ref, project_id, component, key, value})
+          put: fn _, prk, component, key, value ->
+            send(self(), {ref, prk, component, key, value})
             :ok
           end,
-          get: fn _, project_id, component, key ->
+          get: fn _, prk, component, key ->
             case key do
               "madeup" -> %{some: "made up value"}
               _ -> nil
             end
           end,
-          get_and_update: fn _, project_id, component, key, f ->
+          get_and_update: fn _, prk, component, key, f ->
             {v, _} = f.("get_and_update_fake")
             {:ok, v}
           end,

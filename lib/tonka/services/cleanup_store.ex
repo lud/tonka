@@ -104,12 +104,13 @@ defmodule Tonka.Services.CleanupStore do
   @spec delete_id(t, key, id) :: :ok
   def delete_id(%CleanupStore{pstore: ps}, key, id) when is_binary(key) and is_integer(id) do
     ProjectStore.get_and_update(ps, __MODULE__, key, fn cleanups ->
-      new_val = Enum.filter(cleanups, fn {_, {entry_id, _}} -> entry_id != id end)
-
-      {nil, new_val}
+      case Enum.filter(cleanups, fn {_, {entry_id, _}} -> entry_id != id end) do
+        [] -> :pop
+        rest -> {nil, rest}
+      end
     end)
     |> case do
-      {:ok, nil} -> :ok
+      {:ok, _} -> :ok
     end
   end
 

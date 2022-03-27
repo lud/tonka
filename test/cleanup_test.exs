@@ -42,6 +42,6 @@ defmodule Tonka.CleanupTest do
 
     # Assert that when there is no ID left, the whole entry is deleted from CUB
     cub = store.pstore.backend.cub
-    assert nil = CubDB.get(cub, {"Tonka.Services.CleanupStore", "mykey"})
+    assert nil == CubDB.get(cub, {"Tonka.Services.CleanupStore", "mykey"})
   end
 end

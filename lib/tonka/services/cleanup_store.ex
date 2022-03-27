@@ -48,6 +48,11 @@ defmodule Tonka.Services.CleanupStore do
     |> use_service(:pstore, ProjectStore)
   end
 
+  @impl Service
+  def build(%{pstore: pstore}, _params) do
+    {:ok, new(pstore)}
+  end
+
   @spec compute_key(component, cleanup_params, inputs()) :: key
   def compute_key(component, %CleanupParams{key: topic} = params, inputs) do
     hashable_inputs = hashable_inputs(params.inputs, inputs)

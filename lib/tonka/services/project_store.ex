@@ -39,14 +39,21 @@ defmodule Tonka.Services.ProjectStore do
     %ProjectStore{prk: prk, backend: backend}
   end
 
+  @impl Service
   def cast_params(term) do
     {:ok, term}
   end
 
+  @impl Service
   def configure(config) do
     config
     |> use_service(:backend, Tonka.Services.ProjectStore.Backend)
     |> use_service(:info, Tonka.Data.ProjectInfo)
+  end
+
+  @impl Service
+  def build(%{backend: backend, info: %{prk: prk}}, _params) do
+    {:ok, new(prk, backend)}
   end
 
   def put(%ProjectStore{prk: prk, backend: backend}, component, key, value)

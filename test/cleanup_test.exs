@@ -35,6 +35,6 @@ defmodule Tonka.CleanupTest do
     assert :ok = CleanupStore.put(store, key, ttl, data)
     assert [] = CleanupStore.list_expired(store, key)
     Process.sleep(100)
-    assert [^data] = CleanupStore.list_expired(store, key)
+    assert [{_, ^data}] = CleanupStore.list_expired(store, key)
   end
 end

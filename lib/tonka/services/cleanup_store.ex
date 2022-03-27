@@ -43,10 +43,7 @@ defmodule Tonka.Services.CleanupStore do
     do: component
 
   defp component_name(component) when is_atom(component) do
-    case Atom.to_string(component) do
-      "Elixir." <> rest -> rest
-      full -> full
-    end
+    Tonka.Utils.module_to_string(component)
   end
 
   defp hashable_inputs(keys, inputs) do
@@ -63,93 +60,50 @@ defmodule Tonka.Services.CleanupStore do
   @spec put(t, key, ttl, cleanup_data) :: :ok
   def put(%CleanupStore{pstore: ps}, key, ttl, cleanup_data)
       when is_binary(key) and is_integer(ttl) and is_map(cleanup_data) do
+    expiration = now_ms() + ttl
+
     ProjectStore.get_and_update(ps, __MODULE__, key, fn cleanups ->
       new_val =
         case cleanups do
-          nil -> [{ttl, cleanup_data}]
-          # we can prepend, only the ttl is important
-          list -> [{ttl, cleanup_data} | list]
+          nil ->
+            [{expiration, {0, cleanup_data}}]
+
+          # we can prepend, only the expiration is important
+          list ->
+            id = max_id(list) + 1
+            [{expiration, {id, cleanup_data}} | list]
         end
 
       {nil, new_val}
     end)
     |> case do
       {:ok, nil} -> :ok
-      other -> other
     end
   end
 
+  defp max_id(entries) do
+    ids = Enum.map(entries, fn {_, {id, _}} -> id end)
+    Enum.max(ids)
+  end
+
   @spec list_expired(t, key) :: [{id, cleanup_data}]
-  def list_expired(t, key) when is_binary(key) do
-    []
+  def list_expired(%CleanupStore{pstore: ps}, key) when is_binary(key) do
+    case ProjectStore.get(ps, __MODULE__, key, []) do
+      [] ->
+        []
+
+      list ->
+        now = now_ms()
+
+        list
+        |> Enum.filter(fn {exp, _} -> exp <= now end)
+        |> Enum.map(&elem(&1, 1))
+    end
   end
 
   @spec delete_id(t, key, id) :: :ok
   def delete_id(t, key, id) when is_binary(key) and is_integer(id) do
   end
-end
 
-defprotocol Tonka.Services.CleanupStore.Hashable do
-  @spec hashable(t) :: iodata()
-  @doc """
-  Returns a value that will be used to computes hashes for the cleanup store.
-  """
-  def hashable(t)
-end
-
-defimpl Tonka.Services.CleanupStore.Hashable, for: List do
-  def hashable(list), do: Enum.map(list, &Tonka.Services.CleanupStore.Hashable.hashable/1)
-end
-
-defimpl Tonka.Services.CleanupStore.Hashable, for: BitString do
-  # this does not actually support bitstrings, only binaries
-  def hashable(string), do: string
-end
-
-defimpl Tonka.Services.CleanupStore.Hashable, for: Map do
-  def hashable(map) do
-    map
-    |> Map.to_list()
-    |> Tonka.Services.CleanupStore.Hashable.hashable()
-  end
-end
-
-defimpl Tonka.Services.CleanupStore.Hashable, for: Tuple do
-  def hashable(tuple) do
-    tuple
-    |> Tuple.to_list()
-    |> Tonka.Services.CleanupStore.Hashable.hashable()
-  end
-end
-
-defimpl Tonka.Services.CleanupStore.Hashable, for: Atom do
-  def hashable(atom) do
-    # Atoms supports utf8 in elixir, to not use to_charlist
-    atom
-    |> Atom.to_string()
-    |> Tonka.Services.CleanupStore.Hashable.hashable()
-  end
-end
-
-defimpl Tonka.Services.CleanupStore.Hashable, for: Integer do
-  def hashable(int), do: int
-end
-
-defimpl Tonka.Services.CleanupStore.Hashable, for: Integer do
-  def hashable(int) when int < 0 when int > 255 do
-    int
-    |> Integer.to_charlist()
-    |> Tonka.Services.CleanupStore.Hashable.hashable()
-  end
-
-  def hashable(int),
-    do: int
-end
-
-defimpl Tonka.Services.CleanupStore.Hashable, for: Float do
-  def hashable(float) do
-    float
-    |> Float.to_charlist()
-    |> Tonka.Services.CleanupStore.Hashable.hashable()
-  end
+  defp now_ms, do: :erlang.system_time(:millisecond)
 end

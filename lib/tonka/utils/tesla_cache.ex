@@ -1,4 +1,4 @@
-defmodule Tonka.Util.TeslaCache do
+defmodule Tonka.Utils.TeslaCache do
   @behaviour Tesla.Middleware
 
   @dir Path.join([File.cwd!(), "var", "http-cache"])

@@ -58,7 +58,7 @@ defmodule Tonka.Ext.Gitlab.Services.Issues do
       {Tesla.Middleware.BaseUrl, "https://gitlab.com/api/graphql"},
       Tesla.Middleware.JSON,
       {Tesla.Middleware.Headers, headers},
-      Tonka.Util.TeslaCache
+      Tonka.Utils.TeslaCache
     ]
 
     Tesla.client(middleware)

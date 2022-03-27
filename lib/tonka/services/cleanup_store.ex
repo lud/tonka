@@ -63,11 +63,20 @@ defmodule Tonka.Services.CleanupStore do
   @spec put(t, key, ttl, cleanup_data) :: :ok
   def put(%CleanupStore{pstore: ps}, key, ttl, cleanup_data)
       when is_binary(key) and is_integer(ttl) and is_map(cleanup_data) do
-    ProjectStore.get_and_update(ps, __MODULE__, key, fn
-      nil -> [{ttl, cleanup_data}]
-      # we can prepend, only the ttl is important
-      list -> [{ttl, cleanup_data} | list]
+    ProjectStore.get_and_update(ps, __MODULE__, key, fn cleanups ->
+      new_val =
+        case cleanups do
+          nil -> [{ttl, cleanup_data}]
+          # we can prepend, only the ttl is important
+          list -> [{ttl, cleanup_data} | list]
+        end
+
+      {nil, new_val}
     end)
+    |> case do
+      {:ok, nil} -> :ok
+      other -> other
+    end
   end
 
   @spec list_expired(t, key) :: [{id, cleanup_data}]

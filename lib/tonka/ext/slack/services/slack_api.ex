@@ -2,8 +2,7 @@ defmodule Tonka.Ext.Slack.Services.SlackAPI do
   alias Tonka.Ext.Slack.Data.Post
   require Logger
   use TODO
-  # use Tonka.Core.Service
-  alias Tonka.Core.Service
+  use Tonka.Core.Service
 
   @enforce_keys [:send_opts]
   defstruct @enforce_keys
@@ -25,7 +24,7 @@ defmodule Tonka.Ext.Slack.Services.SlackAPI do
 
   def configure(config) do
     config
-    |> Service.use_service(:credentials, Tonka.Services.Credentials)
+    |> use_service(:credentials, Tonka.Services.Credentials)
   end
 
   def build(%{credentials: credentials}, %{credentials: path}) do

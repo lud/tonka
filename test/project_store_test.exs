@@ -10,8 +10,8 @@ defmodule Tonka.ProjectStoreTest do
   @component "MyComponent"
 
   test "building a project info" do
-    assert %ProjectInfo{id: "test", storage_dir: "var/projects/test"} =
-             ProjectInfo.new(id: "test", storage_dir: "var/projects/test")
+    assert %ProjectInfo{prk: "test", storage_dir: "var/projects/test"} =
+             ProjectInfo.new(prk: "test", storage_dir: "var/projects/test")
   end
 
   defmodule MapBackend do

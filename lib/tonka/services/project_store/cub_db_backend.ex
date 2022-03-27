@@ -20,7 +20,7 @@ defmodule Tonka.Services.ProjectStore.CubDBBackend do
 
   def configure(config) do
     config
-    |> Service.use_service(:sup, Tonka.Services.ServiceSupervisor)
+    |> use_service(:sup, Tonka.Services.ServiceSupervisor)
   end
 
   @spec put(t, Backend.prk(), Backend.component(), Backend.key(), Backend.value()) :: :ok

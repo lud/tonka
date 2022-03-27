@@ -33,7 +33,7 @@ defmodule Tonka.Ext.Gitlab.Services.Issues do
 
   def configure(config) do
     config
-    |> Service.use_service(:credentials, Tonka.Services.Credentials)
+    |> use_service(:credentials, Tonka.Services.Credentials)
   end
 
   def build(%{credentials: credentials}, %{credentials: path, projects: projects}) do

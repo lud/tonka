@@ -16,7 +16,7 @@ defmodule Tonka.Services.IssuesStore do
 
   def configure(config) do
     config
-    |> Service.use_service(:source, Tonka.Services.IssuesSource)
+    |> use_service(:source, Tonka.Services.IssuesSource)
   end
 
   def build(injects, _params) do

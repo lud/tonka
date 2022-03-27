@@ -45,7 +45,7 @@ defmodule Tonka.Services.CleanupStore do
   @impl Service
   def configure(config) do
     config
-    |> Service.use_service(:pstore, ProjectStore)
+    |> use_service(:pstore, ProjectStore)
   end
 
   @spec compute_key(component, cleanup_params, inputs()) :: key

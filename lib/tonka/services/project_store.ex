@@ -45,8 +45,8 @@ defmodule Tonka.Services.ProjectStore do
 
   def configure(config) do
     config
-    |> Service.use_service(:backend, Tonka.Services.ProjectStore.Backend)
-    |> Service.use_service(:info, Tonka.Data.ProjectInfo)
+    |> use_service(:backend, Tonka.Services.ProjectStore.Backend)
+    |> use_service(:info, Tonka.Data.ProjectInfo)
   end
 
   def put(%ProjectStore{prk: prk, backend: backend}, component, key, value)

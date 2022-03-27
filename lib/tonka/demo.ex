@@ -40,6 +40,7 @@ defmodule Tonka.Demo do
           "credentials" => "slack.bot"
         }
       )
+      |> bind(Tonka.Services.ServiceSupervisor)
       |> bind(Tonka.Services.CleanupStore)
       |> bind(Tonka.Services.ProjectStore)
       |> bind(Tonka.Services.ProjectStore.Backend, Tonka.Services.ProjectStore.CubDBBackend)

@@ -10,6 +10,9 @@ defmodule Tonka.Application do
     children = [
       # Start the Ecto repository
       Tonka.Repo,
+      # Start the shared registry for projects and services
+      {Tonka.Utils.RegistryLogger, name: Tonka.Utils.RegistryLogger},
+      Tonka.Project.ProjectRegistry,
       # Start the Telemetry supervisor
       TonkaWeb.Telemetry,
       # Start the PubSub system

@@ -61,6 +61,7 @@ defmodule Tonka.Core.Service do
     quote location: :keep do
       alias unquote(__MODULE__)
       @behaviour unquote(__MODULE__)
+      import unquote(__MODULE__), only: [use_service: 3]
     end
   end
 

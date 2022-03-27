@@ -53,7 +53,6 @@ defmodule Tonka.Demo do
       |> bind(Tonka.Services.IssuesStore)
 
     {:ok, issues_source, container} = pull(container, Tonka.Services.IssuesSource)
-    issues_source |> IO.inspect(label: "issues_source")
 
     {:ok, container} = Container.prebuild_all(container)
     Container.freeze(container)

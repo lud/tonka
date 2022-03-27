@@ -54,11 +54,8 @@ defmodule Tonka.BookletTest do
           but it does'nt have newlines
       """
       |> yaml!
-      |> IO.inspect(label: "yaml")
       |> InputCaster.cast_input()
       |> Ark.Ok.uok!()
-
-    booklet |> IO.inspect(label: "booklet")
 
     CliRenderer.render!(booklet) |> IO.puts()
 

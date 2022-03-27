@@ -13,7 +13,7 @@ defmodule Tonka.Actions.Queries.QueriesGroupsMQLCompiler do
 
   def configure(config) do
     config
-    |> Action.use_input(:query_groups, Tonka.T.MQLGroups)
+    |> Action.use_input(:query_groups, Tonka.Data.MQLGroups)
   end
 
   def return_type, do: __MODULE__.Return

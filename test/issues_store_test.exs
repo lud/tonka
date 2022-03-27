@@ -77,7 +77,7 @@ defmodule Tonka.IssuesStoreTest do
           labels: 'todo'
       """
       |> YamlElixir.read_from_string!()
-      |> Tonka.T.MQLGroups.cast_input()
+      |> Tonka.Data.MQLGroups.cast_input()
 
     assert {:ok, [%{limit: 22}, %{limit: -1}]} = groups
   end

@@ -1,4 +1,4 @@
-defmodule Tonka.T.MQLGroups do
+defmodule Tonka.Data.MQLGroups do
   def cast_input(list) when is_list(list) do
     Ark.Ok.map_ok(list, &denormalize_group/1)
   end

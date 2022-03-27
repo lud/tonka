@@ -74,7 +74,7 @@ defmodule Tonka.Ext.Slack.Services.SlackAPI do
   end
 
   defp default_message_icon do
-    Enum.random(["male-technologist", "female-technologist"])
+    Enum.random(["female-technologist", "male-technologist"])
   end
 
   defp build_message(slack, post) do

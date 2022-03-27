@@ -2,6 +2,7 @@ defmodule Tonka.CleanupHashTest do
   use ExUnit.Case, async: true
   alias Tonka.Services.CleanupStore
   alias Tonka.Services.CleanupStore.CleanupParams
+  alias Tonka.Services.CleanupStore.Hashable
 
   test "the raw key is used without if not param says otherwise" do
     key = "a_topic"
@@ -31,12 +32,12 @@ defmodule Tonka.CleanupHashTest do
   defmodule Something do
     defstruct a: 1, b: {:ok, :cool}, c: 99.99
 
-    defimpl Tonka.Services.CleanupStore.Hashable do
+    defimpl Hashable do
       # this does not actually support bitstrings, only binaries
       def hashable(something) do
         something
         |> Map.from_struct()
-        |> Tonka.Services.CleanupStore.Hashable.hashable()
+        |> Hashable.hashable()
       end
     end
   end

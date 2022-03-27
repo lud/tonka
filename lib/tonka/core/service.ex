@@ -1,7 +1,7 @@
 defmodule Tonka.Core.Service do
   alias __MODULE__
-  alias Tonka.Core.Container.InjectSpec
   alias Tonka.Core.Container
+  alias Tonka.Core.Container.InjectSpec
   use TODO
 
   @enforce_keys [:built, :builder, :impl, :params]

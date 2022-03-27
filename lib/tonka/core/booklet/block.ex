@@ -16,6 +16,8 @@ defmodule Tonka.Core.Booklet.Block do
     end
   end
 
+  @type t :: struct()
+
   defmacro prop(definition, options \\ [])
 
   defmacro prop(definition, options) when is_list(options) do
@@ -52,7 +54,7 @@ defmodule Tonka.Core.Booklet.Block do
     ]
   end
 
-  defp def_new_cast() do
+  defp def_new_cast do
     quote location: :keep do
       def new(props \\ []) do
         Tonka.Core.Booklet.Block.cast_block!({__MODULE__, props})
@@ -66,7 +68,7 @@ defmodule Tonka.Core.Booklet.Block do
 
   defp keys_lists(keys) do
     quote location: :keep do
-      def __props__() do
+      def __props__ do
         unquote(keys)
       end
     end

@@ -1,7 +1,7 @@
 defmodule Tonka.Actions.Queries.IssuesGroupsReader do
-  use Tonka.Core.Action
-  alias Tonka.Services.IssuesStore
   alias Tonka.Data.IssuesGroup
+  alias Tonka.Services.IssuesStore
+  use Tonka.Core.Action
 
   def cast_params(term) do
     {:ok, term}

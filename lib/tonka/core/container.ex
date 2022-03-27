@@ -1,8 +1,8 @@
 defmodule Tonka.Core.Container do
   alias Tonka.Core.Container
+  alias Tonka.Core.Container.InjectSpec
   alias Tonka.Core.Injector
   alias Tonka.Core.Service
-  alias Tonka.Core.Container.InjectSpec
   use TODO
 
   @moduledoc """

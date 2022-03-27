@@ -1,13 +1,12 @@
 defmodule Tonka.GridTest do
-  alias Tonka.Core.Grid
   alias Tonka.Core.Action
   alias Tonka.Core.Container
-  alias Tonka.Core.Grid.InvalidInputTypeError
-  alias Tonka.Core.Grid.UndefinedOriginActionError
+  alias Tonka.Core.Grid
   alias Tonka.Core.Grid.CastError
+  alias Tonka.Core.Grid.InvalidInputTypeError
   alias Tonka.Core.Grid.NoInputCasterError
+  alias Tonka.Core.Grid.UndefinedOriginActionError
   alias Tonka.Core.Grid.UnmappedInputError
-
   use ExUnit.Case, async: true
 
   test "a grid can be created" do
@@ -308,12 +307,12 @@ defmodule Tonka.GridTest do
       |> Grid.add_action(
         "use_unknown",
         RequiresAnUnknownType,
-        inputs: %{} |> Grid.pipe_grid_input(:mykey)
+        inputs: Grid.pipe_grid_input(%{}, :mykey)
       )
       |> Grid.add_action(
         "use_uncastable",
         RequiresAnUncastableType,
-        inputs: %{} |> Grid.pipe_static(:mykey, :this_term_not_used)
+        inputs: Grid.pipe_static(%{}, :mykey, :this_term_not_used)
       )
 
     expected_errors = [

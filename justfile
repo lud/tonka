@@ -30,6 +30,8 @@ test-one-stale:
 fwatch:
     fswatch -o -m poll_monitor --event Updated --recursive lib test
 
+compile-warnings-as-errors:
+  mix compile --force --warnigs-as-errors
 
 run: run-0
 run-0: (_run "tonka0" "4000")

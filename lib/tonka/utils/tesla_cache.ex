@@ -1,5 +1,6 @@
 defmodule Tonka.Utils.TeslaCache do
   @behaviour Tesla.Middleware
+  require Logger
 
   @dir Path.join([File.cwd!(), "var", "http-cache"])
   File.mkdir_p!(@dir)
@@ -15,6 +16,10 @@ defmodule Tonka.Utils.TeslaCache do
         |> maybe_write(key)
 
       {:hit, response} ->
+        Logger.warn(
+          "permament cache HIT: #{env.method |> to_string |> String.upcase()} #{env.url}"
+        )
+
         {:ok, response}
     end
   end
@@ -34,14 +39,10 @@ defmodule Tonka.Utils.TeslaCache do
     end
   end
 
-  defp maybe_write({:ok, %Tesla.Env{body: ~s({"data":{"project":null}}) <> _} = resp}, key) do
-    {:ok, resp}
-  end
-
   defp maybe_write({:ok, %Tesla.Env{status: status} = resp}, key) when status < 300 do
     path = file(key)
 
-    IO.puts("write file #{path}")
+    Logger.debug("writing permanent http cache to #{path}")
     bin = :erlang.term_to_binary(resp)
 
     File.write!(path, bin)
@@ -53,7 +54,7 @@ defmodule Tonka.Utils.TeslaCache do
   end
 
   defp maybe_write(other, _key) do
-    IO.warn("bad data #{inspect(other)}")
+    Logger.warn("invalid response passed to permanent http cache: #{inspect(other)}")
     other
   end
 

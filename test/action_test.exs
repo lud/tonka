@@ -1,9 +1,9 @@
 defmodule Tonka.ActionTest do
-  alias Tonka.Core.Grid
   alias Tonka.Core.Action
+  alias Tonka.Core.Action.InputSpec
   alias Tonka.Core.Container
   alias Tonka.Core.Container.InjectSpec
-  alias Tonka.Core.Action.InputSpec
+  alias Tonka.Core.Grid
   alias Tonka.Core.Grid.InvalidInputTypeError
   use ExUnit.Case, async: true
 

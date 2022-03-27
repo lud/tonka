@@ -1,14 +1,13 @@
 defmodule Tonka.GridInjectionTest do
-  alias Tonka.Core.Grid
   alias Tonka.Core.Action
   alias Tonka.Core.Container
   alias Tonka.Core.Container.ServiceResolutionError
-  alias Tonka.Core.Service
+  alias Tonka.Core.Grid
   alias Tonka.Core.Grid.InvalidInputTypeError
-  alias Tonka.Core.Grid.UnavailableServiceError
   alias Tonka.Core.Grid.NoInputCasterError
+  alias Tonka.Core.Grid.UnavailableServiceError
   alias Tonka.Core.Grid.UnmappedInputError
-
+  alias Tonka.Core.Service
   use ExUnit.Case, async: true
 
   test "the grid expects a frozen container to run" do

@@ -4,7 +4,7 @@ defmodule Tonka.Core.Booklet do
 
   defstruct blocks: [], title: "Booklet Title", assigns: %{}
 
-  @type t :: %Booklet{}
+  @type t :: %Booklet{blocks: [Block.t() | Booklet.t()], title: binary(), assigns: map}
 
   @spec from_blocks(list) :: {:ok, Booklet.t()} | {:error, term}
   def from_blocks(blocks) when is_list(blocks) do
@@ -37,10 +37,12 @@ defmodule Tonka.Core.Booklet do
   defmodule CastError do
     defexception [:reason]
 
-    def message(%{reason: {:unknown_prop, module, key, value}}) do
+    def message(%{reason: {:unknown_prop, module, key, _value}}) do
       "unknown property #{inspect(key)} for block #{module}"
     end
   end
+
+  @type splattable(t) :: list(t) | list(splattable(t))
 
   @doc """
   Flattens the list and removes all `nil` entries from the result.
@@ -51,6 +53,7 @@ defmodule Tonka.Core.Booklet do
     - building blocks from nested structures can return an nested list as it
       will be flattened.
   """
+  @spec splat_list(splattable(t | nil)) :: list(t)
   def splat_list(list) when is_list(list) do
     list
     |> Enum.map(fn

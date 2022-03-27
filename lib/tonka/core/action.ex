@@ -1,15 +1,13 @@
 defmodule Tonka.Core.Action do
+  alias __MODULE__
+  alias Tonka.Core.Action.InputSpec
+  alias Tonka.Core.Container.InjectSpec
+  alias Tonka.Core.Service.ServiceConfig
+
   @moduledoc """
   Behaviour defining the callbacks of modules and datatypes used as actions
   in a `Tonka.Core.Grid`.
   """
-
-  alias Tonka.Core.Container.InjectSpec
-  alias Tonka.Core.Action.InputSpec
-  alias Tonka.Core.Container.ReturnSpec
-  alias Tonka.Core.Container.InjectSpec
-  alias Tonka.Core.Service.ServiceConfig
-  alias __MODULE__
 
   defmodule ActionConfig do
     @enforce_keys [:service_config, :inputs, :injects]

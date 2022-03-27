@@ -41,10 +41,6 @@ defimpl Tonka.Services.CleanupStore.Hashable, for: Atom do
 end
 
 defimpl Tonka.Services.CleanupStore.Hashable, for: Integer do
-  def hashable(int), do: int
-end
-
-defimpl Tonka.Services.CleanupStore.Hashable, for: Integer do
   def hashable(int) when int < 0 when int > 255 do
     int
     |> Integer.to_charlist()

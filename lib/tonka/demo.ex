@@ -83,7 +83,7 @@ defmodule Tonka.Demo do
           - title: TODO List
             query:
               last_ext_username: 'lud-agi'
-            limit: 20
+            limit: 2
           """
           |> yaml!()
         )

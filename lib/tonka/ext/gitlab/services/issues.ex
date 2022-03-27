@@ -4,6 +4,8 @@ defmodule Tonka.Ext.Gitlab.Services.Issues do
   require Tonka.GLogger, as: Logger
   alias Tonka.Services.IssuesSource
 
+  use TODO
+
   @enforce_keys [:projects, :private_token]
   @behaviour IssuesSource
   @derive IssuesSource
@@ -14,7 +16,7 @@ defmodule Tonka.Ext.Gitlab.Services.Issues do
           private_token: binary
         }
 
-  @print_queries true
+  @print_queries false
   @pretty_queries @print_queries
 
   @params_caster Hugs.build_props()
@@ -58,6 +60,7 @@ defmodule Tonka.Ext.Gitlab.Services.Issues do
       {Tesla.Middleware.BaseUrl, "https://gitlab.com/api/graphql"},
       Tesla.Middleware.JSON,
       {Tesla.Middleware.Headers, headers},
+      {Tesla.Middleware.Logger, debug: false},
       Tonka.Utils.TeslaCache
     ]
 
@@ -146,7 +149,7 @@ defmodule Tonka.Ext.Gitlab.Services.Issues do
     query
   end
 
-  defp issue_content_query() do
+  defp issue_content_query do
     [
       "title",
       "id",
@@ -226,13 +229,4 @@ defmodule Tonka.Ext.Gitlab.Services.Issues do
       _ -> raise "Could not parse '#{bin}' as DateTime"
     end
   end
-
-  defp format_error({:error, {:gitlab_project_not_found, slug}}),
-    do: "project '#{slug}' is not available"
-
-  defp format_error({:error, reason}) when is_binary(reason),
-    do: reason
-
-  defp format_error({:error, reason}),
-    do: inspect(reason)
 end

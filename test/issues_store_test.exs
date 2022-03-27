@@ -1,12 +1,11 @@
 defmodule Tonka.IssuesStoreTest do
-  use ExUnit.Case, async: true
-
-  alias Tonka.Core.Query.MQL
-  alias Tonka.Data.Issue
   alias Tonka.Core.Container
+  alias Tonka.Core.Query.MQL
   alias Tonka.Core.Service
-  alias Tonka.Services.IssuesStore
+  alias Tonka.Data.Issue
   alias Tonka.Services.IssuesSource
+  alias Tonka.Services.IssuesStore
+  use ExUnit.Case, async: true
 
   defmodule TestIssuesSources do
     @derive IssuesSource

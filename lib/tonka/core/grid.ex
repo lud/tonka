@@ -1,25 +1,21 @@
 defmodule Tonka.Core.Grid do
-  @moduledoc """
-  A grid is an execution context for multiple actions.
-  """
+  alias __MODULE__
+  alias Tonka.Core.Action
+  alias Tonka.Core.Container
+  alias Tonka.Core.Container.InjectSpec
+  alias Tonka.Core.Grid.ActionFailureError
+  alias Tonka.Core.Grid.CastError
+  alias Tonka.Core.Grid.InvalidInputTypeError
+  alias Tonka.Core.Grid.NoInputCasterError
+  alias Tonka.Core.Grid.UnavailableServiceError
+  alias Tonka.Core.Grid.UndefinedOriginActionError
+  alias Tonka.Core.Grid.UnmappedInputError
   use TODO
   use Tonka.GLogger
 
-  alias Tonka.Core.Grid.{
-    InvalidInputTypeError,
-    NoInputCasterError,
-    CastError,
-    UnmappedInputError,
-    UndefinedOriginActionError,
-    UnavailableServiceError,
-    ActionFailureError
-  }
-
-  alias Tonka.Core.Container
-  alias Tonka.Core.Container.InjectSpec
-  alias Tonka.Core.Service
-  alias Tonka.Core.Action
-  alias __MODULE__
+  @moduledoc """
+  A grid is an execution context for multiple actions.
+  """
 
   @type outputs :: %{optional(binary | :incast) => term}
   @type action :: Action.t()
@@ -589,60 +585,65 @@ defmodule Tonka.Core.Grid do
     "#{inspect(m)}.#{f}(#{Enum.map(args, &inspect/1)})"
   end
 
+  defp cast_reason({:unmapped, input_key}, act_key) do
+    %UnmappedInputError{
+      action_key: act_key,
+      input_key: input_key
+    }
+  end
+
+  defp cast_reason({:incompatible_type, input_key, input_type, output_type}, act_key) do
+    %InvalidInputTypeError{
+      action_key: act_key,
+      expected_type: input_type,
+      provided_type: output_type,
+      input_key: input_key
+    }
+  end
+
+  defp cast_reason({:no_caster, input_key, input_type, origin}, act_key) do
+    %NoInputCasterError{
+      action_key: act_key,
+      input_key: input_key,
+      input_type: input_type,
+      origin: origin
+    }
+  end
+
+  defp cast_reason({:input_cast_error, input_key, input_type, reason}, act_key) do
+    %CastError{
+      action_key: act_key,
+      input_key: input_key,
+      input_type: input_type,
+      reason: reason
+    }
+  end
+
+  defp cast_reason({:undef_origin_action, input_key, origin_act}, act_key) do
+    %UndefinedOriginActionError{
+      action_key: act_key,
+      input_key: input_key,
+      origin_action_key: origin_act
+    }
+  end
+
+  defp cast_reason({:service_resolve, inject_key, container_error}, act_key) do
+    %UnavailableServiceError{
+      action_key: act_key,
+      container_error: container_error,
+      inject_key: inject_key
+    }
+  end
+
+  defp cast_reason({:action_failed, act_key, reason}, act_key) do
+    %ActionFailureError{
+      action_key: act_key,
+      reason: reason
+    }
+  end
+
   defp cast_error(reason, act_key) do
-    mapped =
-      case reason do
-        {:unmapped, input_key} ->
-          %UnmappedInputError{
-            action_key: act_key,
-            input_key: input_key
-          }
-
-        {:incompatible_type, input_key, input_type, output_type} ->
-          %InvalidInputTypeError{
-            action_key: act_key,
-            expected_type: input_type,
-            provided_type: output_type,
-            input_key: input_key
-          }
-
-        {:no_caster, input_key, input_type, origin} ->
-          %NoInputCasterError{
-            action_key: act_key,
-            input_key: input_key,
-            input_type: input_type,
-            origin: origin
-          }
-
-        {:input_cast_error, input_key, input_type, reason} ->
-          %CastError{
-            action_key: act_key,
-            input_key: input_key,
-            input_type: input_type,
-            reason: reason
-          }
-
-        {:undef_origin_action, input_key, origin_act} ->
-          %UndefinedOriginActionError{
-            action_key: act_key,
-            input_key: input_key,
-            origin_action_key: origin_act
-          }
-
-        {:service_resolve, inject_key, container_error} ->
-          %UnavailableServiceError{
-            action_key: act_key,
-            container_error: container_error,
-            inject_key: inject_key
-          }
-
-        {:action_failed, ^act_key, reason} ->
-          %ActionFailureError{
-            action_key: act_key,
-            reason: reason
-          }
-      end
-
+    mapped = cast_reason(reason, act_key)
     {:error, mapped}
   end
 end

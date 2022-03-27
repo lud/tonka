@@ -1,9 +1,9 @@
 defmodule Tonka.ContainerTest do
   alias Tonka.Core.Container
-  alias Tonka.Core.Container.ServiceResolutionError
-  alias Tonka.Core.Service
-  alias Tonka.Core.Injector
   alias Tonka.Core.Container.Params
+  alias Tonka.Core.Container.ServiceResolutionError
+  alias Tonka.Core.Injector
+  alias Tonka.Core.Service
   use ExUnit.Case, async: true
 
   test "a new container can be created" do

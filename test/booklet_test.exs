@@ -1,15 +1,14 @@
 defmodule Tonka.BookletTest do
-  use ExUnit.Case, async: true
-  import Tonka.Utils
   alias Tonka.Core.Booklet
-  alias Tonka.Core.Booklet.InputCaster
   alias Tonka.Core.Booklet.Blocks.Header
   alias Tonka.Core.Booklet.Blocks.Mrkdwn
   alias Tonka.Core.Booklet.Blocks.PlainText
   alias Tonka.Core.Booklet.Blocks.RichText
   alias Tonka.Core.Booklet.Blocks.Section
-
   alias Tonka.Core.Booklet.CliRenderer
+  alias Tonka.Core.Booklet.InputCaster
+  import Tonka.Utils
+  use ExUnit.Case, async: true
 
   test "a booklet can accept another booklet as a block" do
     {:ok, content} =

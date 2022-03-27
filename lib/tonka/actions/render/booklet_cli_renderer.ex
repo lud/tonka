@@ -1,16 +1,14 @@
 defmodule Tonka.Actions.Render.BookletCliRenderer do
-  use Tonka.Core.Action
-  alias Tonka.Data.IssuesGroup
   alias Tonka.Core.Booklet
   alias Tonka.Core.Booklet.Blocks.Header
   alias Tonka.Core.Booklet.Blocks.Mrkdwn
   alias Tonka.Core.Booklet.Blocks.PlainText
   alias Tonka.Core.Booklet.Blocks.RichText
   alias Tonka.Core.Booklet.Blocks.Section
-
-  import Tonka.Gettext
-
   alias Tonka.Core.Booklet.CliRenderer
+  alias Tonka.Data.IssuesGroup
+  import Tonka.Gettext
+  use Tonka.Core.Action
 
   def cast_params(term) do
     {:ok, term}

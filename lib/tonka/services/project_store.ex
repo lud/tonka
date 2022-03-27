@@ -24,6 +24,7 @@ end
 defmodule Tonka.Services.ProjectStore do
   alias Tonka.Services.ProjectStore
   alias Tonka.Services.ProjectStore.Backend
+  use TODO
 
   @enforce_keys [:project_id, :backend]
   defstruct @enforce_keys

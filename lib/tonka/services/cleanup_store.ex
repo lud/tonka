@@ -1,7 +1,7 @@
 defmodule Tonka.Services.CleanupStore do
-  alias Tonka.Services.ProjectStore
-  alias Tonka.Services.CleanupStore.Hashable
   alias __MODULE__
+  alias Tonka.Services.CleanupStore.Hashable
+  alias Tonka.Services.ProjectStore
 
   defmodule CleanupParams do
     require Hugs
@@ -76,9 +76,7 @@ defmodule Tonka.Services.CleanupStore do
 
       {nil, new_val}
     end)
-    |> case do
-      {:ok, nil} -> :ok
-    end
+    |> case(do: ({:ok, _} -> :ok))
   end
 
   defp max_id(entries) do
@@ -104,15 +102,17 @@ defmodule Tonka.Services.CleanupStore do
   @spec delete_id(t, key, id) :: :ok
   def delete_id(%CleanupStore{pstore: ps}, key, id) when is_binary(key) and is_integer(id) do
     ProjectStore.get_and_update(ps, __MODULE__, key, fn cleanups ->
-      case Enum.filter(cleanups, fn {_, {entry_id, _}} -> entry_id != id end) do
+      case filter_id(cleanups, id) do
         [] -> :pop
         rest -> {nil, rest}
       end
     end)
-    |> case do
-      {:ok, _} -> :ok
-    end
+    |> case(do: ({:ok, _} -> :ok))
   end
 
   defp now_ms, do: :erlang.system_time(:millisecond)
+
+  defp filter_id(cleanups, id) do
+    Enum.filter(cleanups, fn {_, {entry_id, _}} -> entry_id != id end)
+  end
 end

@@ -47,7 +47,7 @@ defmodule Tonka.CleanupHashTest do
     params_no_input = CleanupParams.of(key: key)
     params_empty_input = CleanupParams.of(key: key, inputs: [])
     params_some = CleanupParams.of(key: key, inputs: [:some])
-    params_dupli = CleanupParams.of(key: key, inputs: [:some, :some])
+    params_some_dupli = CleanupParams.of(key: key, inputs: [:some, :some])
     params_some_str = CleanupParams.of(key: key, inputs: ["some"])
     params_other = CleanupParams.of(key: key, inputs: [:other])
     params_both = CleanupParams.of(key: key, inputs: [:some, :other])
@@ -67,14 +67,19 @@ defmodule Tonka.CleanupHashTest do
       get_key.(params_other),
       get_key.(params_both)
     ])
+
+    assert get_key.(params_no_input) == get_key.(params_empty_input)
+    assert get_key.(params_some) == get_key.(params_some_dupli)
+    # using string input does not work thanks to a feature of the store but
+    # thanks to the casting of the params structs
+    assert get_key.(params_some) == get_key.(params_some_str)
+    assert get_key.(params_both) == get_key.(params_both_rev)
   end
 
   defp assert_all_different(things) do
     things = Enum.with_index(things)
 
     for {v, i} <- things, {w, j} <- things, i != j do
-      v |> IO.inspect(label: "v")
-      w |> IO.inspect(label: "w")
       assert v != w
     end
   end

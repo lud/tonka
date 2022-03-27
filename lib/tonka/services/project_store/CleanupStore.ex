@@ -47,7 +47,7 @@ defmodule Tonka.Services.CleanupStore do
     keys
     |> Enum.uniq()
     |> Enum.sort()
-    |> Enum.map(&(Map.fetch!(inputs, &1) |> Hashable.hashable()))
+    |> Enum.map(fn key -> Map.fetch!(inputs, key) |> Hashable.hashable() end)
   end
 
   defp compute_hash(hashable_inputs) do

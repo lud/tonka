@@ -2,7 +2,8 @@ defmodule Tonka.Ext.Slack.Services.SlackAPI do
   alias Tonka.Ext.Slack.Data.Post
   require Logger
   use TODO
-  use Tonka.Core.Service
+  # use Tonka.Core.Service
+  alias Tonka.Core.Service
 
   @enforce_keys [:send_opts]
   defstruct @enforce_keys
@@ -47,7 +48,7 @@ defmodule Tonka.Ext.Slack.Services.SlackAPI do
 
   defp cast_result(result, channel, blocks) do
     case result do
-      %{"ok" => true, "channel" => channel, "ts" => ts} ->
+      %{"ok" => true, "channel" => channel, "ts" => _ts} ->
         {:ok, "Slack: Successfully posted to #{channel}"}
 
       %{"ok" => false, "error" => "channel_not_found"} ->
@@ -55,14 +56,12 @@ defmodule Tonka.Ext.Slack.Services.SlackAPI do
 
       %{"ok" => false, "error" => reason}
       when reason in ["invalid_blocks_format", "invalid_blocks"] ->
-        if @pretty_json do
-          Logger.debug("""
+        Logger.debug("""
 
-          Invalid blocks JSON:
+        Invalid blocks JSON:
 
-          #{blocks}
-          """)
-        end
+        #{blocks}
+        """)
 
         {:error, reason}
 

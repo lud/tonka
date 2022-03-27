@@ -3,6 +3,7 @@ defmodule Tonka.Services.CleanupStore do
   alias Tonka.Data.TimeInterval
   alias Tonka.Services.CleanupStore.Hashable
   alias Tonka.Services.ProjectStore
+  alias Tonka.Core.Action
 
   defmodule CleanupParams do
     require Hugs

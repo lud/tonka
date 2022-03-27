@@ -4,7 +4,7 @@ definterface Tonka.Services.ProjectStore.Backend do
   @type project_id :: String.t()
   @type component :: String.t()
   @type key :: String.t()
-  @type value :: %{binary => Stirng.t() | integer | float | nil | value}
+  @type value :: %{binary => String.t() | integer | float | nil | value}
   @type getter_updater :: (value -> {value, value} | :pop)
 
   @spec put(t, project_id, component, key, value) :: :ok

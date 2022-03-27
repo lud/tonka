@@ -11,7 +11,7 @@ defmodule Tonka.Services.Credentials.JsonFileCredentials do
     end
 
     def message(%{path: path, kind: :not_a_string}) do
-      "credentials are not a stirng at path #{path}"
+      "credentials are not a string at path #{path}"
     end
   end
 

@@ -20,7 +20,7 @@ defmodule Tonka.Core.Query.MQL do
     raise ArgumentError, message: "expected a query, got: #{inspect(other)}"
   end
 
-  @spec compile(query, __MODULE__.Compiler.compile_opts()) :: {:ok, t} | {:error, term}
+  @spec compile(query, __MODULE__.Compiler.opts()) :: {:ok, t} | {:error, term}
   def compile(q, opts \\ []) when is_map(q) and is_list(opts) do
     {:ok, compile!(q, opts)}
   rescue

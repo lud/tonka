@@ -13,6 +13,9 @@ definterface Tonka.Services.ProjectStore.Backend do
   @spec get(t, project_id, component, key) :: value | nil
   def get(t, project_id, component, key)
 
+  @spec delete(t, project_id, component, key) :: :ok
+  def delete(t, project_id, component, key)
+
   @spec get_and_update(t, project_id, component, key, getter_updater) ::
           {:ok, value} | {:error, term}
   def get_and_update(t, project_id, component, key, getter_updater)
@@ -47,6 +50,13 @@ defmodule Tonka.Services.ProjectStore do
       nil -> default
       found -> found
     end
+  end
+
+  def delete(%ProjectStore{project_id: project_id, backend: backend}, component, key)
+      when is_component(component) and is_binary(key) do
+    component = cast_component(component)
+
+    Backend.delete(backend, project_id, component, key)
   end
 
   def get_and_update(%ProjectStore{project_id: project_id, backend: backend}, component, key, f)

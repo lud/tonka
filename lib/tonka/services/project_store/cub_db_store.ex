@@ -24,6 +24,12 @@ defmodule Tonka.Services.ProjectStore.CubDBStore do
     CubDB.get(cub, cub_key, nil)
   end
 
+  @spec delete(t, Backend.project_id(), Backend.component(), Backend.key()) :: :ok
+  def delete(%{cub: cub}, _project_id, component, key) do
+    cub_key = {component, key}
+    CubDB.delete(cub, cub_key)
+  end
+
   @spec get_and_update(
           t,
           Backend.project_id(),

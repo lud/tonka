@@ -50,7 +50,8 @@ defmodule Tonka.ProjectStoreTest do
           get_and_update: fn _, project_id, component, key, f ->
             {v, _} = f.("get_and_update_fake")
             {:ok, v}
-          end
+          end,
+          delete: fn _, _, _, _ -> :ok end
         )
       )
 
@@ -68,6 +69,8 @@ defmodule Tonka.ProjectStoreTest do
                assert stored == "get_and_update_fake"
                {:returned, :ignored}
              end)
+
+    assert :ok = ProjectStore.delete(store, @component, "mykey")
   end
 
   defp backend_stub(funs) when is_map(funs) do
@@ -114,5 +117,10 @@ defmodule Tonka.ProjectStoreTest do
     # store. This assertion is here to fail if we want to use a global db for
     # all projects.
     assert ^updated = CubDB.get(cub, {@component, "mykey"})
+
+    assert :ok = ProjectStore.delete(store, @component, "mykey")
+    assert nil == ProjectStore.get(store, @component, "mykey")
+
+    assert nil == CubDB.get(cub, {@component, "mykey"})
   end
 end

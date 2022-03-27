@@ -27,7 +27,7 @@ defmodule Tonka.CleanupTest do
     CleanupStore.new(project_store())
   end
 
-  test "a cleanup can be registered" do
+  test "a cleanup can be registered and deleted" do
     store = get_store()
     key = "mykey"
     data = %{some: "data"}
@@ -35,6 +35,9 @@ defmodule Tonka.CleanupTest do
     assert :ok = CleanupStore.put(store, key, ttl, data)
     assert [] = CleanupStore.list_expired(store, key)
     Process.sleep(100)
-    assert [{_, ^data}] = CleanupStore.list_expired(store, key)
+    assert [{id, ^data}] = CleanupStore.list_expired(store, key)
+
+    assert :ok = CleanupStore.delete_id(store, key, id)
+    assert [] = CleanupStore.list_expired(store, key)
   end
 end

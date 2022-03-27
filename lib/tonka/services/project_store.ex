@@ -8,12 +8,17 @@ defmodule Tonka.Services.ProjectStore do
     @type component :: String.t()
     @type key :: String.t()
     @type value :: %{binary => Stirng.t() | integer | float | nil | value}
+    @type getter_updater :: (value -> {value, value})
 
     @spec put(t, project_id, component, key, value) :: :ok
     def put(t, project_id, component, key, value)
 
     @spec get(t, project_id, component, key) :: value | nil
     def get(t, project_id, component, key)
+
+    @spec get_and_update(t, project_id, component, key, getter_updater) ::
+            {:ok, value} | {:error, term}
+    def get_and_update(t, project_id, component, key, getter_updater)
   end
 
   @enforce_keys [:project_id, :backend]
@@ -36,5 +41,10 @@ defmodule Tonka.Services.ProjectStore do
       nil -> default
       found -> found
     end
+  end
+
+  def get_and_update(%ProjectStore{project_id: project_id, backend: backend}, component, key, f)
+      when is_function(f, 1) do
+    Backend.get_and_update(backend, project_id, component, key, f)
   end
 end

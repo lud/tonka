@@ -77,5 +77,6 @@ clean-dep dep:
 
 clean: (clean-dep "tonka")
 
-clear-http-cache:
+clear-dirt:
     rm -rvf var/http-cache/*
+    rm -rvf var/projects/test/stores/*

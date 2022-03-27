@@ -1,6 +1,7 @@
 defmodule Tonka.Services.CleanupStore do
   alias Tonka.Services.ProjectStore
   alias Tonka.Services.CleanupStore.Hashable
+  alias __MODULE__
 
   defmodule CleanupParams do
     require Hugs
@@ -22,10 +23,15 @@ defmodule Tonka.Services.CleanupStore do
   @type key :: binary()
   @type cleanup_data :: term
   @type id :: integer
+  @type ttl :: integer
 
   @enforce_keys [:pstore]
   defstruct @enforce_keys
   @type t :: %__MODULE__{pstore: ProjectStore.t()}
+
+  def new(%ProjectStore{} = pstore) do
+    %__MODULE__{pstore: pstore}
+  end
 
   @spec compute_key(component, cleanup_params, inputs()) :: key
   def compute_key(component, %CleanupParams{key: topic} = params, inputs) do
@@ -54,16 +60,23 @@ defmodule Tonka.Services.CleanupStore do
     :crypto.hash(:sha, hashable_inputs) |> Base.encode16()
   end
 
-  @spec put_cleanup(t, key, cleanup_data) :: :ok
-  def put_cleanup(t, key, cleanup_data) do
+  @spec put(t, key, ttl, cleanup_data) :: :ok
+  def put(%CleanupStore{pstore: ps}, key, ttl, cleanup_data)
+      when is_binary(key) and is_integer(ttl) and is_map(cleanup_data) do
+    ProjectStore.get_and_update(ps, __MODULE__, key, fn
+      nil -> [{ttl, cleanup_data}]
+      # we can prepend, only the ttl is important
+      list -> [{ttl, cleanup_data} | list]
+    end)
   end
 
-  @spec list_cleanups(t, key) :: [{id, cleanup_data}]
-  def list_cleanups(t, key) do
+  @spec list_expired(t, key) :: [{id, cleanup_data}]
+  def list_expired(t, key) when is_binary(key) do
+    []
   end
 
-  @spec delete_cleanup(t, key, id) :: :ok
-  def delete_cleanup(t, key, id) do
+  @spec delete_id(t, key, id) :: :ok
+  def delete_id(t, key, id) when is_binary(key) and is_integer(id) do
   end
 end
 

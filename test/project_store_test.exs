@@ -46,6 +46,10 @@ defmodule Tonka.ProjectStoreTest do
               "madeup" -> %{some: "made up value"}
               _ -> nil
             end
+          end,
+          get_and_update: fn _, project_id, component, key, f ->
+            {v, _} = f.("get_and_update_fake")
+            {:ok, v}
           end
         )
       )
@@ -58,10 +62,12 @@ defmodule Tonka.ProjectStoreTest do
 
     assert %{some: "default"} ==
              ProjectStore.get(store, @component, "not existing", %{some: "default"})
-  end
 
-  defp test_info do
-    ProjectInfo.new(id: "test", storage_dir: "var/projects/test")
+    assert {:ok, :returned} =
+             ProjectStore.get_and_update(store, @component, "mykey", fn stored ->
+               assert stored == "get_and_update_fake"
+               {:returned, :ignored}
+             end)
   end
 
   defp backend_stub(funs) when is_map(funs) do
@@ -77,17 +83,18 @@ defmodule Tonka.ProjectStoreTest do
     # do not set auto_compact: false, auto_file_sync: false outside of tests
     assert {:ok, cub} =
              CubDB.start_link(
-               data_dir: test_info.storage_dir,
+               data_dir: "var/projects/test/stores/project-store-test",
                auto_compact: true,
                auto_file_sync: true
              )
 
-    delete_all_cub_data(cub)
+    CubDB.clear(cub)
 
     backend = CubDBStore.new(cub)
     store = ProjectStore.new("test", backend)
 
     value = %{this: "is", a: %{"sub" => "map"}}
+    updated = %{"a new" => :VALUE}
 
     assert :ok = ProjectStore.put(store, @component, "mykey", value)
     assert ^value = ProjectStore.get(store, @component, "mykey")
@@ -95,13 +102,17 @@ defmodule Tonka.ProjectStoreTest do
     assert %{hello: "world"} =
              ProjectStore.get(store, @component, "non existing", %{hello: "world"})
 
+    assert {:ok, :returnval} =
+             ProjectStore.get_and_update(store, @component, "mykey", fn v ->
+               assert value == v
+               {:returnval, updated}
+             end)
+
+    assert ^updated = ProjectStore.get(store, @component, "mykey")
+
     # assert that the cub store does not bother inserting the project id in the
     # store. This assertion is here to fail if we want to use a global db for
     # all projects.
-    assert ^value = CubDB.get(cub, {@component, "mykey"})
-  end
-
-  defp delete_all_cub_data(cub) do
-    CubDB.clear(cub)
+    assert ^updated = CubDB.get(cub, {@component, "mykey"})
   end
 end

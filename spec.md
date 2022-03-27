@@ -315,5 +315,6 @@ would store a new row for each `%{exp: expiration_ms, d: cleanup_data}`.
 
 If we want to be able to run a cleanup only for a given project, we will need to
 be able to lookup cleanup elements with:
-- the component name
-- the inputs and keys to compute the hash.
+
+* the component name
+* the inputs and keys to compute the hash.

@@ -51,7 +51,7 @@ defmodule Tonka.Services.IssuesStore do
     run_mql(store, query, limit)
   end
 
-  def run_mql(%IssuesStore{source: source} = store, query, limit) do
+  def run_mql(%IssuesStore{source: source}, query, limit) do
     with {:ok, issues} <- IssuesSource.fetch_all_issues(source) do
       {_, filtered} =
         Enum.reduce_while(issues, {0, []}, fn issue, {size, acc} ->

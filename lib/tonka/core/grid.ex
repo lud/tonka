@@ -154,12 +154,12 @@ defmodule Tonka.Core.Grid do
     %{config: %{injects: inject_specs}} = action
 
     inject_specs
-    |> Enum.map(fn {inject_key, inject_spec} ->
+    |> Enum.map(fn {_inject_key, inject_spec} ->
       validate_action_inject(inject_spec, act_key, container)
     end)
     |> Enum.filter(fn
       :ok -> false
-      {:error, _} = err -> true
+      {:error, _} -> true
     end)
     |> case do
       [] -> :ok
@@ -167,7 +167,7 @@ defmodule Tonka.Core.Grid do
     end
   end
 
-  defp validate_action_inject(%{key: inject_key, type: utype} = inject_spec, act_key, container) do
+  defp validate_action_inject(%{key: inject_key, type: utype}, act_key, container) do
     Container.pull_frozen(container, utype)
 
     # we will fetch the type to get a meaningful error from the container

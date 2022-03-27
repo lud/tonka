@@ -1,8 +1,8 @@
 defmodule Tonka.Renderer.BBMustache do
-  IO.warn("@todo test bbustache render tree")
-
   def render(template, params) do
-    :bbmustache.render(template, params, key_type: :binary, raise_on_context_miss: true)
+    {:ok, :bbmustache.render(template, params, key_type: :binary, raise_on_context_miss: true)}
+  rescue
+    e -> {:error, e}
   end
 
   @doc """

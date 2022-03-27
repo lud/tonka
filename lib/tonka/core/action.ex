@@ -3,6 +3,7 @@ defmodule Tonka.Core.Action do
   alias Tonka.Core.Action.InputSpec
   alias Tonka.Core.Container.InjectSpec
   alias Tonka.Core.Service.ServiceConfig
+  use TODO
 
   @moduledoc """
   Behaviour defining the callbacks of modules and datatypes used as actions
@@ -12,8 +13,6 @@ defmodule Tonka.Core.Action do
   defmodule ActionConfig do
     @enforce_keys [:service_config, :inputs, :injects]
     defstruct @enforce_keys
-
-    @todo "type input specs"
 
     @type t :: %__MODULE__{
             service_config: ServiceConfig.t(),

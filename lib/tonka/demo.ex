@@ -24,12 +24,12 @@ defmodule Tonka.Demo do
     grid = prepare_grid()
 
     case Grid.run(grid, container, "some dummy input") do
-      {:ok, :done, grid} ->
+      {:ok, :done, _grid} ->
         # grid |> IO.inspect(label: "grid", pretty: true)
         # grid.outputs |> IO.inspect(label: "grid.outputs")
         IO.puts("OK")
 
-      {:error, detail, grid} ->
+      {:error, detail, _grid} ->
         Logger.error(Grid.format_error(detail))
     end
   end
@@ -50,7 +50,7 @@ defmodule Tonka.Demo do
       )
       |> bind(Tonka.Services.IssuesStore)
 
-    {:ok, issues_source, container} = pull(container, Tonka.Services.IssuesSource)
+    {:ok, _issues_source, container} = pull(container, Tonka.Services.IssuesSource)
 
     {:ok, container} = Container.prebuild_all(container)
     Container.freeze(container)

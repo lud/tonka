@@ -6,7 +6,6 @@ defmodule Tonka.Core.Query.MQL do
   import Kernel, except: [match: 2]
   alias Tonka.Data.TimeInterval
 
-  @todo "wrap the mql query type"
   @type query :: map
   @type t :: map
 

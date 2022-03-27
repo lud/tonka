@@ -1,6 +1,5 @@
 defmodule Tonka.Data.Issue do
   require Hugs
-  use Tonka.Core.Container.Type
 
   Hugs.build_struct()
   |> Hugs.field(:id, type: :binary, required: true)

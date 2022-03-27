@@ -177,7 +177,7 @@ defmodule Tonka.Ext.Gitlab.Services.Issues do
     {:ok, issues}
   end
 
-  defp print_query(query) when is_binary(query) do
+  def print_query(query) when is_binary(query) do
     IO.puts([IO.ANSI.cyan(), query, IO.ANSI.default_color()])
   end
 

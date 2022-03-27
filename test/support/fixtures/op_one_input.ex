@@ -1,21 +1,10 @@
 defmodule Tonka.Test.Fixtures.OpOneInput.MyInput do
-  @behaviour Tonka.Core.Container.Type
-
   defstruct text: nil
 
   @type t :: %__MODULE__{text: binary}
-
-  def expand_type do
-    {:remote_type, __MODULE__, :t}
-  end
 end
 
 defmodule Tonka.Test.Fixtures.OpOneInput.MyOutput do
-  @behaviour Tonka.Core.Container.Type
-
-  def expand_type do
-    {:type, :binary}
-  end
 end
 
 defmodule Tonka.Test.UserlandMacros do

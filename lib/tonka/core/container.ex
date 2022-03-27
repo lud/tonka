@@ -1,7 +1,6 @@
 defmodule Tonka.Core.Container do
   alias Tonka.Core.Container
   alias Tonka.Core.Container.InjectSpec
-  alias Tonka.Core.Injector
   alias Tonka.Core.Service
   use TODO
 
@@ -241,54 +240,5 @@ defmodule Tonka.Core.Container do
         end
       end
     )
-  end
-
-  # ---------------------------------------------------------------------------
-  #  Container Types to Elixir Types expansion
-  # ---------------------------------------------------------------------------
-
-  @spec expand_type(typespec) :: {:type, atom} | {:remote_type, atom, atom}
-  def expand_type(module) when is_atom(module) do
-    IO.puts("expanding type: #{inspect(module)}")
-    Code.ensure_loaded!(module)
-    expand_type(module.expand_type())
-  end
-
-  def expand_type({:remote_type, module, type} = terminal)
-      when is_atom(module) and is_atom(type) do
-    terminal
-  end
-
-  def expand_type({:type, _} = terminal) do
-    terminal
-  end
-
-  def expand_type({:list, type}) do
-    {:list, expand_type(type)}
-  end
-
-  def to_quoted_type({:remote_type, module, type})
-      when is_atom(module) and is_atom(type) do
-    quote do
-      unquote(module).unquote(type)
-    end
-  end
-
-  def to_quoted_type({:type, type}) when is_atom(type) do
-    quote do
-      unquote(type)()
-    end
-  end
-
-  def to_quoted_type({:type, {:atom, literal}}) when is_atom(literal) do
-    quote do
-      unquote(literal)
-    end
-  end
-
-  def to_quoted_type({:list, type}) do
-    quote do
-      [unquote(to_quoted_type(type))]
-    end
   end
 end

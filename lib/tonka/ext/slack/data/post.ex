@@ -2,6 +2,8 @@ defmodule Tonka.Ext.Slack.Data.Post do
   @enforce_keys [:title, :blocks]
   defstruct title: nil, icon_emoji: nil, blocks: nil
 
+  @type t :: %__MODULE__{title: binary, blocks: list(map), icon_emoji: nil | binary()}
+
   @spec new(title :: binary, blocks :: list, Keyword.t()) :: %__MODULE__{}
   def new(title, blocks, opts \\ [])
       when is_binary(title) and is_list(blocks) do

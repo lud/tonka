@@ -163,7 +163,7 @@ defmodule Tonka.Ext.Slack.BlockKit do
 
   defblock(:divider)
 
-  def divider() do
+  def divider do
     divider([])
   end
 

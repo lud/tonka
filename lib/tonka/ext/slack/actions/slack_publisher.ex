@@ -1,11 +1,11 @@
 defmodule Tonka.Ext.Slack.Actions.SlackPublisher do
   alias Tonka.Core.Booklet
-  alias Tonka.Ext.Slack.Services.SlackAPI
   alias Tonka.Core.Booklet.CliRenderer
   alias Tonka.Ext.Slack.Data.Post
   alias Tonka.Ext.Slack.Render.BookletRenderer
-  use Tonka.Core.Action
+  alias Tonka.Ext.Slack.Services.SlackAPI
   require Hugs
+  use Tonka.Core.Action
 
   @params_schema Hugs.build_props()
                  |> Hugs.field(:channel, type: :binary, required: true)

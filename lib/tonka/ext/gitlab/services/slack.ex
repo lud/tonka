@@ -1,7 +1,8 @@
 defmodule Tonka.Ext.Slack.Services.SlackAPI do
-  use Tonka.Core.Service
-  use TODO
   alias Tonka.Ext.Slack.Data.Post
+  require Logger
+  use TODO
+  use Tonka.Core.Service
 
   @enforce_keys [:send_opts]
   defstruct @enforce_keys
@@ -33,24 +34,19 @@ defmodule Tonka.Ext.Slack.Services.SlackAPI do
     end
   end
 
-  @spec send_chat_message(%__MODULE__{}, %Post{}, channel :: binary) ::
+  @spec send_chat_message(%__MODULE__{}, Post.t(), channel :: binary) ::
           {:ok, cleanup_data :: term} | {:error, term}
 
   def send_chat_message(%__MODULE__{} = slack, %Post{} = post, channel) do
-    slack_opts =
-      Map.merge(slack.send_opts, %{
-        icon_emoji:
-          case post.icon_emoji do
-            nil -> default_message_icon()
-            icon when is_binary(icon) -> icon
-          end,
-        blocks:
-          post.blocks
-          |> Jason.encode_to_iodata!(pretty: @pretty_json)
-      })
+    message = build_message(slack, post)
 
-    Slack.Web.Chat.post_message(channel, post.title, slack_opts)
-    |> case do
+    post_result = Slack.Web.Chat.post_message(channel, post.title, message)
+
+    cast_result(post_result, channel, message.blocks)
+  end
+
+  defp cast_result(result, channel, blocks) do
+    case result do
       %{"ok" => true, "channel" => channel, "ts" => ts} ->
         {:ok, "Slack: Successfully posted to #{channel}"}
 
@@ -64,7 +60,7 @@ defmodule Tonka.Ext.Slack.Services.SlackAPI do
 
           Invalid blocks JSON:
 
-          #{slack_opts.blocks}
+          #{blocks}
           """)
         end
 
@@ -78,7 +74,20 @@ defmodule Tonka.Ext.Slack.Services.SlackAPI do
     end
   end
 
-  defp default_message_icon() do
+  defp default_message_icon do
     Enum.random(["male-technologist", "female-technologist"])
+  end
+
+  defp build_message(slack, post) do
+    Map.merge(slack.send_opts, %{
+      icon_emoji:
+        case post.icon_emoji do
+          nil -> default_message_icon()
+          icon when is_binary(icon) -> icon
+        end,
+      blocks:
+        post.blocks
+        |> Jason.encode_to_iodata!(pretty: @pretty_json)
+    })
   end
 end

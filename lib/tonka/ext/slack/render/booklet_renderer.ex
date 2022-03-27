@@ -5,11 +5,9 @@ defmodule Tonka.Ext.Slack.Render.BookletRenderer do
   alias Tonka.Ext.Slack.BlockKit, as: BK
   alias Tonka.Ext.Slack.Data.Post
 
-  @impl Booklet.Renderer
-  @spec render(Booklet.t()) ::
-          {:ok, %Post{}} | {:error, term}
+  @spec render(Booklet.t()) :: {:ok, Post.t()} | {:error, term}
 
-  def(render(%Booklet{} = booklet)) do
+  def render(%Booklet{} = booklet) do
     blocks = render_blocks(booklet.blocks)
     {:ok, Post.new(booklet.title, blocks)}
   rescue

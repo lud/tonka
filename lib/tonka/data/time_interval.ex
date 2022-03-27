@@ -1,5 +1,6 @@
 defmodule Tonka.Data.TimeInterval do
   alias __MODULE__
+  @enforce_keys [:ms]
   defstruct ms: 0
 
   # Returns the total interval sum in millisecond
@@ -54,8 +55,25 @@ defmodule Tonka.Data.TimeInterval do
     end
   end
 
+  def to_ms(%__MODULE__{ms: ms}),
+    do: {:ok, ms}
+
+  def to_ms(raw) when is_binary(raw) do
+    with {:ok, parsed} <- parse(raw),
+         do: to_ms(parsed)
+  end
+
+  def to_ms(raw) when is_integer(raw),
+    do: {:ok, raw}
+
+  def to_ms(raw),
+    do: {:error, "expected integer or binary, got: #{raw}"}
+
   def to_ms!(bin) when is_binary(bin),
     do: bin |> parse!() |> Map.fetch!(:ms)
+
+  def to_ms!(int) when is_integer(int),
+    do: int
 
   def to_ms!(%__MODULE__{ms: ms}),
     do: ms

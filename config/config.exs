@@ -34,3 +34,6 @@ config :tesla, Tesla.Middleware.Logger, format: "$method $url ====> $status / ti
 import_config "#{config_env()}.exs"
 
 import_config "secrets.exs"
+
+config :tonka,
+  extensions: [Tonka.Core.BuiltIn]

@@ -43,6 +43,7 @@ defmodule Tonka.MixProject do
       {:oban, "~> 2.11"},
       {:cubdb, "~> 1.1"},
       {:slack, "~> 0.23"},
+      {:ymlr, "~> 2.0", only: :dev},
 
       # Phoenix stack
       {:phoenix, "~> 1.6.6"},

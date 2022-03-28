@@ -33,8 +33,8 @@ defmodule Tonka.MixProject do
       # App
 
       {:ark, "~> 0.7.4"},
-      # {:hugs, path: "~/src/hugs"},
-      {:hugs, "~> 0.1.12"},
+      {:hugs, path: "~/src/hugs"},
+      # {:hugs, "~> 0.1.12"},
       {:yaml_elixir, "~> 2.5"},
       {:bbmustache, "~> 1.12"},
       {:nimble_options, "~> 0.4.0"},

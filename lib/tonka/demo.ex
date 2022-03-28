@@ -127,7 +127,7 @@ defmodule Tonka.Demo do
     )
     |> Grid.add_action("report_to_slatck", Tonka.Ext.Slack.Actions.SlackPublisher,
       inputs: Grid.pipe_action(%{}, :booklet, "report_booklet"),
-      params: %{channel: "DS4SX8VPF"}
+      params: %{channel: "DS4SX8VPF", cleanup: %{"key" => "devpost"}}
     )
   end
 end

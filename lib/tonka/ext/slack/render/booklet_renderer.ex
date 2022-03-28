@@ -44,7 +44,7 @@ defmodule Tonka.Ext.Slack.Render.BookletRenderer do
     ]
   end
 
-  defp render_block(%struct{} = block) do
+  defp render_block(%struct{}) do
     raise ArgumentError,
       message: "unknown block type #{struct}"
   end
@@ -53,7 +53,7 @@ defmodule Tonka.Ext.Slack.Render.BookletRenderer do
     to_string(rich(richtext))
   end
 
-  defp rich({:strong, sub} = tag) do
+  defp rich({:strong, sub}) do
     "*#{without(sub, "*")}*"
   end
 
@@ -63,7 +63,7 @@ defmodule Tonka.Ext.Slack.Render.BookletRenderer do
 
   @todo "rich must accept options to know the indent level of nested lists"
   defp rich({:ul, elems}) do
-    md = [10, Enum.map(elems, fn el -> ["– ", rich(el), 10] end)]
+    [10, Enum.map(elems, fn el -> ["– ", rich(el), 10] end)]
   end
 
   defp rich({:link, url, text}) do

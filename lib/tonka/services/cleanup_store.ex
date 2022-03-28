@@ -1,25 +1,10 @@
 defmodule Tonka.Services.CleanupStore do
   alias __MODULE__
-  alias Tonka.Data.TimeInterval
+  alias Tonka.Core.Action
+  alias Tonka.Services.CleanupStore.CleanupParams
   alias Tonka.Services.CleanupStore.Hashable
   alias Tonka.Services.ProjectStore
-  alias Tonka.Core.Action
-
   use Tonka.Core.Service
-
-  defmodule CleanupParams do
-    require Hugs
-
-    Hugs.build_struct()
-    |> Hugs.field(:key, type: :binary, required: true)
-    |> Hugs.field(:ttl, type: :integer, default: 0, cast: &TimeInterval.to_ms/1)
-    |> Hugs.field(:inputs,
-      type: {:list, :atom},
-      default: [],
-      cast: {:list, &Hugs.Cast.string_to_existing_atom/1}
-    )
-    |> Hugs.inject()
-  end
 
   @type component :: binary() | atom()
   @type cleanup_params :: CleanupParams.t()
@@ -71,6 +56,10 @@ defmodule Tonka.Services.CleanupStore do
     |> Enum.uniq()
     |> Enum.sort()
     |> Enum.map(fn key -> Map.fetch!(inputs, key) |> Hashable.hashable() end)
+  end
+
+  defp compute_hash([]) do
+    "noinput"
   end
 
   defp compute_hash(hashable_inputs) do

@@ -1,6 +1,6 @@
 defmodule Tonka.Ext.Slack.Services.SlackAPI do
   alias Tonka.Ext.Slack.Data.Post
-  require Logger
+  use Tonka.Project.ProjectLogger, as: Logger
   use TODO
   use Tonka.Core.Service
 
@@ -42,20 +42,37 @@ defmodule Tonka.Ext.Slack.Services.SlackAPI do
 
     post_result = Slack.Web.Chat.post_message(channel, post.title, message)
 
-    cast_result(post_result, channel, message.blocks)
+    print_warnings(post_result)
+    cast_send_result(post_result, channel, message.blocks)
   end
 
-  defp cast_result(result, channel, blocks) do
+  defp print_warnings(result) do
     case result do
-      %{"ok" => true, "channel" => channel, "ts" => _ts} ->
-        {:ok, "Slack: Successfully posted to #{channel}"}
+      %{"response_metadata" => %{"warnings" => warnings}} when is_list(warnings) ->
+        Enum.each(warnings, fn w -> Elixir.Logger.warn("slack api warning: #{inspect(w)}") end)
+
+      _ ->
+        :ok
+    end
+
+    :ok
+  end
+
+  defp cast_send_result(result, channel, blocks) do
+    case result do
+      %{"ok" => true, "channel" => channel, "ts" => ts} ->
+        {:ok,
+         %{
+           success_message: "Slack: Successfully posted to #{channel}",
+           cleanup: %{channel: channel, ts: ts}
+         }}
 
       %{"ok" => false, "error" => "channel_not_found"} ->
         {:error, {__MODULE__, {:channel_not_found, channel}}}
 
       %{"ok" => false, "error" => reason}
       when reason in ["invalid_blocks_format", "invalid_blocks"] ->
-        Logger.debug("""
+        Elixir.Logger.debug("""
 
         Invalid blocks JSON:
 
@@ -87,5 +104,21 @@ defmodule Tonka.Ext.Slack.Services.SlackAPI do
         post.blocks
         |> Jason.encode_to_iodata!(pretty: @pretty_json)
     })
+  end
+
+  def cleanup_chat_message(%__MODULE__{send_opts: opts}, %{channel: channel, ts: ts}) do
+    case Slack.Web.Chat.delete(channel, ts, opts) do
+      %{"ok" => true} ->
+        :ok
+
+      %{"ok" => false, "error" => "message_not_found"} ->
+        :ok
+
+      %{"ok" => false} = resp ->
+        {:error, "slack returned unsuccessful response: #{inspect(resp)}"}
+
+      resp ->
+        {:error, "slack returned unknown response: #{inspect(resp)}"}
+    end
   end
 end

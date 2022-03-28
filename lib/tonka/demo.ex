@@ -44,7 +44,7 @@ defmodule Tonka.Demo do
       |> bind(Tonka.Services.Credentials, &build_credentials(&1, project_path))
       |> bind(Tonka.Services.IssuesSource, Tonka.Ext.Gitlab.Services.Issues,
         params: %{
-          "projects" => ["company-agilap/r-d/agislack", "pleenk/suivi"],
+          "projects" => ["company-agilap/r-d/agislack"],
           "credentials" => "gitlab.private_token"
         }
       )
@@ -125,7 +125,7 @@ defmodule Tonka.Demo do
     |> Grid.add_action("report_to_cli", Tonka.Actions.Render.BookletCliRenderer,
       inputs: Grid.pipe_action(%{}, :booklet, "report_booklet")
     )
-    |> Grid.add_action("report_to_slatck", Tonka.Ext.Slack.Actions.SlackPublisher,
+    |> Grid.add_action("report_to_slack", Tonka.Ext.Slack.Actions.SlackPublisher,
       inputs: Grid.pipe_action(%{}, :booklet, "report_booklet"),
       params: %{channel: "DS4SX8VPF", cleanup: %{"key" => "devpost"}}
     )

@@ -1,5 +1,5 @@
 %{
-  "ark": {:hex, :ark, "0.7.4", "b059f15ba7cbb3aabbbe4334c25320919f26e561ad03015adfe3f63f7aedf3c4", [:mix], [], "hexpm", "2a48d2a9c05bbf9815227f1f2a9ddc4afefd2c721d894bacd144af40098a65cf"},
+  "ark": {:hex, :ark, "0.7.5", "614ec3c3d79b489896ae6c7a9d1c6b6181e1eb691e02d3e12244691aa76f433f", [:mix], [], "hexpm", "b5345be04a2de87e60164b4ee397066d286ae6d780df16372fdd8e7e76786a1e"},
   "bbmustache": {:hex, :bbmustache, "1.12.2", "0cabdce0db9fe6d3318131174b9f2b351328a4c0afbeb3e6e99bb0e02e9b621d", [:rebar3], [], "hexpm", "688b33a4d5cc2d51f575adf0b3683fc40a38314a2f150906edcfc77f5b577b3b"},
   "bunt": {:hex, :bunt, "0.2.0", "951c6e801e8b1d2cbe58ebbd3e616a869061ddadcc4863d0a2182541acae9a38", [:mix], [], "hexpm", "7af5c7e09fe1d40f76c8e4f9dd2be7cebd83909f31fee7cd0e9eadc567da8353"},
   "certifi": {:hex, :certifi, "2.9.0", "6f2a475689dd47f19fb74334859d460a2dc4e3252a3324bd2111b8f0429e7e21", [:rebar3], [], "hexpm", "266da46bdb06d6c6d35fde799bcb28d36d985d424ad7c08b5bb48f5b5cdd4641"},

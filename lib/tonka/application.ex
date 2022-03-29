@@ -13,6 +13,8 @@ defmodule Tonka.Application do
       # Start the shared registry for projects and services
       {Tonka.Utils.RegistryLogger, name: Tonka.Utils.RegistryLogger},
       Tonka.Project.ProjectRegistry,
+      # Start all configured Projects
+      Tonka.Project.ProjectSupervisor,
       # Start the Telemetry supervisor
       TonkaWeb.Telemetry,
       # Start the PubSub system

@@ -10,8 +10,8 @@ defmodule Tonka.Services.ServiceSupervisor do
   #  Supervisor
   # ---------------------------------------------------------------------------
 
-  def start_link(opts) when is_list(opts) do
-    name = Keyword.fetch!(opts, :name)
+  def start_link(prk: prk) do
+    name = Tonka.Project.ProjectRegistry.via(prk, __MODULE__)
     Supervisor.start_link(__MODULE__, [], name: name)
   end
 

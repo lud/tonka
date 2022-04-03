@@ -93,6 +93,34 @@ that handles the event listening, issues sources refetch calls, and inputs
 creation.
 
 
+## RAM vs. Disk local persistence
+
+A RAM cache allows for faster responses when sending slack commands, but forces
+any project to use the issues store as a process sitting on an ETS table in a
+supervision tree. A disk-based cache allows projects to be "cold", where the
+full container definition is loaded before executing any grid.
+
+The webhook system can declare a single webhook for all supported extensions.
+Because multiple local projects can listen webhooks emitted from a common gitlab
+project.  The webhook should be handled by the provider extension (gitlab), that
+declares a route at compilation time, and uses a registry for webhook listeners
+for all gitlab projects.  Hence, this registry and handler is not located inside
+a local project supervision tree.  But any listener registration requires either
+a process or a callback as the consumer:
+
+* With a callback, it can be an input generation that will prepare an event to
+  be sent to event-listening grids. The callback can be passed a producer
+  function to actually generate the input.
+* With a process, it requires a pubsub system inside the project.
+
+The main problem with a callback system is that the project settings/layout must
+be read to know which grid listen to which event. So we need to cache this also.
+
+How to decide? Using the RAM is always better for performance. As long as we do
+not need to handle too many projects, using the RAM and having a "live" system
+is simpler to code.
+
+
 ## Layout definition YAML for inputs
 
 We need to define actions as follows in the project layout.

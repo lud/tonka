@@ -304,3 +304,59 @@ be able to lookup cleanup elements with:
 
 * the component name
 * the inputs and keys to compute the hash.
+
+
+## Project supervision tree
+
+Here we describe what we need for a project to run.
+
+* (process) A project store
+* (process) A services supervisor to hold the issues store
+* Parse and read the project settings to build all services, it depends on the
+  service supervisor.
+* Declare a webhook and keep a listener to receive events. This is done by one
+  of the processes. It can be a local pubsub where the gitlab extension
+  registers a callback to transform the webhook event into a local event.
+* A webook listener. This is handled by the gitlab extension and is in another
+  supervision tree.
+
+The project supervisor itself it a rest-for-one supervisor. The project will
+have two main children, two supervisors with different strategies:
+
+* A dynamic supervisor for the jobs themselves.
+* The deps supervisor that will hold whatever is required to run jobs (services,
+  grids data cache, etc), and the job starter process.
+
+Note that the job starter process is considered as a dependency : if some
+dependency fails, the jobs starter will be restarted and no new job will be able
+to run in the meantime, but running jobs will not be affected (they will only
+crash if they try to use restarting dependencies).
+
+
+## Jobs sup
+
+For now it is a simple Dynamic supervisor.
+
+
+## Deps sup
+
+
+When a project is started, the settings file is read and parsed and transformed
+into a definition structure, but no container is created yet. The container
+depends on the services supervisor.
+
+Before building services we need the services supervisor, that will be the first
+child, with a well-known name since we must know the name to build the
+container.
+
+We also need the events so that is the second child.
+
+Then the project loader loads the project from the YAML (or whatever) file and
+creates the container. It will store the container in a registry when
+registering its own name, and will also register each grid. Using the registry
+ensures that all this data is deleted when this process exits.
+
+Finally the job starter process that is responsible to track concurrent inputs
+for a same grid. For now it will do nothing, all functions from the module will
+just use data stored in the registry (container and grid defs)
+

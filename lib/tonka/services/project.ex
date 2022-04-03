@@ -36,14 +36,14 @@ defmodule Tonka.Project.DepsSup do
   # ---------------------------------------------------------------------------
 
   def start_link(prk: prk) do
-    name = Tonka.Project.ProjectRegistry.via(prk, __MODULE__)
-    Supervisor.start_link(__MODULE__, [prk: prk], name: name)
+    Supervisor.start_link(__MODULE__, prk: prk)
   end
 
   @impl Supervisor
   def init(prk: prk) do
     children = [
-      {Tonka.Services.ServiceSupervisor, prk: prk}
+      {Tonka.Services.ServiceSupervisor, prk: prk},
+      {Tonka.Project.ProjectLoader, prk: prk}
     ]
 
     Supervisor.init(children, strategy: :one_for_one)

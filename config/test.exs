@@ -1,5 +1,8 @@
 import Config
 
+verbose = !true
+concise_level = :error
+
 # Configure your database
 #
 # The MIX_TEST_PARTITION environment variable can be used
@@ -21,7 +24,7 @@ config :tonka, TonkaWeb.Endpoint,
   secret_key_base: "8x8EP7ydJbHZV5rWxyIKVMAOIJLtP+ziEyRDxELOywdPP070jfVbmeVesnejeex2",
   server: false
 
-config :logger, level: :debug
+config :logger, level: if(verbose, do: :debug, else: concise_level)
 
 # Initialize plugs at runtime for faster test compilation
 config :phoenix, :plug_init_mode, :runtime

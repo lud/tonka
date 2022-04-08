@@ -28,11 +28,11 @@ defmodule Tonka.Demo do
     # On init, the project will fill the container with services used by actions.
 
     project_path = "var/projects/dev"
-    prk = "dev"
-    service_sup_name = ProjectRegistry.via(prk, :service_sup)
+    prk = "dev-demo"
+    service_sup_name = ProjectRegistry.via(prk, ServiceSupervisor)
     Logger.info("started service supervisor as #{inspect(service_sup_name)}")
 
-    {:ok, _} = ServiceSupervisor.start_link(name: service_sup_name)
+    {:ok, _} = ServiceSupervisor.start_link(prk: prk)
 
     container =
       new()

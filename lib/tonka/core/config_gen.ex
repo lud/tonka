@@ -85,7 +85,7 @@ defmodule Tonka.Core.ConfigGen do
     do: "core.issues_store"
 
   defp unmap_module(Tonka.Actions.Queries.QueriesGroupsMQLCompiler),
-    do: "core.query.mql.compile_groups"
+    do: "core.query.mql.queries_groups_compiler"
 
   defp unmap_module(Tonka.Actions.Render.IssuesGroupsBookletRenderer),
     do: "core.render.booklet.issues_groups"
@@ -97,7 +97,7 @@ defmodule Tonka.Core.ConfigGen do
     do: "core.render.booklet_wrapper"
 
   defp unmap_module(Tonka.Ext.Slack.Actions.SlackPublisher),
-    do: "ext.slack.slack_publisher"
+    do: "ext.slack.publisher"
 
   defp unmap_module(other) do
     IO.puts(

@@ -7,28 +7,38 @@ defmodule Tonka.Application do
 
   @impl Application
   def start(_type, _args) do
-    children = [
-      # Start the Ecto repository
-      Tonka.Repo,
-      # Start the shared registry for projects and services
-      {Tonka.Utils.RegistryLogger, name: Tonka.Utils.RegistryLogger},
-      Tonka.Project.ProjectRegistry,
-      # Start all configured Projects
-      Tonka.Project.ProjectSupervisor,
-      # Start the Telemetry supervisor
-      TonkaWeb.Telemetry,
-      # Start the PubSub system
-      {Phoenix.PubSub, name: Tonka.PubSub},
-      # Start the Endpoint (http/https)
-      TonkaWeb.Endpoint
-      # Start a worker by calling: Tonka.Worker.start_link(arg)
-      # {Tonka.Worker, arg}
-    ]
+    children = tz_stack() ++ db_stack() ++ project_stack() ++ http_stack()
 
-    # See https://hexdocs.pm/elixir/Supervisor.html
-    # for other strategies and supported options
     opts = [strategy: :one_for_one, name: Tonka.Supervisor]
     Supervisor.start_link(children, opts)
+  end
+
+  defp project_stack do
+    [
+      {Tonka.Utils.RegistryLogger, name: Tonka.Utils.RegistryLogger},
+      Tonka.Project.ProjectRegistry,
+      Tonka.Project.ProjectSupervisor
+    ]
+  end
+
+  defp tz_stack do
+    if Application.get_env(:tonka, :refresh_tz, false) do
+      [{Tz.UpdatePeriodically, []}]
+    else
+      []
+    end
+  end
+
+  defp db_stack do
+    [Tonka.Repo]
+  end
+
+  defp http_stack do
+    [
+      TonkaWeb.Telemetry,
+      {Phoenix.PubSub, name: Tonka.PubSub},
+      TonkaWeb.Endpoint
+    ]
   end
 
   # Tell Phoenix to update the endpoint configuration

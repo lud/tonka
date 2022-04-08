@@ -44,6 +44,11 @@ defmodule Tonka.MixProject do
       {:cubdb, "~> 1.1"},
       {:slack, "~> 0.23"},
       {:ymlr, "~> 2.0", only: :dev},
+      {:time_queue, "~> 0.9.6"},
+      {:tz, "~> 0.20.1"},
+      {:castore, "~> 0.1.11"},
+      {:mint, "~> 1.3"},
+      {:crontab, "~> 1.1"},
 
       # Phoenix stack
       {:phoenix, "~> 1.6.6"},

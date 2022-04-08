@@ -14,6 +14,8 @@ config :tonka, TonkaWeb.Endpoint, cache_static_manifest: "priv/static/cache_mani
 # Do not print debug messages in production
 config :logger, level: :info
 
+config :tonka, refresh_tz: true
+
 # ## SSL Support
 #
 # To get SSL working, you will need to add the `https` key

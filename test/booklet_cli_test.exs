@@ -68,7 +68,7 @@ defmodule Tonka.BookletCliTest do
              [
                {:link, "http://example.com", "first item"},
                "second item",
-               {:ul, ["nested", {:em, "list"}]}
+               ["sublist: ", {:ul, ["nested", {:em, "list"}]}]
              ]},
             [
               "not strong but ",

@@ -140,7 +140,8 @@ defmodule Tonka.Core.Booklet.CliRenderer do
   end
 
   defp rich({:ul, sub}, ctx) do
-    Enum.map(sub, fn sub -> ["* ", rich(sub, ctx), ?\n] end)
+    ctx = indent(ctx)
+    [?\n, Enum.map(sub, fn sub -> list_item(sub, ctx) end), ?\n]
   end
 
   defp rich(other, _) do
@@ -154,6 +155,14 @@ defmodule Tonka.Core.Booklet.CliRenderer do
 
     # raise ArgumentError, "unknown rich text element: #{inspect(other)}"
     []
+  end
+
+  defp list_item({:ul, _} = item, ctx) do
+    [s_indent(ctx.indent + 1), rich(item, ctx)]
+  end
+
+  defp list_item(item, ctx) do
+    [?\n, s_indent(ctx), "* ", rich(item, ctx)]
   end
 
   # defp ansi_wrap(sub, ctx, start, stop) do
@@ -198,8 +207,10 @@ defmodule Tonka.Core.Booklet.CliRenderer do
   end
 
   defp base_context do
-    %{strong: 0, colors: [], em: 0, strike: 0}
+    %{strong: 0, colors: [], em: 0, strike: 0, indent: -1}
   end
+
+  defp indent(%{indent: n} = ctx), do: %{ctx | indent: n + 1}
 
   defp restart_tags(%{strong: strong, colors: colors}) do
     [
@@ -214,4 +225,17 @@ defmodule Tonka.Core.Booklet.CliRenderer do
       end
     ]
   end
+
+  defp s_indent(%{indent: n}), do: s_indent(n)
+
+  defp s_indent(8), do: "                "
+  defp s_indent(7), do: "              "
+  defp s_indent(6), do: "            "
+  defp s_indent(5), do: "          "
+  defp s_indent(4), do: "        "
+  defp s_indent(3), do: "      "
+  defp s_indent(2), do: "    "
+  defp s_indent(1), do: "  "
+  defp s_indent(0), do: []
+  defp s_indent(n), do: String.duplicate("  ", n)
 end

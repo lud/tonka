@@ -4,5 +4,5 @@ defmodule Tonka.Data.ProjectInfo do
   Hugs.build_struct()
   |> Hugs.field(:prk, type: :binary, required: true)
   |> Hugs.field(:storage_dir, type: :binary, required: true)
-  |> Hugs.inject()
+  |> Hugs.define()
 end

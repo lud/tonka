@@ -83,16 +83,16 @@ defmodule Tonka.Ext.Slack.Render.BookletRenderer do
     String.replace(str, char, "")
   end
 
-  defp format_datetime(dt, format \\ "{date_short} {time}", url \\ nil) do
-    unix = DateTime.to_unix(dt)
+  # defp format_datetime(dt, format \\ "{date_short} {time}", url \\ nil) do
+  #   unix = DateTime.to_unix(dt)
 
-    link =
-      case url do
-        nil -> ""
-        _ -> "^#{url}"
-      end
+  #   link =
+  #     case url do
+  #       nil -> ""
+  #       _ -> "^#{url}"
+  #     end
 
-    fallback = "UTC #{dt}"
-    "<!date^#{unix}^#{format}#{link}|#{fallback}>"
-  end
+  #   fallback = "UTC #{dt}"
+  #   "<!date^#{unix}^#{format}#{link}|#{fallback}>"
+  # end
 end

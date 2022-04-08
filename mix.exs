@@ -32,9 +32,9 @@ defmodule Tonka.MixProject do
     [
       # App
 
-      {:ark, "~> 0.7.5"},
+      {:ark, "~> 0.7.6"},
       {:hugs, path: "~/src/hugs"},
-      # {:hugs, "~> 0.1.12"},
+      # {:hugs, "~> 0.1.13"},
       {:yaml_elixir, "~> 2.5"},
       {:bbmustache, "~> 1.12"},
       {:nimble_options, "~> 0.4.0"},
@@ -44,7 +44,7 @@ defmodule Tonka.MixProject do
       {:cubdb, "~> 1.1"},
       {:slack, "~> 0.23"},
       {:ymlr, "~> 2.0", only: :dev},
-      {:time_queue, "~> 0.9.6"},
+      {:time_queue, "~> 1.0"},
       {:tz, "~> 0.20.1"},
       {:castore, "~> 0.1.11"},
       {:mint, "~> 1.3"},

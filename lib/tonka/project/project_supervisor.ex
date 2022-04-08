@@ -15,7 +15,7 @@ defmodule Tonka.Project.ProjectSupervisor do
 
   @impl Supervisor
   def init(_init_arg) do
-    children = Enum.map(list_projects, &project_child_spec/1)
+    children = Enum.map(list_projects(), &project_child_spec/1)
 
     Supervisor.init(children, strategy: :one_for_one)
   end

@@ -13,5 +13,5 @@ defmodule Tonka.Data.Issue do
   |> Hugs.field(:labels, type: {:list, :binary})
   |> Hugs.field(:updated_at, type: DateTime, cast: &Hugs.Cast.datetime_from_iso8601/1)
   |> Hugs.field(:status, type: {:enum, [:open, :closed]}, required: true)
-  |> Hugs.inject()
+  |> Hugs.define()
 end

@@ -10,5 +10,5 @@ defmodule Tonka.Services.CleanupStore.CleanupParams do
     default: [],
     cast: {:list, &Hugs.Cast.string_to_existing_atom/1}
   )
-  |> Hugs.inject()
+  |> Hugs.define()
 end

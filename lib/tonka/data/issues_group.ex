@@ -5,5 +5,5 @@ defmodule Tonka.Data.IssuesGroup do
   |> Hugs.field(:issues, type: {:list, Tonka.Data.Issue}, required: true)
   |> Hugs.field(:title, type: :binary, required: true)
   |> Hugs.field(:remain, type: :integer, default: nil)
-  |> Hugs.inject()
+  |> Hugs.define()
 end

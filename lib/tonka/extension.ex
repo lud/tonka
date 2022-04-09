@@ -15,4 +15,10 @@ defmodule Tonka.Extension do
     # override previous definitions with new modules
     Enum.reduce(list_extensions(), %{}, fn mod, acc -> Map.merge(acc, mod.services()) end)
   end
+
+  def build_action_index do
+    # Merge in order of the list_extensions config value so it is possible to
+    # override previous definitions with new modules
+    Enum.reduce(list_extensions(), %{}, fn mod, acc -> Map.merge(acc, mod.actions()) end)
+  end
 end

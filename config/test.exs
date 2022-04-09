@@ -1,6 +1,6 @@
 import Config
 
-verbose = true
+verbose = !true
 concise_level = :error
 
 # Configure your database

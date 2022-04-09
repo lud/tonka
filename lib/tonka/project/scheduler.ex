@@ -20,7 +20,7 @@ defmodule Tonka.Project.Scheduler do
     |> Hugs.field(:schedule,
       type: :map,
       required: true,
-      cast: {Crontab.CronExpression.Parser, :parse, []}
+      cast: &Crontab.CronExpression.Parser.parse/1
     )
     |> Hugs.field(:timezone,
       type: :binary,

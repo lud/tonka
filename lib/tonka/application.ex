@@ -9,6 +9,8 @@ defmodule Tonka.Application do
   def start(_type, _args) do
     children = tz_stack() ++ db_stack() ++ project_stack() ++ http_stack()
 
+    Tonka.Extension.ensure_all_loaded()
+
     opts = [strategy: :one_for_one, name: Tonka.Supervisor]
     Supervisor.start_link(children, opts)
   end

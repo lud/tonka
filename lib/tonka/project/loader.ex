@@ -29,7 +29,7 @@ defmodule Tonka.Project.Loader do
     require Hugs
 
     Hugs.build_struct()
-    |> Hugs.field(:inputs, type: :map, default: %{})
+    |> Hugs.field(:inputs, type: :map, default: %{}, cast: {__MODULE__, :cast_inputs, []})
     |> Hugs.field(:module,
       serkey: "use",
       type: :atom,
@@ -50,6 +50,34 @@ defmodule Tonka.Project.Loader do
           {:error, "no such action module: #{bin}. Known actions: #{known}"}
       end
     end
+
+    @doc false
+    def cast_inputs(map, _) when is_map(map) do
+      Ark.Ok.reduce_ok(map, %{}, &cast_input/2)
+    end
+
+    def cast_inputs(other, _) do
+      {:error, "expcted a map as inputs, got: #{inspect(other)}"}
+    end
+
+    def cast_input({input_name, inputdef}, acc) do
+      with {:ok, input_key} <- Hugs.Cast.string_to_existing_atom(input_name),
+           {:ok, inputspec} <- cast_input(inputdef) do
+        {:ok, Map.put(acc, input_key, inputspec)}
+      end
+    end
+
+    defp cast_input(%{"origin" => "static", "static" => static}),
+      do: {:ok, %{origin: :static, static: static}}
+
+    defp cast_input(%{"origin" => "action", "action" => action}) when is_binary(action),
+      do: {:ok, %{origin: :action, action: action}}
+
+    defp cast_input(%{"origin" => "grid_input"}),
+      do: {:ok, %{origin: :grid_input}}
+
+    defp cast_input(other),
+      do: {:error, "invalid input defintion: #{other}"}
   end
 
   defmodule PublicationDef do
@@ -73,8 +101,6 @@ defmodule Tonka.Project.Loader do
 
   defp get_services_defs(%{"services" => raw}) do
     service_index = Tonka.Extension.build_service_index()
-
-    service_index |> IO.inspect(label: "service_index")
 
     map_ok(raw, fn {key, sdef} when is_binary(key) ->
       case ServiceDef.denormalize(sdef, context_arg: %{resolver: service_index}) do

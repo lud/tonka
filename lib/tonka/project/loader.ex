@@ -39,6 +39,7 @@ defmodule Tonka.Project.Loader do
     require Hugs
 
     Hugs.build_struct()
+    |> Hugs.field(:id, type: :binary, default: nil)
     |> Hugs.field(:grid, type: GridDef, required: true)
     |> Hugs.define()
   end
@@ -79,7 +80,7 @@ defmodule Tonka.Project.Loader do
 
     map_ok(raw, fn {key, pubdef} when is_binary(key) ->
       case PublicationDef.denormalize(pubdef, context_arg: %{resolver: action_index}) do
-        {:ok, pub} -> {:ok, {key, pub}}
+        {:ok, pub} -> {:ok, {key, Map.put(pub, :id, key)}}
         {:error, _} = err -> err
       end
     end)

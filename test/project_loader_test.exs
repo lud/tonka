@@ -117,5 +117,9 @@ defmodule Tonka.ProjectLoaderTest do
     assert Map.has_key?(definitions, :publications)
     assert Map.has_key?(definitions.publications, "some_pub")
     assert Map.has_key?(definitions.publications["some_pub"], :grid)
+
+    Enum.each(definitions.publications, fn {id, v} ->
+      assert v.id == id
+    end)
   end
 end

@@ -65,7 +65,7 @@ defmodule Tonka.ProjectLoaderTest do
                     query:
                       last_ext_username: lud-agi
                     title: TODO List
-            module: core.query.mql.queries_groups_compiler
+            use: core.query.mql.queries_groups_compiler
             params:
               data_type: issue
           issues_booklet:
@@ -73,13 +73,13 @@ defmodule Tonka.ProjectLoaderTest do
               issues_groups:
                 action: query_issues
                 origin: action
-            module: core.render.booklet.issues_groups
+            use: core.render.booklet.issues_groups
           query_issues:
             inputs:
               query_groups:
                 action: define_query
                 origin: action
-            module: core.query.issues_groups_reader
+            use: core.query.issues_groups_reader
           report_booklet:
             inputs:
               above:
@@ -96,7 +96,7 @@ defmodule Tonka.ProjectLoaderTest do
               content:
                 action: issues_booklet
                 origin: action
-            module: core.render.booklet_wrapper
+            use: core.render.booklet_wrapper
             params:
               title: Issues Report
           report_to_slack:
@@ -104,7 +104,7 @@ defmodule Tonka.ProjectLoaderTest do
               booklet:
                 action: report_booklet
                 origin: action
-            module: ext.slack.publisher
+            use: ext.slack.publisher
             params:
               channel: DS4SX8VPF
               cleanup:
@@ -118,8 +118,15 @@ defmodule Tonka.ProjectLoaderTest do
     assert Map.has_key?(definitions.publications, "some_pub")
     assert Map.has_key?(definitions.publications["some_pub"], :grid)
 
-    Enum.each(definitions.publications, fn {id, v} ->
-      assert v.id == id
+    Enum.each(definitions.publications, fn {pubid, pub} ->
+      assert pub.id == pubid
+
+      Enum.each(pub.grid, fn {actid, actdef} ->
+        assert is_map(actdef.inputs)
+        assert is_map(actdef.params)
+        assert is_atom(actdef.module)
+        assert is_list(actdef.module.module_info(:exports))
+      end)
     end)
   end
 end

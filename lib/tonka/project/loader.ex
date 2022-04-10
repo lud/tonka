@@ -25,14 +25,31 @@ defmodule Tonka.Project.Loader do
     end
   end
 
-  defmodule GridDef do
+  defmodule ActionDef do
     require Hugs
 
     Hugs.build_struct()
     |> Hugs.field(:inputs, type: :map, default: %{})
-    |> Hugs.field(:module, serkey: "use", type: :atom, cast: {__MODULE__, :resolve_module, []})
+    |> Hugs.field(:module,
+      serkey: "use",
+      type: :atom,
+      cast: {__MODULE__, :resolve_module, []},
+      required: true
+    )
     |> Hugs.field(:params, type: :map, default: %{})
     |> Hugs.define()
+
+    @doc false
+    def resolve_module(bin, %{arg: %{resolver: services_map}}) do
+      case Map.fetch(services_map, bin) do
+        {:ok, mod} ->
+          {:ok, mod}
+
+        :error ->
+          known = Enum.join(Map.keys(services_map), ", ")
+          {:error, "no such action module: #{bin}. Known actions: #{known}"}
+      end
+    end
   end
 
   defmodule PublicationDef do
@@ -40,7 +57,7 @@ defmodule Tonka.Project.Loader do
 
     Hugs.build_struct()
     |> Hugs.field(:id, type: :binary, default: nil)
-    |> Hugs.field(:grid, type: GridDef, required: true)
+    |> Hugs.field(:grid, type: {:map, :binary, ActionDef}, required: true)
     |> Hugs.define()
   end
 

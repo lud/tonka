@@ -17,8 +17,6 @@ defmodule Tonka.ProjectLoaderTest do
             credentials: slack.bot
       """)
 
-    raw |> IO.inspect(label: "raw")
-
     assert {:error, err} = Loader.get_definitions(raw)
 
     assert Exception.message(err) =~ ~r/no such service: this\.module\.is\.unknown/
@@ -42,8 +40,6 @@ defmodule Tonka.ProjectLoaderTest do
           params:
             credentials: slack.bot
       """)
-
-    raw |> IO.inspect(label: "raw")
 
     assert {:ok, definitions} = Loader.get_definitions(raw)
     assert Map.has_key?(definitions, :services)
@@ -113,7 +109,6 @@ defmodule Tonka.ProjectLoaderTest do
 
     raw = yaml!(yaml)
     assert {:ok, definitions} = Loader.get_definitions(raw)
-    definitions |> IO.inspect(label: "definitions")
     assert Map.has_key?(definitions, :publications)
     assert Map.has_key?(definitions.publications, "some_pub")
     assert Map.has_key?(definitions.publications["some_pub"], :grid)
@@ -150,8 +145,6 @@ defmodule Tonka.ProjectLoaderTest do
             input: none
       """)
 
-    raw |> IO.inspect(label: "raw")
-
     assert {:ok, definitions} = Loader.get_definitions(raw)
     assert Map.has_key?(definitions, :scheduler)
     assert is_list(definitions.scheduler)
@@ -171,7 +164,5 @@ defmodule Tonka.ProjectLoaderTest do
 
     assert is_struct(s1.schedule, Crontab.CronExpression)
     assert is_struct(s2.schedule, Crontab.CronExpression)
-
-    s1.run |> IO.inspect(label: "s1.run")
   end
 end

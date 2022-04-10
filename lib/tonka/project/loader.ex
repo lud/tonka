@@ -120,8 +120,6 @@ defmodule Tonka.Project.Loader do
   defp get_publications_defs(%{"publications" => raw}) do
     action_index = Tonka.Extension.build_action_index()
 
-    action_index |> IO.inspect(label: "action_index")
-
     map_ok(raw, fn {key, pubdef} when is_binary(key) ->
       case PublicationDef.denormalize(pubdef, context_arg: %{resolver: action_index}) do
         {:ok, pub} -> {:ok, {key, Map.put(pub, :id, key)}}

@@ -129,4 +129,49 @@ defmodule Tonka.ProjectLoaderTest do
       end)
     end)
   end
+
+  test "parsing the scheduler spec" do
+    raw =
+      yaml!("""
+      scheduler:
+        my_spec_1:
+          schedule: "0 8 * * *"
+          run:
+            grid: "grid_1"
+            input: none
+
+        my_spec_2:
+          backoff: 1h
+          timezone: Europe/Paris
+          schedule: "0 8 * * *"
+          max_attempts: 2
+          run:
+            grid: "grid_1"
+            input: none
+      """)
+
+    raw |> IO.inspect(label: "raw")
+
+    assert {:ok, definitions} = Loader.get_definitions(raw)
+    assert Map.has_key?(definitions, :scheduler)
+    assert is_list(definitions.scheduler)
+    assert Enum.all?(definitions.scheduler, &is_struct(&1, Tonka.Project.Scheduler.Spec))
+
+    s1 = Enum.find(definitions.scheduler, &(&1.id == "my_spec_1"))
+    s2 = Enum.find(definitions.scheduler, &(&1.id == "my_spec_2"))
+
+    assert 0 == s1.backoff
+    assert 3600 * 1000 == s2.backoff
+
+    assert "UTC" == s1.timezone
+    assert "Europe/Paris" == s2.timezone
+
+    assert 1 == s1.max_attempts
+    assert 2 == s2.max_attempts
+
+    assert is_struct(s1.schedule, Crontab.CronExpression)
+    assert is_struct(s2.schedule, Crontab.CronExpression)
+
+    s1.run |> IO.inspect(label: "s1.run")
+  end
 end

@@ -94,8 +94,9 @@ defmodule Tonka.Project.Loader do
   @spec get_definitions(map) :: {:ok, project_defs} | {:error, term}
   def get_definitions(map) when is_map(map) do
     with {:ok, services} <- get_services_defs(map),
-         {:ok, publications} <- get_publications_defs(map) do
-      {:ok, %{services: services, publications: publications}}
+         {:ok, publications} <- get_publications_defs(map),
+         {:ok, schedulist} <- get_scheduler_specs(map) do
+      {:ok, %{services: services, publications: publications, scheduler: schedulist}}
     end
   end
 
@@ -134,4 +135,16 @@ defmodule Tonka.Project.Loader do
   end
 
   defp get_publications_defs(_), do: {:ok, %{}}
+
+  defp get_scheduler_specs(%{"scheduler" => defs}) when is_map(defs) do
+    Tonka.Project.Scheduler.cast_specs(defs)
+  end
+
+  defp get_scheduler_specs(%{"scheduler" => other}) do
+    {:error, "invalid scheduler specs: #{inspect(other)}"}
+  end
+
+  defp get_scheduler_specs(_) do
+    {:ok, []}
+  end
 end

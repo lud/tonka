@@ -28,6 +28,16 @@ defmodule Tonka.Project.ProjectRegistry do
 
   defp process_key(prk, kind, nil), do: {prk, :server, kind}
   defp process_key(prk, kind, id), do: {prk, :server, kind, id}
+  defp value_key(prk, kind, id), do: {prk, :value, kind, id}
+  defp value_key(prk, kind), do: {prk, :value, kind}
+
+  def register_value(prk, kind, id, value) do
+    Registry.register(@registry, value_key(prk, kind, id), value)
+  end
+
+  def register_value(prk, kind, value) do
+    Registry.register(@registry, value_key(prk, kind), value)
+  end
 
   def project_started?(prk) do
     case lookup(prk, :project) do

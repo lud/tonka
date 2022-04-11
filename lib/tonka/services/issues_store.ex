@@ -1,4 +1,5 @@
 defmodule Tonka.Services.IssuesStore do
+  alias Tonka.Core.Service
   use Tonka.Core.Service
   alias Tonka.Core.Query.MQL
   alias Tonka.Services.IssuesSource
@@ -10,15 +11,21 @@ defmodule Tonka.Services.IssuesStore do
   #  Service API
   # ---------------------------------------------------------------------------
 
+  @impl Service
+  def service_type, do: __MODULE__
+
+  @impl Service
   def cast_params(term) do
     {:ok, term}
   end
 
+  @impl Service
   def configure(config) do
     config
     |> use_service(:source, Tonka.Services.IssuesSource)
   end
 
+  @impl Service
   def build(injects, _params) do
     {:ok, %__MODULE__{source: injects.source}}
   end

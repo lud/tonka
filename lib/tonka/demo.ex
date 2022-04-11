@@ -11,6 +11,8 @@ defmodule Tonka.Demo do
   def run do
     Tonka.Project.ProjectLogger.enable_system_logs()
     container = prepare_container()
+
+    exit(:normal)
     grid = prepare_grid()
 
     case Grid.run(grid, container, "some dummy input") do
@@ -32,7 +34,7 @@ defmodule Tonka.Demo do
     service_sup_name = ProjectRegistry.via(prk, ServiceSupervisor)
     Logger.info("started service supervisor as #{inspect(service_sup_name)}")
 
-    {:ok, _} = ServiceSupervisor.start_link(prk: prk)
+    {:ok, _} = ServiceSupervisor.start_link(prk: prk, name: service_sup_name)
 
     container =
       new()

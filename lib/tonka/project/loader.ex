@@ -10,6 +10,7 @@ defmodule Tonka.Project.Loader do
 
     Hugs.build_struct()
     |> Hugs.field(:module, serkey: "use", type: :atom, cast: {__MODULE__, :resolve_module, []})
+    |> Hugs.field(:params, type: :map, default: %{})
     |> Hugs.define()
 
     @doc false
@@ -89,7 +90,11 @@ defmodule Tonka.Project.Loader do
     |> Hugs.define()
   end
 
-  @type project_defs :: %{services: [ServiceDef.t()]}
+  @type project_defs :: %{
+          services: %{binary => ServiceDef.t()},
+          publications: %{binary => PublicationDef.t()},
+          scheduler: [Tonka.Project.Scheduler.Spec.t()]
+        }
 
   @spec get_definitions(map) :: {:ok, project_defs} | {:error, term}
   def get_definitions(map) when is_map(map) do

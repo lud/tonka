@@ -14,6 +14,9 @@ defmodule Tonka.Ext.Slack.Services.SlackAPI do
 
   @pretty_json Mix.env() != :prod
 
+  @impl Tonka.Core.Service
+  def service_type, do: __MODULE__
+
   def new(opts) do
     struct!(__MODULE__, opts)
   end

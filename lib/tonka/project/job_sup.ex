@@ -1,10 +1,9 @@
 defmodule Tonka.Project.JobSup do
-  # Automatically defines child_spec/1
   use DynamicSupervisor
 
-  def start_link(prk: prk) do
-    name = Tonka.Project.ProjectRegistry.via(prk, __MODULE__)
-    DynamicSupervisor.start_link(__MODULE__, [], name: name)
+  def start_link(opts) do
+    {gen_opts, _opts} = Keyword.split(opts, [:name])
+    DynamicSupervisor.start_link(__MODULE__, [], gen_opts)
   end
 
   @impl true

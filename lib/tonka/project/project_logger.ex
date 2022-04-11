@@ -17,8 +17,9 @@ defmodule Tonka.Project.ProjectLogger do
     Process.put({__MODULE__, :system_logger_enabled}, enabled)
   end
 
+  @todo "false by default"
   def system_logger_enabled? do
-    Process.get({__MODULE__, :system_logger_enabled}, false)
+    Process.get({__MODULE__, :system_logger_enabled}, true)
   end
 
   [:debug, :info, :warn, :error, :critical]

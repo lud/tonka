@@ -28,13 +28,35 @@ defmodule Tonka.Services.ProjectStore.CubDBBackend do
   end
 
   @impl Service
-  def build(%{sup: sup, info: %{prk: prk, storage_dir: dir}}, _params) do
-    name = Tonka.Project.ProjectRegistry.via(prk, __MODULE__, make_ref())
-    Logger.info("opening CubDB database at #{dir} as #{inspect(name)}")
-    child_spec = {CubDB, name: name, data_dir: dir, auto_compact: true, auto_file_sync: true}
+  def build(%{sup: sup, info: %{storage_dir: dir, store_backend_name: name}}, _params) do
+    start_ref(sup, name, dir)
+  end
 
-    with {:ok, _} <- Supervisor.start_child(sup, child_spec) do
-      {:ok, new(name)}
+  def start_ref(sup, name, dir) do
+    Logger.info("opening CubDB database at #{dir} as #{inspect(name)}")
+
+    {ref, opts} =
+      case name do
+        nil -> {:use_pid, []}
+        _ -> {name, [name: name]}
+      end
+
+    opts = opts ++ [data_dir: dir, auto_compact: true, auto_file_sync: true]
+
+    child_spec = {CubDB, opts}
+
+    with {:ok, pid} <- Supervisor.start_child(sup, child_spec) do
+      ref =
+        case ref do
+          :use_pid ->
+            pid
+
+          _ ->
+            ^pid = GenServer.whereis(name)
+            name
+        end
+
+      {:ok, new(ref)}
     end
   end
 

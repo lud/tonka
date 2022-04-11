@@ -45,6 +45,7 @@ defmodule Tonka.ProjectLoaderTest do
     assert Map.has_key?(definitions, :services)
     assert Map.has_key?(definitions.services, "slack_api")
     assert Tonka.Ext.Slack.Services.SlackAPI == definitions.services["slack_api"].module
+    assert %{"credentials" => "slack.bot"} == definitions.services["slack_api"].params
   end
 
   test "parsing publications" do

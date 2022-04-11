@@ -23,6 +23,9 @@ defmodule Tonka.Ext.Gitlab.Services.Issues do
                  |> Hugs.field(:projects, type: {:list, :binary}, required: true)
                  |> Hugs.field(:credentials, type: :binary, required: true)
 
+  @impl Tonka.Core.Service
+  def service_type, do: IssuesSource
+
   def new(opts) do
     struct!(__MODULE__, opts)
   end

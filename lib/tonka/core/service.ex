@@ -40,6 +40,9 @@ defmodule Tonka.Core.Service do
   """
   @callback configure(config) :: config
   @callback build(injects, params) :: {:ok, impl} | {:error, term}
+  @callback service_type() :: Tonka.Core.Container.typespec()
+
+  @todo "allow an :id option to select service with it and have multiples services of the same utype"
 
   @new_opts [
     params: [

@@ -48,7 +48,6 @@ defmodule Tonka.Core.Container do
   @type override :: module | (() -> {:ok, term} | {:error, term})
 
   @type bind_impl_opt :: {:name, binary}
-  @type bind_impl_opts :: [bind_impl_opt]
   @type bind_opt :: {:params, term}
   @type bind_opts :: list(bind_opt | bind_impl_opt)
 
@@ -234,7 +233,8 @@ defmodule Tonka.Core.Container do
 
         replace_service(new_c, utype, service, new_service)
 
-      {:error, _} = err ->
+      {:error, reason} = err ->
+        Logger.error("could not build service #{inspect(utype)}: #{Ark.Error.to_string(reason)}")
         err
     end
   end

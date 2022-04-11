@@ -97,4 +97,10 @@ defmodule Tonka.ProjectSchedulerTest do
 
     GenServer.stop(pid)
   end
+
+  test "formatting a time interval" do
+    t = "2d1h12s"
+    ms = Tonka.Data.TimeInterval.to_ms!(t)
+    assert t == Tonka.Data.TimeInterval.to_string(ms)
+  end
 end

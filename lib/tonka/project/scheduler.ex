@@ -44,8 +44,12 @@ defmodule Tonka.Project.Scheduler do
       size = length(String.split(exp, " ", trim: true))
 
       case size do
-        6 -> Crontab.CronExpression.Parser.parse(exp, true)
-        _ -> Crontab.CronExpression.Parser.parse(exp, false)
+        6 ->
+          Logger.warn("using extended crontab expression: #{exp}")
+          Crontab.CronExpression.Parser.parse(exp, true)
+
+        _ ->
+          Crontab.CronExpression.Parser.parse(exp, false)
       end
     end
   end
@@ -222,9 +226,13 @@ defmodule Tonka.Project.Scheduler do
 
   defp next_timeout(%{tq: tq}) do
     case TimeQueue.timeout(tq) do
-      :infinity -> :hibernate
-      other -> other
+      :infinity ->
+        Logger.warn("scheduler hibernating")
+        :hibernate
+
+      t ->
+        Logger.warn("scheduler timeout in #{TimeInterval.to_string(t)}")
+        t
     end
-    |> IO.inspect(label: "scheduler timeout")
   end
 end

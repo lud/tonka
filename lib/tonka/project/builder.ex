@@ -32,8 +32,11 @@ defmodule Tonka.Project.Builder do
     with {:ok, yaml} <- File.read(pinfo.yaml_path),
          {:ok, raw_layout} <- load_yaml(yaml),
          {:ok, layout} <- read_layout(raw_layout),
-         :ok <- build_container(pinfo, layout) do
+         :ok <- build_container(pinfo, layout),
+         {:ok, _} <- build_publications(pinfo, layout) do
       :ok
+    else
+      {:error, _} = err -> err
     end
   end
 
@@ -70,8 +73,9 @@ defmodule Tonka.Project.Builder do
         Container.bind(c, utype, sdef.module, params: sdef.params)
       end)
 
-    with {:ok, container} <- Container.prebuild_all(container) do
-      Tonka.Project.ProjectRegistry.register_value(prk, :container, Container.freeze(container))
+    with {:ok, container} <- Container.prebuild_all(container),
+         container <- Container.freeze(container),
+         :ok <- Tonka.Project.ProjectRegistry.register_value(prk, :container, container) do
       :ok
     end
   end
@@ -99,6 +103,28 @@ defmodule Tonka.Project.Builder do
     store = Tonka.Services.Credentials.JsonFileCredentials.from_path!(pinfo.credentials_path)
     {:ok, store, container}
   end
-end
 
-# Process.exit(GenServer.whereis(Tonka.Project.project_name("dev")), :kill)
+  defp build_publications(%{prk: prk} = _pinfo, layout) do
+    Ark.Ok.map_ok(layout.publications, fn {key, raw} ->
+      with {:ok, pub} <- build_pub(raw),
+           :ok <- Tonka.Project.ProjectRegistry.register_value(prk, :publication, key, pub) do
+        {:ok, key}
+      end
+      |> IO.inspect(label: "return")
+    end)
+  end
+
+  alias Tonka.Core.Grid
+  alias Tonka.Project.Loader.ActionDef
+
+  defp build_pub(pub) do
+    grid =
+      Enum.reduce(pub.grid, Grid.new(), fn {key, %ActionDef{} = act}, grid ->
+        Grid.add_action(grid, key, act.module, params: act.params, inputs: act.inputs)
+      end)
+
+    {:ok, grid}
+  rescue
+    e -> {:error, e}
+  end
+end

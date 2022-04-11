@@ -96,4 +96,25 @@ defmodule Tonka.Data.TimeInterval do
   def hour(n), do: n * @hour
   def minute(n), do: n * @minute
   def second(n), do: n * @second
+
+  @str_parts [{"d", @day}, {"h", @hour}, {"m", @minute}, {"s", @second}]
+
+  def to_string(ms) when is_integer(ms) do
+    Enum.reduce(@str_parts, {[], ms}, fn {unit, val_of_unit}, {io, ms} ->
+      if ms > val_of_unit do
+        {n, rest} = divrem(ms, val_of_unit)
+        {[io, Integer.to_string(n), unit], rest}
+      else
+        {io, ms}
+      end
+    end)
+    |> case do
+      {[], ms} -> "#{ms}ms"
+      {str, _} -> :erlang.iolist_to_binary(str)
+    end
+  end
+
+  def divrem(num, d) do
+    {div(num, d), rem(num, d)}
+  end
 end

@@ -32,11 +32,18 @@ defmodule Tonka.Project.ProjectRegistry do
   defp value_key(prk, kind), do: {prk, :value, kind}
 
   def register_value(prk, kind, id, value) do
-    Registry.register(@registry, value_key(prk, kind, id), value)
+    _register_value(value_key(prk, kind, id), value)
   end
 
   def register_value(prk, kind, value) do
-    Registry.register(@registry, value_key(prk, kind), value)
+    _register_value(value_key(prk, kind), value)
+  end
+
+  defp _register_value(key, value) do
+    case Registry.register(@registry, key, value) do
+      {:ok, _} -> :ok
+      {:error, _} = err -> err
+    end
   end
 
   def project_started?(prk) do

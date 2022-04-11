@@ -144,7 +144,7 @@ defmodule Tonka.Core.Grid do
       end
     end)
     |> case do
-      [] -> :ok = Logger.info("✓ all actions services are valid")
+      [] -> :ok = Logger.info("✓✓ all actions services are valid")
       invalids -> {:error, {:invalid_injects, invalids}}
     end
   end
@@ -193,7 +193,7 @@ defmodule Tonka.Core.Grid do
       end
     end)
     |> case do
-      [] -> :ok = Logger.info("✓ all actions inputs are valid")
+      [] -> :ok = Logger.info("✓✓ all actions inputs are valid")
       invalids -> {:error, {:invalid_inputs, invalids}}
     end
   end
@@ -360,7 +360,7 @@ defmodule Tonka.Core.Grid do
         end
 
       :done ->
-        Logger.info("✓ all actions have run")
+        Logger.info("✓✓ all actions have run")
         {:ok, :done, grid}
 
       :noavail ->

@@ -67,6 +67,6 @@ defmodule Tonka.ProjectGridRunTest do
     prk = "gridtest"
     {:ok, pid} = Tonka.Project.start_project(prk: prk, dir: dir)
 
-    assert :ok = Tonka.Project.start_publication(prk, "test_cli", "my input")
+    assert :ok = Tonka.Project.run_publication(prk, "test_cli", "my input")
   end
 end

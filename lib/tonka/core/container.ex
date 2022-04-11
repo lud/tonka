@@ -182,7 +182,7 @@ defmodule Tonka.Core.Container do
 
     case Ark.Ok.reduce_ok(unbuilt_utypes, c, fn utype, new_c -> ensure_built(new_c, utype) end) do
       {:ok, new_c} ->
-        Logger.info("✓ successfully prebuilt all services")
+        Logger.info("✓✓ successfully prebuilt all services")
         {:ok, new_c}
 
       {:error, _} = err ->

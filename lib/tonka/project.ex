@@ -20,7 +20,7 @@ defmodule Tonka.Project do
     Supervisor.start_child(Tonka.Project.ProjectSupervisor, cs)
   end
 
-  def start_publication(prk, publication, input, timeout \\ :infinity) do
+  def run_publication(prk, publication, input, timeout \\ :infinity) do
     spec = {Tonka.Project.Job, prk: prk, publication: publication, input: input}
     job_sup = job_sup_name(prk)
 

@@ -61,6 +61,7 @@ defmodule Tonka.Project.Builder do
         Tonka.Services.ProjectStore.Backend,
         Tonka.Services.ProjectStore.CubDBBackend
       )
+      |> Container.bind(Tonka.Services.CleanupStore)
       |> Container.bind(Tonka.Services.ProjectStore)
       |> Container.bind(Tonka.Services.Credentials, &build_credentials(&1, pinfo))
 

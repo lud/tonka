@@ -154,6 +154,10 @@ defmodule Tonka.Project.Scheduler do
     end
   end
 
+  defp run_command(%Command.Grid{grid: grid, input: input}, %{prk: prk}) do
+    Tonka.Project.run_publication(prk, grid, input)
+  end
+
   defp requeue(%S{tq: tq} = state, spec) do
     %S{state | tq: spec |> reset_attempts() |> insert_spec(tq)}
   end
@@ -227,11 +231,11 @@ defmodule Tonka.Project.Scheduler do
   defp next_timeout(%{tq: tq}) do
     case TimeQueue.timeout(tq) do
       :infinity ->
-        Logger.warn("scheduler hibernating")
+        Logger.debug("scheduler hibernating")
         :hibernate
 
       t ->
-        Logger.warn("scheduler timeout in #{TimeInterval.to_string(t)}")
+        Logger.debug("scheduler timeout in #{TimeInterval.to_string(t)}")
         t
     end
   end

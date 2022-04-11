@@ -152,7 +152,6 @@ defmodule Tonka.ProjectLoaderTest do
 
     assert {:ok, definitions} = Loader.get_definitions(raw)
     assert Map.has_key?(definitions, :services)
-    definitions.services |> IO.inspect(label: "definitions.services")
 
     # assert is_list(definitions.scheduler)
     # assert Enum.all?(definitions.scheduler, &is_struct(&1, Tonka.Project.Scheduler.Spec))

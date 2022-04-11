@@ -1,6 +1,6 @@
 import Config
 
-verbose = !true
+verbose = true
 concise_level = :error
 
 # Configure your database
@@ -28,3 +28,5 @@ config :logger, level: if(verbose, do: :debug, else: concise_level)
 
 # Initialize plugs at runtime for faster test compilation
 config :phoenix, :plug_init_mode, :runtime
+
+config :tonka, start_projects: :none

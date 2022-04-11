@@ -21,11 +21,28 @@ defmodule Tonka.Project.ProjectSupervisor do
   end
 
   def list_projects do
-    ["dev"]
+    case Application.fetch_env!(:tonka, :start_projects) do
+      :all -> list_projects_from_disk()
+      :none -> []
+      list -> list
+    end
   end
 
-  def project_child_spec(prk) do
-    args = [prk: prk]
+  @projects_dir "var/projects"
+  def list_projects_from_disk do
+    Enum.filter(File.ls!(@projects_dir), fn prk ->
+      dir = Path.join(@projects_dir, prk)
+      yaml = Path.join(dir, "project.yaml")
+      File.dir?(dir) and File.regular?(yaml)
+    end)
+  end
+
+  def project_child_spec(prk) when is_binary(prk) do
+    project_child_spec(prk: prk)
+  end
+
+  def project_child_spec(args) when is_list(args) do
+    prk = Keyword.fetch!(args, :prk)
 
     args
     |> Tonka.Project.child_spec()

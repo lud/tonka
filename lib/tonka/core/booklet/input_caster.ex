@@ -19,6 +19,10 @@ defmodule Tonka.Core.Booklet.InputCaster do
     cast_input([])
   end
 
+  def cast_input(text) when is_binary(text) do
+    cast_input([%{"plaintext" => text}])
+  end
+
   def cast_input(other) do
     {:error, "expected the input to be a list, got: #{inspect(other)}"}
   end

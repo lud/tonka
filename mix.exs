@@ -63,6 +63,7 @@ defmodule Tonka.MixProject do
       {:plug_cowboy, "~> 2.5"},
 
       # dev, test, tools
+      {:briefly, "~> 0.3"},
       {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
       {:ex_doc, "~> 0.28.0", only: [:dev, :test], runtime: false},

@@ -46,6 +46,21 @@ defmodule Tonka.Project.ProjectRegistry do
     end
   end
 
+  def fetch_value(prk, kind) do
+    _fetch_value(value_key(prk, kind))
+  end
+
+  def fetch_value(prk, kind, id) do
+    _fetch_value(value_key(prk, kind, id))
+  end
+
+  defp _fetch_value(key) do
+    case Registry.lookup(@registry, key) do
+      [{_, v}] -> {:ok, v}
+      _ -> {:error, {:not_registered, key}}
+    end
+  end
+
   def project_started?(prk) do
     case lookup(prk, :project) do
       [{_pid, _}] -> true

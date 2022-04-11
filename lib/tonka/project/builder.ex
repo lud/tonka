@@ -5,7 +5,6 @@ defmodule Tonka.Project.Builder do
   alias Tonka.Project.Loader
   alias Tonka.Core.Container
   alias Tonka.Data.ProjectInfo
-  alias Tonka.Project
   use GenServer
   require Logger
 
@@ -18,8 +17,6 @@ defmodule Tonka.Project.Builder do
 
   @impl GenServer
   def init(pinfo: pinfo) do
-    Logger.info("building project #{pinfo.prk}")
-
     case build_project(pinfo) do
       :ok -> {:ok, nil, :hibernate}
       {:error, reason} -> {:stop, reason}
@@ -110,7 +107,6 @@ defmodule Tonka.Project.Builder do
            :ok <- Tonka.Project.ProjectRegistry.register_value(prk, :publication, key, pub) do
         {:ok, key}
       end
-      |> IO.inspect(label: "return")
     end)
   end
 
@@ -123,7 +119,7 @@ defmodule Tonka.Project.Builder do
         Grid.add_action(grid, key, act.module, params: act.params, inputs: act.inputs)
       end)
 
-    {:ok, grid}
+    {:ok, %{grid: grid}}
   rescue
     e -> {:error, e}
   end

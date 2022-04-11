@@ -18,7 +18,8 @@ defmodule Tonka.Ext.BuiltIn do
       "core.query.mql.queries_groups_compiler" => Tonka.Actions.Queries.QueriesGroupsMQLCompiler,
       "core.render.booklet.issues_groups" => Tonka.Actions.Render.IssuesGroupsBookletRenderer,
       "core.query.issues_groups_reader" => Tonka.Actions.Queries.IssuesGroupsReader,
-      "core.render.booklet_wrapper" => Tonka.Actions.Render.BookletWrapper
+      "core.render.booklet_wrapper" => Tonka.Actions.Render.BookletWrapper,
+      "core.render.booklet_cli" => Tonka.Actions.Render.BookletCliRenderer
     }
   end
 end

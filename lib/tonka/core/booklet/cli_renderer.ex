@@ -54,6 +54,7 @@ defmodule Tonka.Core.Booklet.CliRenderer do
   end
 
   defp border_bottom,
+    # do: "\n............................................................\n"
     do: "\n============================================================\n"
 
   defp render_block(:block_separator, _) do

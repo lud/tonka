@@ -2,6 +2,7 @@ defmodule Tonka.Project.Scheduler do
   use GenServer
   require Logger
   alias Tonka.Data.TimeInterval
+  use Tonka.Core.Service
 
   defmodule Command.Grid do
     require Hugs
@@ -20,7 +21,7 @@ defmodule Tonka.Project.Scheduler do
     |> Hugs.field(:schedule,
       type: :map,
       required: true,
-      cast: &Crontab.CronExpression.Parser.parse/1
+      cast: &__MODULE__.parse_cron/1
     )
     |> Hugs.field(:timezone,
       type: :binary,
@@ -33,9 +34,48 @@ defmodule Tonka.Project.Scheduler do
     |> Hugs.constraint(__MODULE__, :check_timezone, [])
     |> Hugs.define()
 
+    @doc false
     def check_timezone(%{timezone: tz}) do
       Tz.PeriodsProvider.periods(tz)
     end
+
+    @doc false
+    def parse_cron(exp) do
+      size = length(String.split(exp, " ", trim: true))
+
+      case size do
+        6 -> Crontab.CronExpression.Parser.parse(exp, true)
+        _ -> Crontab.CronExpression.Parser.parse(exp, false)
+      end
+    end
+  end
+
+  @impl Tonka.Core.Service
+  def service_type, do: __MODULE__
+
+  @params_schema Hugs.build_props()
+                 |> Hugs.field(:jobs,
+                   type: {:list, Spec},
+                   required: true,
+                   cast: {__MODULE__, :cast_specs, []}
+                 )
+
+  @impl true
+  def cast_params(term) do
+    Hugs.denormalize(term, @params_schema)
+  end
+
+  @impl true
+  def configure(config) do
+    config
+    |> use_service(:store, Tonka.Services.ProjectStore)
+    |> use_service(:sup, Tonka.Services.ServiceSupervisor)
+    |> use_service(:pinfo, Tonka.Data.ProjectInfo)
+  end
+
+  @impl true
+  def build(%{sup: sup, store: _store, pinfo: %{prk: prk}}, %{jobs: specs}) do
+    Tonka.Services.ServiceSupervisor.start_child(sup, {__MODULE__, specs: specs, prk: prk})
   end
 
   @moduledoc """
@@ -51,8 +91,8 @@ defmodule Tonka.Project.Scheduler do
 
   @type specs :: [Spec.t()]
 
-  @spec cast_specs(term) :: {:ok, specs} | {:error, term}
-  def cast_specs(raw) when is_map(raw) do
+  @spec cast_specs(term, Hugs.Context.t() | nil) :: {:ok, specs} | {:error, term}
+  def cast_specs(raw, _ctx \\ nil) when is_map(raw) do
     raw
     |> Enum.map(fn {id, v} -> Map.put(v, :id, id) end)
     |> Ark.Ok.map_ok(&Spec.denormalize/1)
@@ -67,33 +107,39 @@ defmodule Tonka.Project.Scheduler do
     specs = Keyword.fetch!(opts, :specs)
     prk = Keyword.fetch!(opts, :prk)
     tq = build_queue(specs)
-    {:ok, %S{prk: prk, tq: tq}, TimeQueue.timeout(tq)}
+    state = %S{prk: prk, tq: tq}
+    {:ok, state, next_timeout(state)}
   end
 
   @impl GenServer
   def handle_info(:timeout, state) do
+    Logger.debug("scheduler timeout")
+
     case TimeQueue.pop(state.tq) do
-      {:ok, spec, tq} -> run_spec(spec, Map.put(state, :tq, tq))
-      {:delay, _, timeout} -> {:noreply, state, timeout}
-      :empty -> {:noreply, state, :infinity}
+      {:ok, spec, tq} ->
+        state = run_spec(spec, Map.put(state, :tq, tq))
+        {:noreply, state, next_timeout(state)}
+
+      {:delay, _, timeout} ->
+        {:noreply, state, timeout}
+
+      :empty ->
+        {:noreply, state, :infinity}
     end
   end
 
   defp run_spec(%Spec{id: id} = spec, state) do
     Logger.debug("scheduler running job #{id}")
 
-    state =
-      case run_command(spec.run, state) do
-        :ok ->
-          Logger.info("✓ scheduler job #{id} ran successfully")
-          requeue(state, spec)
+    case run_command(spec.run, state) do
+      :ok ->
+        Logger.info("✓ scheduler job #{id} ran successfully")
+        requeue(state, spec)
 
-        {:error, reason} ->
-          Logger.error("scheduler job #{id} failed: #{Ark.Error.to_string(reason)}")
-          requeue_attempt(state, spec)
-      end
-
-    {:noreply, state, next_timeout(state)}
+      {:error, reason} ->
+        Logger.error("scheduler job #{id} failed: #{Ark.Error.to_string(reason)}")
+        requeue_attempt(state, spec)
+    end
   end
 
   defp run_command(f, _) when is_function(f, 0) do
@@ -175,6 +221,10 @@ defmodule Tonka.Project.Scheduler do
   end
 
   defp next_timeout(%{tq: tq}) do
-    TimeQueue.timeout(tq)
+    case TimeQueue.timeout(tq) do
+      :infinity -> :hibernate
+      other -> other
+    end
+    |> IO.inspect(label: "scheduler timeout")
   end
 end

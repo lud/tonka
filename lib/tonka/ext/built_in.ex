@@ -7,7 +7,8 @@ defmodule Tonka.Ext.BuiltIn do
   @impl Tonka.Extension
   def services do
     %{
-      "core.issues_store" => Tonka.Services.IssuesStore
+      "core.issues_store" => Tonka.Services.IssuesStore,
+      "core.scheduler" => Tonka.Project.Scheduler
     }
   end
 

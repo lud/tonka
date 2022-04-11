@@ -9,7 +9,12 @@ defmodule Tonka.Project.Loader do
     require Hugs
 
     Hugs.build_struct()
-    |> Hugs.field(:module, serkey: "use", type: :atom, cast: {__MODULE__, :resolve_module, []})
+    |> Hugs.field(:module,
+      serkey: "use",
+      type: :atom,
+      cast: {__MODULE__, :resolve_module, []},
+      required: true
+    )
     |> Hugs.field(:params, type: :map, default: %{})
     |> Hugs.define()
 
@@ -92,16 +97,14 @@ defmodule Tonka.Project.Loader do
 
   @type project_defs :: %{
           services: %{binary => ServiceDef.t()},
-          publications: %{binary => PublicationDef.t()},
-          scheduler: [Tonka.Project.Scheduler.Spec.t()]
+          publications: %{binary => PublicationDef.t()}
         }
 
-  @spec get_definitions(map) :: {:ok, project_defs} | {:error, term}
+  @spec get_definitions(map) :: {:ok, project_defs} | {:error, :x}
   def get_definitions(map) when is_map(map) do
     with {:ok, services} <- get_services_defs(map),
-         {:ok, publications} <- get_publications_defs(map),
-         {:ok, schedulist} <- get_scheduler_specs(map) do
-      {:ok, %{services: services, publications: publications, scheduler: schedulist}}
+         {:ok, publications} <- get_publications_defs(map) do
+      {:ok, %{services: services, publications: publications}}
     end
   end
 
@@ -138,16 +141,4 @@ defmodule Tonka.Project.Loader do
   end
 
   defp get_publications_defs(_), do: {:ok, %{}}
-
-  defp get_scheduler_specs(%{"scheduler" => defs}) when is_map(defs) do
-    Tonka.Project.Scheduler.cast_specs(defs)
-  end
-
-  defp get_scheduler_specs(%{"scheduler" => other}) do
-    {:error, "invalid scheduler specs: #{inspect(other)}"}
-  end
-
-  defp get_scheduler_specs(_) do
-    {:ok, []}
-  end
 end

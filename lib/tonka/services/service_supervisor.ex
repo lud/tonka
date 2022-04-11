@@ -23,4 +23,8 @@ defmodule Tonka.Services.ServiceSupervisor do
 
     Supervisor.init(children, strategy: :one_for_one)
   end
+
+  def start_child(sup, child_spec) do
+    Supervisor.start_child(sup, child_spec)
+  end
 end

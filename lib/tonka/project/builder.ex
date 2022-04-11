@@ -82,14 +82,16 @@ defmodule Tonka.Project.Builder do
         module.service_type()
 
       false ->
-        Logger.warn("""
+        Logger.error("""
         function not exported from #{inspect(module)}
 
             @impl Tonka.Core.Service
             def service_type, do: __MODULE__
         """)
 
-        exit("service has no type")
+        Logger.flush()
+
+        exit("service #{module} has no type")
     end
   end
 

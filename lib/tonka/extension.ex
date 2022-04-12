@@ -52,8 +52,9 @@ defmodule Tonka.Extension do
 
     with {:ok, zipdir, bin_name} <- parse_ext_path(path),
          {:ok, ebin_dir} <- make_code_path(path, zipdir, bin_name),
-         :ok <- append_code_path(ebin_dir),
          app = String.to_atom(bin_name),
+         :ok <- append_code_path(ebin_dir),
+         :ok <- load_app_modules(path, zipdir, app),
          :ok <- load_app(app),
          {:ok, ext_mod} <- get_ext_mod(app),
          :ok <- start_app(app) do
@@ -64,7 +65,7 @@ defmodule Tonka.Extension do
   end
 
   defp load_app(app) do
-    Logger.info("loading extension #{app}")
+    Logger.info("loading application #{app}")
     Application.ensure_loaded(app)
   end
 
@@ -92,6 +93,43 @@ defmodule Tonka.Extension do
       true -> :ok
       {:error, _} = err -> err
     end
+  end
+
+  defp load_app_modules(ez_path, zipdir, app) do
+    appfile = Path.join([zipdir, "ebin", "#{app}.app"]) |> String.to_charlist()
+
+    unzipped = :zip.extract(String.to_charlist(ez_path), [{:file_list, [appfile]}, :memory])
+
+    with {:ok, [{^appfile, content}]} <- unzipped,
+         {:ok, appspec} <- parse_app_file(content),
+         {:ok, modules} <- fetch_app_modules(appspec, app),
+         :ok <- ensure_loaded_all(modules) do
+      :ok
+    end
+  end
+
+  defp ensure_loaded_all(modules) do
+    :code.ensure_modules_loaded(modules)
+  end
+
+  defp fetch_app_modules(appspec, app) do
+    case appspec do
+      {:application, ^app, spec} ->
+        case Keyword.fetch(spec, :modules) do
+          {:ok, _} = fine -> fine
+          :error -> {:error, "missing modules from app file for #{app}"}
+        end
+
+      _ ->
+        {:error, "invalid app file for #{app}"}
+    end
+  end
+
+  defp parse_app_file(content) do
+    {:ok, ts, _} = :erl_scan.string(String.to_charlist(content))
+    {:ok, _term} = :erl_parse.parse_term(ts)
+  catch
+    _, _ -> {:error, "invalid app file"}
   end
 
   defp make_code_path(path, zipdir, bin_name) do

@@ -82,3 +82,11 @@ clean: (clean-dep "tonka")
 clear-dirt:
     rm -rvf var/http-cache/*
     rm -rvf var/projects/test/stores/*
+
+docker-test: docker-build docker-run
+
+docker-build:
+  docker build . -t tonka:latest
+
+docker-run:
+  docker run -v "$(pwd)/var/projects:/app/var/projects:rw" -v /tmp/plugins:/tmp/plugins tonka:latest

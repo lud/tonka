@@ -51,7 +51,7 @@ defmodule Tonka.Extension do
     Logger.info("loading extension from #{path}")
 
     with {:ok, zipdir, bin_name} <- parse_ext_path(path),
-         {:ok, ebin_dir} <- make_code_path(path, zipdir, bin_name),
+         {:ok, ebin_dir} <- make_code_path(path, zipdir),
          app = String.to_atom(bin_name),
          :ok <- append_code_path(ebin_dir),
          :ok <- load_app_modules(path, zipdir, app),
@@ -132,7 +132,7 @@ defmodule Tonka.Extension do
     _, _ -> {:error, "invalid app file"}
   end
 
-  defp make_code_path(path, zipdir, bin_name) do
+  defp make_code_path(path, zipdir) do
     ebin_dir = String.to_charlist(Path.join([path, zipdir, "ebin"]))
     {:ok, ebin_dir}
   end

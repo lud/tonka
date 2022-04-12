@@ -12,6 +12,8 @@ if System.get_env("PHX_SERVER") && System.get_env("RELEASE_NAME") do
   config :tonka, TonkaWeb.Endpoint, server: true
 end
 
+config :tonka, extensions_dir: "/tmp/plugins"
+
 if config_env() == :prod do
   database_url =
     System.get_env("DATABASE_URL") ||

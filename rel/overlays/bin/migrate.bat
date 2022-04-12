@@ -1,1 +1,0 @@
-call "%~dp0\tonka" eval Tonka.Release.migrate

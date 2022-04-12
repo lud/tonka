@@ -48,10 +48,10 @@ COPY priv priv
 # which customizes asset compilation based on what it finds in
 # your Elixir templates, you will need to move the asset compilation
 # step down so that `lib` is available.
-COPY assets assets
+# COPY assets assets
 
 # compile assets
-RUN mix assets.deploy
+# RUN mix assets.deploy
 
 # Compile the release
 COPY lib lib
@@ -79,11 +79,12 @@ ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
 
 WORKDIR "/app"
-RUN chown nobody /app
+RUN useradd tonka
+RUN chown tonka /app
 
 # Only copy the final release from the build stage
 COPY --from=builder --chown=nobody:root /app/_build/prod/rel/tonka ./
 
-USER nobody
+USER tonka
 
-CMD ["/app/bin/server"]
+CMD ["/app/bin/tonka", "start"]

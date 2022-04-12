@@ -231,11 +231,11 @@ defmodule Tonka.Project.Scheduler do
   defp next_timeout(%{tq: tq}) do
     case TimeQueue.timeout(tq) do
       :infinity ->
-        Logger.debug("scheduler hibernating")
+        Logger.info("scheduler hibernating")
         :hibernate
 
       t ->
-        Logger.debug("scheduler timeout in #{TimeInterval.to_string(t)}")
+        Logger.info("scheduler timeout in #{TimeInterval.to_string(t)}")
         t
     end
   end

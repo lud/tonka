@@ -81,11 +81,11 @@ defmodule Tonka.Project do
     Supervisor.init(children, strategy: :one_for_all)
   end
 
-  defp project_info(prk) do
+  def project_info(prk) do
     project_info(prk, project_dir(prk))
   end
 
-  defp project_info(prk, dir) do
+  def project_info(prk, dir) do
     Tonka.Data.ProjectInfo.of(
       prk: prk,
       yaml_path: Path.join(dir, "project.yaml"),

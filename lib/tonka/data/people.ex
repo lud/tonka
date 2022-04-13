@@ -43,14 +43,24 @@ defmodule Tonka.Data.People do
 
   defstruct people: []
 
+  @type t :: %__MODULE__{people: [Tonka.Data.Person.t()]}
+
   def new(people) do
     %__MODULE__{people: people}
   end
 
   def fetch(%{people: ps}, id) do
-    case Enum.find(ps, &(&1.id == id)) do
-      nil -> :error
-      %{id: _} = p -> {:ok, p}
-    end
+    ps |> Enum.find(&(&1.id == id)) |> cast_found()
+  end
+
+  defp cast_found(nil), do: :error
+  defp cast_found(%{id: _} = p), do: {:ok, p}
+
+  def find_by(%{people: ps}, key, value) when is_binary(key) do
+    ps
+    |> Enum.find(fn %{props: props} ->
+      is_map_key(props, key) and Map.fetch!(props, key) == value
+    end)
+    |> cast_found()
   end
 end

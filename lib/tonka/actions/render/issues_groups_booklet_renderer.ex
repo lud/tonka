@@ -14,6 +14,7 @@ defmodule Tonka.Actions.Render.IssuesGroupsBookletRenderer do
   def configure(config) do
     config
     |> Action.use_input(:issues_groups, {:list, IssuesGroup})
+    |> Action.use_service(:people, Tonka.Data.People)
   end
 
   def call(%{issues_groups: issues_groups}, _, _params) do

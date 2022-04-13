@@ -1,19 +1,21 @@
 defmodule Tonka.Ext.Gitlab.Services.Issues do
   use Tonka.Core.Service
   alias Tonka.Data.Issue
+  alias Tonka.Data.People
   require Tonka.Project.ProjectLogger, as: Logger
   alias Tonka.Services.IssuesSource
 
   use TODO
 
-  @enforce_keys [:projects, :private_token]
+  @enforce_keys [:projects, :private_token, :people]
   @behaviour IssuesSource
   @derive IssuesSource
   defstruct @enforce_keys
 
   @type t :: %__MODULE__{
           projects: [binary()],
-          private_token: binary
+          private_token: binary,
+          people: People.t()
         }
 
   @print_queries false
@@ -37,22 +39,45 @@ defmodule Tonka.Ext.Gitlab.Services.Issues do
   def configure(config) do
     config
     |> use_service(:credentials, Tonka.Services.Credentials)
+    |> use_service(:people, People)
   end
 
-  def build(%{credentials: credentials}, %{credentials: path, projects: projects}) do
+  def build(%{credentials: credentials, people: people}, %{credentials: path, projects: projects}) do
     case Tonka.Services.Credentials.get_string(credentials, path) do
-      {:ok, token} -> {:ok, new(private_token: token, projects: projects)}
+      {:ok, token} -> {:ok, new(private_token: token, projects: projects, people: people)}
       {:error, _} = err -> err
     end
   end
 
   def fetch_all_issues(%__MODULE__{} = gitlab) do
-    client = build_http_client(gitlab.private_token)
+    %__MODULE__{people: people, private_token: token} = gitlab
+    client = build_http_client(token)
 
     with {:ok, projects_issues} <-
            Ark.Ok.map_ok(gitlab.projects, &fetch_project_issues(client, &1)) do
-      {:ok, Enum.concat(projects_issues)}
+      all = projects_issues |> Enum.concat() |> Enum.map(&put_people(&1, people))
+      {:ok, all}
     end
+  end
+
+  def put_people(%Issue{} = issue, people) do
+    issue =
+      with last_ext when is_binary(last_ext) <- issue.last_ext_username,
+           {:ok, person} <- People.find_by(people, "gitlab.username", last_ext) do
+        Map.put(issue, :last_user_id, person.id)
+      else
+        _ -> issue
+      end
+
+    issue =
+      with assignee_ext when is_binary(assignee_ext) <- issue.assignee_ext_username,
+           {:ok, person} <- People.find_by(people, "gitlab.username", assignee_ext) do
+        Map.put(issue, :assignee_user_id, person.id)
+      else
+        _ -> issue
+      end
+
+    issue
   end
 
   @todo "remove hackish cache"
@@ -189,6 +214,7 @@ defmodule Tonka.Ext.Gitlab.Services.Issues do
       id: raw["id"],
       iid: "#" <> raw["iid"],
       last_ext_username: extract_last_username(raw),
+      assignee_ext_username: extract_assignee_username(raw),
       labels: extract_labels(raw),
       url: raw["webUrl"],
       title: raw["title"],
@@ -207,6 +233,20 @@ defmodule Tonka.Ext.Gitlab.Services.Issues do
         }
       } ->
         name
+
+      _ ->
+        nil
+    end
+  end
+
+  defp extract_assignee_username(raw_issue) do
+    case raw_issue do
+      %{
+        "assignees" => %{
+          "edges" => [%{"node" => %{"username" => username}} | _]
+        }
+      } ->
+        username
 
       _ ->
         nil

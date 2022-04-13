@@ -12,6 +12,9 @@ defmodule Tonka.PeopleTest do
         params: %{
           "lud" => %{
             "dummy" => "hello"
+          },
+          "joe" => %{
+            "other" => "value"
           }
         }
       )
@@ -23,5 +26,8 @@ defmodule Tonka.PeopleTest do
     assert "lud" == lud.name
     # extra map keys are collected in :props
     assert "hello" == lud.props["dummy"]
+
+    assert {:ok, %{props: %{"dummy" => "hello"}}} = People.find_by(people, "dummy", "hello")
+    assert {:ok, %{props: %{"other" => "value"}}} = People.find_by(people, "other", "value")
   end
 end

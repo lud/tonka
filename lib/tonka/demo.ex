@@ -12,7 +12,6 @@ defmodule Tonka.Demo do
     Tonka.Project.ProjectLogger.enable_system_logs()
     container = prepare_container()
 
-    exit(:normal)
     grid = prepare_grid()
 
     case Grid.run(grid, container, "some dummy input") do
@@ -30,19 +29,16 @@ defmodule Tonka.Demo do
     # On init, the project will fill the container with services used by actions.
 
     project_path = "var/projects/dev"
-    prk = "dev-demo"
-    service_sup_name = ProjectRegistry.via(prk, ServiceSupervisor)
-    Logger.info("started service supervisor as #{inspect(service_sup_name)}")
+    prk = "demo"
+    pinfo = Tonka.Project.project_info(prk, project_path)
+    Logger.info("started service supervisor as #{inspect(pinfo.service_sup_name)}")
 
-    {:ok, _} = ServiceSupervisor.start_link(prk: prk, name: service_sup_name)
+    {:ok, _} = ServiceSupervisor.start_link(prk: prk, name: pinfo.service_sup_name)
 
     container =
       new()
-      |> bind_impl(Tonka.Services.ServiceSupervisor, service_sup_name)
-      |> bind_impl(
-        ProjectInfo,
-        ProjectInfo.new(prk: prk, storage_dir: Path.join(project_path, "storage"))
-      )
+      |> bind_impl(Tonka.Services.ServiceSupervisor, pinfo.service_sup_name)
+      |> bind_impl(ProjectInfo, pinfo)
       |> bind(Tonka.Services.Credentials, &build_credentials(&1, project_path))
       |> bind(Tonka.Services.IssuesSource, Tonka.Ext.Gitlab.Services.Issues,
         params: %{
@@ -51,6 +47,14 @@ defmodule Tonka.Demo do
         }
       )
       |> bind(Tonka.Services.IssuesStore)
+      |> bind(Tonka.Data.People,
+        params: %{
+          "lud" => %{
+            "gitlab.username" => "lud-agi",
+            "slack.id" => "UHZNHHQUX"
+          }
+        }
+      )
       |> bind(Tonka.Ext.Slack.Services.SlackAPI,
         params: %{
           "credentials" => "slack.bot"

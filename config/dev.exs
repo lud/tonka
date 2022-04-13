@@ -60,4 +60,4 @@ config :phoenix, :stacktrace_depth, 20
 # Initialize plugs at runtime for faster development compilation
 config :phoenix, :plug_init_mode, :runtime
 
-config :tonka, start_projects: :all
+config :tonka, start_projects: :none

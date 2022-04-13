@@ -1,6 +1,5 @@
 defmodule Tonka.ProjectStoreTest do
   alias Tonka.Core.Container
-  alias Tonka.Data.ProjectInfo
   alias Tonka.Services.ProjectStore
   alias Tonka.Services.ProjectStore.Backend
   alias Tonka.Services.ProjectStore.CubDBBackend
@@ -8,11 +7,6 @@ defmodule Tonka.ProjectStoreTest do
   use ExUnit.Case, async: true
 
   @component "MyComponent"
-
-  test "building a project info" do
-    assert %ProjectInfo{prk: "test", storage_dir: "var/projects/test"} =
-             ProjectInfo.new(prk: "test", storage_dir: "var/projects/test")
-  end
 
   defmodule MapBackend do
     @derive Backend

@@ -34,7 +34,6 @@ start_projects =
 config :tonka,
   extensions_dir: env!("TONKA_EXTENSIONS_DIR", :string, "/var/tonka/extensions"),
   projects_dir: env!("TONKA_PROJECTS_DIR", :string, "/var/tonka/projects"),
-  refresh_tz: env!("TONKA_REFRESH_TZDB", :boolean, config_env() == :prod),
   start_projects: start_projects
 
 # if config_env() == :prod do

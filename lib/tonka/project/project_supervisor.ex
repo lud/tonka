@@ -28,10 +28,11 @@ defmodule Tonka.Project.ProjectSupervisor do
     end
   end
 
-  @projects_dir "var/projects"
   def list_projects_from_disk do
-    Enum.filter(File.ls!(@projects_dir), fn prk ->
-      dir = Path.join(@projects_dir, prk)
+    projects_dir = Tonka.Project.projects_dir()
+
+    Enum.filter(File.ls!(projects_dir), fn prk ->
+      dir = Path.join(projects_dir, prk)
       yaml = Path.join(dir, "project.yaml")
       File.dir?(dir) and File.regular?(yaml)
     end)

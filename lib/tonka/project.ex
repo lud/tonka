@@ -99,8 +99,12 @@ defmodule Tonka.Project do
 
   def job_sup_name(prk), do: name_for(prk, :jobs_sup)
 
+  def projects_dir do
+    Application.fetch_env!(:tonka, :projects_dir)
+  end
+
   def project_dir(prk) do
-    Path.join(Application.fetch_env!(:tonka, :projects_dir), prk)
+    Path.join(projects_dir(), prk)
   end
 
   defp name_for(prk, kind), do: ProjectRegistry.via(prk, kind)

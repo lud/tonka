@@ -78,12 +78,12 @@ ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
 
-WORKDIR "/app"
+WORKDIR /app
 RUN useradd tonka
 RUN chown tonka /app
 
 # Only copy the final release from the build stage
-COPY --from=builder --chown=nobody:root /app/_build/prod/rel/tonka ./
+COPY --from=builder --chown=tonka:root /app/_build/prod/rel/tonka ./
 
 USER tonka
 

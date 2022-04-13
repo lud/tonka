@@ -13,7 +13,6 @@ defmodule Tonka.Application do
 
     children =
       :lists.flatten([
-        tz_stack(@mix_env),
         db_stack(@mix_env),
         http_stack(@mix_env),
         project_stack(@mix_env)
@@ -29,17 +28,6 @@ defmodule Tonka.Application do
       Tonka.Project.ProjectRegistry,
       Tonka.Project.ProjectSupervisor
     ]
-  end
-
-  defp tz_stack(_) do
-    Application.fetch_env!(:tonka, :refresh_tz)
-    |> IO.inspect(label: "Application.fetch_env!(:tonka, :refresh_tz)")
-
-    if Application.fetch_env!(:tonka, :refresh_tz) do
-      [{Tz.UpdatePeriodically, []}]
-    else
-      []
-    end
   end
 
   defp db_stack(:test), do: [Tonka.Repo]

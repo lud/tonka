@@ -36,7 +36,11 @@ defmodule Tonka.Project.Scheduler do
 
     @doc false
     def check_timezone(%{timezone: tz}) do
-      Tz.PeriodsProvider.periods(tz)
+      if Tzdata.zone_exists?(tz) do
+        :ok
+      else
+        {:error, "invalid timezone: #{inspect(tz)}"}
+      end
     end
 
     @doc false

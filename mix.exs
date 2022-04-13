@@ -45,9 +45,7 @@ defmodule Tonka.MixProject do
       {:slack, "~> 0.23"},
       {:ymlr, "~> 2.0", only: :dev},
       {:time_queue, "~> 1.0"},
-      {:tz, "~> 0.20.1"},
-      {:castore, "~> 0.1.11"},
-      {:mint, "~> 1.3"},
+      {:tzdata, "~> 1.1"},
       {:crontab, "~> 1.1"},
 
       # Phoenix stack
@@ -63,7 +61,7 @@ defmodule Tonka.MixProject do
       {:plug_cowboy, "~> 2.5"},
 
       # dev, test, tools
-      {:briefly, "~> 0.3"},
+      {:briefly, "~> 0.3", only: :test},
       {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
       {:ex_doc, "~> 0.28.0", only: [:dev, :test], runtime: false},

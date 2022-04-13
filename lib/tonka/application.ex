@@ -32,7 +32,10 @@ defmodule Tonka.Application do
   end
 
   defp tz_stack(_) do
-    if Application.get_env(:tonka, :refresh_tz, false) do
+    Application.fetch_env!(:tonka, :refresh_tz)
+    |> IO.inspect(label: "Application.fetch_env!(:tonka, :refresh_tz)")
+
+    if Application.fetch_env!(:tonka, :refresh_tz) do
       [{Tz.UpdatePeriodically, []}]
     else
       []

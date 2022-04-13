@@ -32,6 +32,7 @@ defmodule Tonka.MixProject do
     [
       # App
 
+      {:dotenvy, "~> 0.6.0"},
       {:ark, "~> 0.7.6"},
       {:hugs, "~> 0.2.2"},
       {:yaml_elixir, "~> 2.5"},

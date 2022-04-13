@@ -1,4 +1,14 @@
 import Config
+import Dotenvy
+
+if config_env() != :prod do
+  Tonka.Release.load_env_files([
+    ".env",
+    ".env.#{config_env()}",
+    :system,
+    ".env.overrides"
+  ])
+end
 
 # config/runtime.exs is executed for all environments, including
 # during releases. It is executed after compilation and before the
@@ -12,9 +22,20 @@ if System.get_env("PHX_SERVER") && System.get_env("RELEASE_NAME") do
   config :tonka, TonkaWeb.Endpoint, server: true
 end
 
+config_env() |> IO.inspect(label: "config_env()")
+
+start_projects =
+  case env!("TONKA_START_PROJECTS", :string!, "_all") do
+    "_all" -> :all
+    "_none" -> :none
+    list -> String.split(list, ",")
+  end
+
 config :tonka,
-  extensions_dir: "/tmp/plugins",
-  refresh_tz: false
+  extensions_dir: env!("TONKA_EXTENSIONS_DIR", :string, "/var/tonka/extensions"),
+  projects_dir: env!("TONKA_PROJECTS_DIR", :string, "/var/tonka/projects"),
+  refresh_tz: env!("TONKA_REFRESH_TZDB", :boolean, config_env() == :prod),
+  start_projects: start_projects
 
 # if config_env() == :prod do
 #   database_url =

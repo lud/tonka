@@ -71,6 +71,13 @@ defmodule Tonka.Project.Builder do
         Container.bind(c, utype, sdef.module, params: sdef.params)
       end)
 
+    container =
+      if Container.has?(container, Tonka.Data.People) do
+        container
+      else
+        Container.bind(container, Tonka.Data.People, params: %{})
+      end
+
     with {:ok, container} <- Container.prebuild_all(container),
          container <- Container.freeze(container),
          :ok <- Tonka.Project.ProjectRegistry.register_value(prk, :container, container) do

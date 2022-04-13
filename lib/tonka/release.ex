@@ -1,9 +1,31 @@
 defmodule Tonka.Release do
   @moduledoc """
-  Used for executing DB release tasks when run in production without Mix
-  installed.
+  Used for executing tasks when run in production without Mix installed.
   """
   @app :tonka
+
+  def load_env_files(files) do
+    files
+    |> map_envs()
+    |> Dotenvy.source!()
+  end
+
+  defp map_envs(files) do
+    Enum.flat_map(files, fn
+      :system ->
+        [System.get_env()]
+
+      path when is_binary(path) ->
+        case File.regular?(path) do
+          true ->
+            IO.puts("using env file: #{path}")
+            [path]
+
+          false ->
+            []
+        end
+    end)
+  end
 
   def migrate do
     load_app()

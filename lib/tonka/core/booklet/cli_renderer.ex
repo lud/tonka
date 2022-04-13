@@ -20,7 +20,7 @@ defmodule Tonka.Core.Booklet.CliRenderer do
   def render(booklet) do
     {:ok, render!(booklet)}
   rescue
-    e -> {:error, e}
+    e -> {:error, {e, __STACKTRACE__}}
   end
 
   def render!(booklet) do

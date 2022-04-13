@@ -44,6 +44,10 @@ defmodule Tonka.Ext.Slack.Render.BookletRenderer do
     ]
   end
 
+  defp render_block(%Blocks.RichText{data: rich}) do
+    [BK.section(BK.mrkdwn(rich_to_mrkdwn(rich)))]
+  end
+
   defp render_block(%struct{}) do
     raise ArgumentError,
       message: "unknown block type #{struct}"

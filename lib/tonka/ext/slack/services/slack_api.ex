@@ -46,6 +46,7 @@ defmodule Tonka.Ext.Slack.Services.SlackAPI do
     post_result = Slack.Web.Chat.post_message(channel, post.title, message)
 
     print_warnings(post_result)
+
     cast_send_result(post_result, channel, message.blocks)
   end
 

@@ -575,7 +575,7 @@ defmodule Tonka.Core.Grid do
 
   def format_error(%{__exception__: true} = e), do: Exception.message(e)
   def format_error(message) when is_binary(message), do: message
-  def format_error(other), do: other
+  def format_error(other), do: inspect(other)
 
   def format_call({fun, args}) do
     "#{inspect(fun)}(#{Enum.map(args, &inspect/1)})"

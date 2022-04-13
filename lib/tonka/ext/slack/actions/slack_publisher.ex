@@ -57,16 +57,20 @@ defmodule Tonka.Ext.Slack.Actions.SlackPublisher do
   defp run_cleanup(store, key, slack) do
     for {id, data} <- CleanupStore.list_expired(store, key) do
       case SlackAPI.cleanup_chat_message(slack, data) do
-        :ok -> CleanupStore.delete_id(store, key, id)
+        :ok ->
+          CleanupStore.delete_id(store, key, id)
+
+        {:error, e} ->
+          Logger.warn("could not cleanup previous message: #{Ark.Error.to_iodata(e)}")
       end
     end
   rescue
-    e -> Logger.warn("coult not cleanup previous message: #{Exception.message(e)}")
+    e -> Logger.warn("could not cleanup previous message: #{Exception.message(e)}")
   end
 
   defp register_cleanup(store, cleanup_params, key, %{cleanup: data} = _post_result) do
     CleanupStore.put(store, key, cleanup_params.ttl, data)
   rescue
-    e -> Logger.warn("coult not register message for cleanup: #{Exception.message(e)}")
+    e -> Logger.warn("could not register message for cleanup: #{Exception.message(e)}")
   end
 end

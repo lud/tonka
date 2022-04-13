@@ -150,7 +150,7 @@ defmodule Tonka.Ext.Slack.BlockKit do
 
   defblock(:_mrkdwn, :mrkdwn)
 
-  def mrkdwn(text) do
+  def mrkdwn(text) when is_binary(text) do
     _mrkdwn(__rawtext__: text)
   end
 

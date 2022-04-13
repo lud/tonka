@@ -12,6 +12,7 @@ defmodule Tonka.Core.Booklet.CliRenderer do
 
   @date_color :magenta
   @link_color :blue
+  @person_color :cyan
 
   # "rc" (Rich Context) record to represent the wrapping of elements like strong, to known when to
   # reset brightness/color
@@ -143,6 +144,11 @@ defmodule Tonka.Core.Booklet.CliRenderer do
   defp rich({:ul, sub}, ctx) do
     ctx = indent(ctx)
     [?\n, Enum.map(sub, fn sub -> list_item(sub, ctx) end), ?\n]
+  end
+
+  defp rich(%Tonka.Data.Person{name: name}, ctx) do
+    sub = "[#{name}]"
+    ansi_wrap(sub, ctx, &wrap_color(&1, @person_color))
   end
 
   defp rich(other, _) do

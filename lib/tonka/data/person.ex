@@ -17,4 +17,8 @@ defmodule Tonka.Data.Person do
   def collect_props(ctx) do
     {:ok, Map.drop(ctx.parent_data, @ignore_keys)}
   end
+
+  def fetch_prop(%__MODULE__{props: props}, key) do
+    Map.fetch(props, key)
+  end
 end

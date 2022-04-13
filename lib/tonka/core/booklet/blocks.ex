@@ -102,5 +102,9 @@ defmodule Tonka.Core.Booklet.Blocks do
         do: validate_data(list),
         else: {:error, ":ul must contain a list of elements"}
     end
+
+    def validate_data(%Tonka.Data.Person{} = p) do
+      {:ok, p}
+    end
   end
 end

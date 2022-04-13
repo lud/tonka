@@ -74,6 +74,13 @@ defmodule Tonka.Ext.Slack.Render.BookletRenderer do
     bin
   end
 
+  defp rich(%Tonka.Data.Person{} = person) do
+    case Tonka.Data.Person.fetch_prop(person, "slack.id") do
+      {:ok, id} -> "<@#{id}>"
+      :error -> person.name
+    end
+  end
+
   defp rich(richtext) do
     raise ArgumentError,
       message: "unknown richtext element #{inspect(richtext)}"

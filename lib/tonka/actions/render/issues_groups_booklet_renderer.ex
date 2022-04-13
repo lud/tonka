@@ -17,14 +17,14 @@ defmodule Tonka.Actions.Render.IssuesGroupsBookletRenderer do
     |> Action.use_service(:people, Tonka.Data.People)
   end
 
-  def call(%{issues_groups: issues_groups}, _, _params) do
-    blocks = Enum.map(issues_groups, fn group -> group_to_blocks(group) end)
+  def call(%{issues_groups: issues_groups}, %{people: people}, _params) do
+    blocks = Enum.map(issues_groups, fn group -> group_to_blocks(group, people) end)
     booklet_result = blocks |> Booklet.splat_list() |> Booklet.from_blocks()
 
     booklet_result
   end
 
-  defp group_to_blocks(group) do
+  defp group_to_blocks(group, people) do
     %{title: title, remain: remain, issues: issues} = group
 
     {Section,
@@ -32,8 +32,7 @@ defmodule Tonka.Actions.Render.IssuesGroupsBookletRenderer do
      content: [
        {:ul,
         for issue <- issues do
-          iid = format_iid(issue.iid)
-          {:link, issue.url, [iid, issue.title]}
+          issue_item(issue, people)
         end}
      ],
      footer:
@@ -45,6 +44,27 @@ defmodule Tonka.Actions.Render.IssuesGroupsBookletRenderer do
          )
        end}
   end
+
+  defp issue_item(issue, people) do
+    iid = format_iid(issue.iid)
+
+    case format_assignee(issue, people) do
+      {:ok, assignee} -> [{:link, issue.url, [iid, issue.title]}, " – ", assignee]
+      :error -> {:link, issue.url, [iid, issue.title]}
+    end
+  end
+
+  defp format_assignee(%{assignee_user_id: nil}, _) do
+    :error
+  end
+
+  defp format_assignee(%{assignee_user_id: user_id}, people) do
+    Tonka.Data.People.fetch(people, user_id)
+  end
+
+  # defp format_assignee(%{assignee_user_id: nil}) do
+
+  # end
 
   # This iid already contains the "#" character
   defp format_iid(nil), do: ""

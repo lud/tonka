@@ -4,7 +4,7 @@ defmodule Tonka.MixProject do
   def project do
     [
       app: :tonka,
-      version: "0.2.0",
+      version: "0.2.1",
       elixir: "~> 1.13",
       elixirc_paths: elixirc_paths(Mix.env()),
       compilers: [:gettext] ++ Mix.compilers(),

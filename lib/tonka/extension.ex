@@ -8,7 +8,7 @@ defmodule Tonka.Extension do
   @callback actions :: %{binary => module}
 
   def list_extensions do
-    [Tonka.Ext.BuiltIn, Tonka.Ext.Slack, Tonka.Ext.Gitlab]
+    :persistent_term.get(:tonka_extensions)
   end
 
   def build_service_index do
@@ -42,7 +42,18 @@ defmodule Tonka.Extension do
       end)
       |> Enum.map(&Ark.Ok.uok!/1)
 
-    ext_mods |> IO.inspect(label: "ext_mods")
+    all_exts =
+      [
+        ensure_loaded(Tonka.Ext.BuiltIn),
+        ensure_loaded(Tonka.Ext.Slack),
+        ensure_loaded(Tonka.Ext.Gitlab)
+      ] ++
+        ext_mods
+
+    Logger.info("registering extensions: #{inspect(all_exts)}")
+
+    :persistent_term.put(:tonka_extensions, all_exts)
+    :ok
   end
 
   @re_ez ~r"\/(([a-zA-Z0-9_]+)-[0-9.]+)\.ez"
@@ -147,5 +158,6 @@ defmodule Tonka.Extension do
   def ensure_loaded(ext) do
     ext.services |> Map.values() |> Enum.each(&Code.ensure_loaded!/1)
     ext.actions |> Map.values() |> Enum.each(&Code.ensure_loaded!/1)
+    ext
   end
 end

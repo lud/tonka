@@ -9,7 +9,7 @@ defmodule Tonka.Application do
 
   @impl Application
   def start(_type, _args) do
-    Tonka.Extension.load_extensions()
+    :ok = Tonka.Extension.load_extensions()
 
     children =
       :lists.flatten([

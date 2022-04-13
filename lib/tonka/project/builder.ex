@@ -45,7 +45,7 @@ defmodule Tonka.Project.Builder do
   end
 
   defp read_layout(raw) do
-    {:ok, _} = Loader.get_definitions(raw)
+    Loader.get_definitions(raw)
   end
 
   defp build_container(%{prk: prk} = pinfo, layout) do

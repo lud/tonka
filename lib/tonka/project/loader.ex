@@ -46,13 +46,13 @@ defmodule Tonka.Project.Loader do
     |> Hugs.define()
 
     @doc false
-    def resolve_module(bin, %{arg: %{resolver: services_map}}) do
-      case Map.fetch(services_map, bin) do
+    def resolve_module(bin, %{arg: %{resolver: actions_map}}) do
+      case Map.fetch(actions_map, bin) do
         {:ok, mod} ->
           {:ok, mod}
 
         :error ->
-          known = Enum.join(Map.keys(services_map), ", ")
+          known = Enum.join(Map.keys(actions_map), ", ")
           {:error, "no such action module: #{bin}. Known actions: #{known}"}
       end
     end
@@ -103,6 +103,7 @@ defmodule Tonka.Project.Loader do
   @spec get_definitions(map) :: {:ok, project_defs} | {:error, :x}
   def get_definitions(map) when is_map(map) do
     with {:ok, services} <- get_services_defs(map),
+         IO.puts("services ok"),
          {:ok, publications} <- get_publications_defs(map) do
       {:ok, %{services: services, publications: publications}}
     end
@@ -129,9 +130,13 @@ defmodule Tonka.Project.Loader do
     action_index = Tonka.Extension.build_action_index()
 
     map_ok(raw, fn {key, pubdef} when is_binary(key) ->
-      case PublicationDef.denormalize(pubdef, context_arg: %{resolver: action_index}) do
-        {:ok, pub} -> {:ok, {key, Map.put(pub, :id, key)}}
-        {:error, _} = err -> err
+      try do
+        case PublicationDef.denormalize(pubdef, context_arg: %{resolver: action_index}) do
+          {:ok, pub} -> {:ok, {key, Map.put(pub, :id, key)}}
+          {:error, _} = err -> err
+        end
+      catch
+        t, e -> {:error, {t, e}}
       end
     end)
     |> case do

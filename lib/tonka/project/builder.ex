@@ -79,9 +79,8 @@ defmodule Tonka.Project.Builder do
       end
 
     with {:ok, container} <- Container.prebuild_all(container),
-         container <- Container.freeze(container),
-         :ok <- Tonka.Project.ProjectRegistry.register_value(prk, :container, container) do
-      :ok
+         container <- Container.freeze(container) do
+      Tonka.Project.ProjectRegistry.register_value(prk, :container, container)
     end
   end
 

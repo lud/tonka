@@ -113,9 +113,8 @@ defmodule Tonka.Extension do
 
     with {:ok, [{^appfile, content}]} <- unzipped,
          {:ok, appspec} <- parse_app_file(content),
-         {:ok, modules} <- fetch_app_modules(appspec, app),
-         :ok <- ensure_loaded_all(modules) do
-      :ok
+         {:ok, modules} <- fetch_app_modules(appspec, app) do
+      ensure_loaded_all(modules)
     end
   end
 

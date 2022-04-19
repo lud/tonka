@@ -68,6 +68,11 @@ defmodule Tonka.Ext.Slack.Actions.SlackPublisher do
     e -> Logger.warn("could not cleanup previous message: #{Exception.message(e)}")
   end
 
+  defp register_cleanup(_store, _params, nil, _post_result) do
+    Logger.warn("message cleanup key is not defined")
+    :ok
+  end
+
   defp register_cleanup(store, cleanup_params, key, %{cleanup: data} = _post_result) do
     CleanupStore.put(store, key, cleanup_params.ttl, data)
   rescue

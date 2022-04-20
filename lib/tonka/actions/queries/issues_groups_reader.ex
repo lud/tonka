@@ -24,8 +24,13 @@ defmodule Tonka.Actions.Queries.IssuesGroupsReader do
     # we can tell how much more there are
     with {:ok, issues} <- IssuesStore.mql_query(store, query, :infinity) do
       len = length(issues)
-      issues = Enum.take(issues, limit)
-      remain = len - limit
+
+      {issues, remain} =
+        case limit do
+          -1 -> {issues, 0}
+          _ -> {Enum.take(issues, limit), len - limit}
+        end
+
       {:ok, IssuesGroup.new(issues: issues, title: title, remain: remain)}
     end
   end

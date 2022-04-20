@@ -263,8 +263,8 @@ defmodule Tonka.Ext.Gitlab.Services.Issues do
     end
   end
 
-  defp cast_status("closed"), do: :closed
-  defp cast_status(_), do: :open
+  defp cast_status("closed"), do: "closed"
+  defp cast_status(_), do: "open"
 
   defp parse_date!(bin) when is_binary(bin) do
     case DateTime.from_iso8601(bin) do

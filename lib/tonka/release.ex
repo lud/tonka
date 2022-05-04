@@ -47,4 +47,10 @@ defmodule Tonka.Release do
   defp load_app do
     Application.load(@app)
   end
+
+  def create_dirs do
+    File.mkdir_p!(Application.fetch_env!(:tonka, :projects_dir))
+    File.mkdir_p!(Application.fetch_env!(:tonka, :storage_dir))
+    File.mkdir_p!(Application.fetch_env!(:tonka, :extensions_dir))
+  end
 end

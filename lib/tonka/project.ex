@@ -81,31 +81,39 @@ defmodule Tonka.Project do
     Supervisor.init(children, strategy: :one_for_all)
   end
 
-  def project_info(prk) do
-    project_info(prk, project_dir(prk))
-  end
+  def project_info(prk),
+    do: project_info(prk, project_dir(prk))
 
-  def project_info(prk, dir) do
+  def project_info(prk, project_dir),
+    do: project_info(prk, project_dir, storage_dir(prk))
+
+  def project_info(prk, project_dir, storage_dir) do
     Tonka.Data.ProjectInfo.of(
       prk: prk,
-      yaml_path: Path.join(dir, "project.yaml"),
-      storage_dir: Path.join(dir, "storage"),
-      credentials_path: Path.join(dir, "credentials.json"),
+      yaml_path: Path.join(project_dir, "project.yaml"),
+      storage_dir: storage_dir,
+      credentials_path: Path.join(project_dir, "credentials.json"),
       service_sup_name: name_for(prk, :services_sup),
       job_sup_name: job_sup_name(prk),
       store_backend_name: name_for(prk, :store_backend)
     )
   end
 
-  def job_sup_name(prk), do: name_for(prk, :jobs_sup)
+  def job_sup_name(prk),
+    do: name_for(prk, :jobs_sup)
 
-  def projects_dir do
-    Application.fetch_env!(:tonka, :projects_dir)
-  end
+  def projects_dir,
+    do: Application.fetch_env!(:tonka, :projects_dir)
 
-  def project_dir(prk) do
-    Path.join(projects_dir(), prk)
-  end
+  def project_dir(prk) when is_binary(prk),
+    do: Path.join(projects_dir(), prk)
 
-  defp name_for(prk, kind), do: ProjectRegistry.via(prk, kind)
+  def storage_dir,
+    do: Application.fetch_env!(:tonka, :storage_dir)
+
+  def storage_dir(prk) when is_binary(prk),
+    do: Path.join(storage_dir(), prk)
+
+  defp name_for(prk, kind),
+    do: ProjectRegistry.via(prk, kind)
 end

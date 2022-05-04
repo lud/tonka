@@ -9,6 +9,7 @@ defmodule Tonka.Application do
 
   @impl Application
   def start(_type, _args) do
+    :ok = Tonka.Release.create_dirs()
     :ok = Tonka.Extension.load_extensions()
 
     children =

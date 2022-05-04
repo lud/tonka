@@ -83,6 +83,9 @@ clear-dirt:
     rm -rvf var/http-cache/*
     rm -rvf var/projects/test/stores/*
 
+clear-storage:
+    rm -rvf var/storage/*
+
 docker-test: docker-build docker-run
 
 docker-build:
@@ -90,3 +93,6 @@ docker-build:
 
 docker-run:
   docker run -v "$(pwd)/var/projects:/app/var/projects:rw" -v /tmp/plugins:/tmp/plugins tonka:latest
+
+dump-storage:
+  mix run --no-start scripts/dump-storage.exs

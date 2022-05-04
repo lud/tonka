@@ -22,8 +22,6 @@ if System.get_env("PHX_SERVER") && System.get_env("RELEASE_NAME") do
   config :tonka, TonkaWeb.Endpoint, server: true
 end
 
-config_env() |> IO.inspect(label: "config_env()")
-
 start_projects =
   case env!("TONKA_START_PROJECTS", :string!, "_all") do
     "_all" -> :all
@@ -34,6 +32,7 @@ start_projects =
 config :tonka,
   extensions_dir: env!("TONKA_EXTENSIONS_DIR", :string, "/var/tonka/extensions"),
   projects_dir: env!("TONKA_PROJECTS_DIR", :string, "/var/tonka/projects"),
+  storage_dir: env!("TONKA_STORAGE_DIR", :string, "/var/tonka/storage"),
   start_projects: start_projects
 
 # if config_env() == :prod do

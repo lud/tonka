@@ -66,7 +66,8 @@ defmodule Tonka.MixProject do
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
       {:ex_doc, "~> 0.28.0", only: [:dev, :test], runtime: false},
       {:mix_version, "~> 1.3", runtime: false},
-      {:todo, "~> 1.6", runtime: false}
+      {:todo, "~> 1.6", runtime: false},
+      {:gradient, github: "esl/gradient", only: [:dev], runtime: false}
     ]
   end
 

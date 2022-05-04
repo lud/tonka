@@ -28,8 +28,9 @@ defmodule Tonka.Demo do
   def prepare_container do
     # On init, the project will fill the container with services used by actions.
 
-    project_path = "var/projects/dev"
     prk = "demo"
+    # use the dev project data even if the prk is demo
+    project_path = "var/projects/dev"
     pinfo = Tonka.Project.project_info(prk, project_path)
     Logger.info("started service supervisor as #{inspect(pinfo.service_sup_name)}")
 
@@ -131,9 +132,10 @@ defmodule Tonka.Demo do
     |> Grid.add_action("report_to_cli", Tonka.Actions.Render.BookletCliRenderer,
       inputs: Grid.pipe_action(%{}, :booklet, "report_booklet")
     )
-    |> Grid.add_action("report_to_slack", Tonka.Ext.Slack.Actions.SlackPublisher,
-      inputs: Grid.pipe_action(%{}, :booklet, "report_booklet"),
-      params: %{channel: "DS4SX8VPF", cleanup: %{"key" => "devpost"}}
-    )
+
+    # |> Grid.add_action("report_to_slack", Tonka.Ext.Slack.Actions.SlackPublisher,
+    #   inputs: Grid.pipe_action(%{}, :booklet, "report_booklet"),
+    #   params: %{channel: "DS4SX8VPF", cleanup: %{"key" => "devpost"}}
+    # )
   end
 end

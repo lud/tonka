@@ -2,7 +2,6 @@ defmodule Tonka.Demo do
   alias Tonka.Core.Container
   alias Tonka.Core.Grid
   alias Tonka.Data.ProjectInfo
-  alias Tonka.Project.ProjectRegistry
   alias Tonka.Services.ServiceSupervisor
   import Container
   import Tonka.Utils

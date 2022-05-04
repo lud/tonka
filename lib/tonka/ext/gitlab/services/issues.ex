@@ -25,23 +25,27 @@ defmodule Tonka.Ext.Gitlab.Services.Issues do
                  |> Hugs.field(:projects, type: {:list, :binary}, required: true)
                  |> Hugs.field(:credentials, type: :binary, required: true)
 
-  @impl Tonka.Core.Service
-  def service_type, do: IssuesSource
+  @impl Service
+  def service_type,
+    do: IssuesSource
 
   def new(opts) do
     struct!(__MODULE__, opts)
   end
 
+  @impl Service
   def cast_params(params) do
     Hugs.denormalize(params, @params_caster)
   end
 
+  @impl Service
   def configure(config) do
     config
     |> use_service(:credentials, Tonka.Services.Credentials)
     |> use_service(:people, People)
   end
 
+  @impl Service
   def build(%{credentials: credentials, people: people}, %{credentials: path, projects: projects}) do
     case Tonka.Services.Credentials.get_string(credentials, path) do
       {:ok, token} -> {:ok, new(private_token: token, projects: projects, people: people)}
@@ -49,6 +53,7 @@ defmodule Tonka.Ext.Gitlab.Services.Issues do
     end
   end
 
+  @impl IssuesSource
   def fetch_all_issues(%__MODULE__{} = gitlab) do
     %__MODULE__{people: people, private_token: token} = gitlab
     client = build_http_client(token)

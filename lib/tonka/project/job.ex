@@ -11,7 +11,7 @@ defmodule Tonka.Project.Job do
   end
 
   @impl GenServer
-  def init(%{prk: prk, pub: pubkey} = state) do
+  def init(state) do
     {:ok, state, {:continue, :start}}
   end
 

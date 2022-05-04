@@ -1,7 +1,4 @@
 defmodule Tonka.Project do
-  alias Tonka.Core.Container
-  alias Tonka.Data.ProjectInfo
-  alias Tonka.Project.Loader
   alias Tonka.Project.ProjectRegistry
   require Logger
   use Supervisor

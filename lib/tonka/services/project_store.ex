@@ -40,6 +40,10 @@ defmodule Tonka.Services.ProjectStore do
   end
 
   @impl Service
+  def service_type,
+    do: __MODULE__
+
+  @impl Service
   def cast_params(term) do
     {:ok, term}
   end

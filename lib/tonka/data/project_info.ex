@@ -1,7 +1,7 @@
 defmodule Tonka.Data.ProjectInfo do
   require Hugs
+  use TODO
 
-  @todo "everything required"
   @todo "hide credentials in closure, test if closure can leak info"
 
   Hugs.build_struct()

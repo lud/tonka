@@ -1,7 +1,7 @@
 defmodule Tonka.Project.Job do
-  use GenServer, restart: :temporary, shutdown: 60_000
-  alias Tonka.Project
   alias Tonka.Core.Grid
+  alias Tonka.Project
+  use GenServer, restart: :temporary, shutdown: 60_000
 
   def start_link(opts) do
     prk = Keyword.fetch!(opts, :prk)
@@ -10,11 +10,12 @@ defmodule Tonka.Project.Job do
     GenServer.start_link(__MODULE__, %{prk: prk, pub: pubkey, input: input}, [])
   end
 
-  @impl true
-  def init(%{prk: prk, pub: pubkey, input: input} = state) do
+  @impl GenServer
+  def init(%{prk: prk, pub: pubkey} = state) do
     {:ok, state, {:continue, :start}}
   end
 
+  @impl GenServer
   def handle_continue(:start, %{prk: prk, pub: pubkey, input: input} = state) do
     with {:ok, pub} <- Project.fetch_publication(prk, pubkey),
          {:ok, container} <- Project.fetch_container(prk),

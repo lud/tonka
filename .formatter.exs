@@ -1,6 +1,6 @@
 [
   import_deps: [:ecto, :phoenix, :todo],
-  inputs: ["*.{ex,exs}", "priv/*/seeds.exs", "{config,lib,test}/**/*.{ex,exs}"],
+  inputs: ["*.{ex,exs}", "priv/*/seeds.exs", "{config,lib,test,scripts}/**/*.{ex,exs}"],
   subdirectories: ["priv/*/migrations"],
   force_do_end_blocks: false,
   locals_without_parens: [

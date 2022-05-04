@@ -4,6 +4,12 @@ defmodule Tonka.Project.Scheduler do
   alias Tonka.Data.TimeInterval
   use Tonka.Core.Service
 
+  @moduledoc """
+  The scheduler is a per-project GenServer that will run the commands configured
+  in the project YAML file. Such command are associated to a CRON expression to
+  define when they are run.
+  """
+
   defmodule Command.Grid do
     require Hugs
 
@@ -15,6 +21,7 @@ defmodule Tonka.Project.Scheduler do
 
   defmodule Spec do
     require Hugs
+    alias Crontab.CronExpression.Parser
 
     Hugs.build_struct()
     |> Hugs.field(:id, type: :binary, required: true)
@@ -50,10 +57,10 @@ defmodule Tonka.Project.Scheduler do
       case size do
         6 ->
           Logger.warn("using extended crontab expression: #{exp}")
-          Crontab.CronExpression.Parser.parse(exp, true)
+          Parser.parse(exp, true)
 
         _ ->
-          Crontab.CronExpression.Parser.parse(exp, false)
+          Parser.parse(exp, false)
       end
     end
   end
@@ -68,12 +75,12 @@ defmodule Tonka.Project.Scheduler do
                    cast: {__MODULE__, :cast_specs, []}
                  )
 
-  @impl true
+  @impl Service
   def cast_params(term) do
     Hugs.denormalize(term, @params_schema)
   end
 
-  @impl true
+  @impl Service
   def configure(config) do
     config
     |> use_service(:store, Tonka.Services.ProjectStore)
@@ -81,14 +88,10 @@ defmodule Tonka.Project.Scheduler do
     |> use_service(:pinfo, Tonka.Data.ProjectInfo)
   end
 
-  @impl true
+  @impl Service
   def build(%{sup: sup, store: _store, pinfo: %{prk: prk}}, %{jobs: specs}) do
     Tonka.Services.ServiceSupervisor.start_child(sup, {__MODULE__, specs: specs, prk: prk})
   end
-
-  @moduledoc """
-  Write a little description of the module …
-  """
 
   @gen_opts ~w(name timeout debug spawn_opt hibernate_after)a
 

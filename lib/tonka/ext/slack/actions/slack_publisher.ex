@@ -1,10 +1,10 @@
 defmodule Tonka.Ext.Slack.Actions.SlackPublisher do
   alias Tonka.Core.Booklet
-  alias Tonka.Services.CleanupStore
-  alias Tonka.Services.CleanupStore.CleanupParams
   alias Tonka.Ext.Slack.Data.Post
   alias Tonka.Ext.Slack.Render.BookletRenderer
   alias Tonka.Ext.Slack.Services.SlackAPI
+  alias Tonka.Services.CleanupStore
+  alias Tonka.Services.CleanupStore.CleanupParams
   require Hugs
   use Tonka.Core.Action
   use Tonka.Project.ProjectLogger, as: Logger

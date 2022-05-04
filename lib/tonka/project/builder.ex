@@ -1,12 +1,22 @@
 defmodule Tonka.Project.Builder do
-  @moduledoc """
-  Write a little description of the module …
-  """
-  alias Tonka.Project.Loader
   alias Tonka.Core.Container
   alias Tonka.Data.ProjectInfo
-  use GenServer
+  alias Tonka.Project.Loader
+  alias Tonka.Project.ProjectRegistry
   require Logger
+  use GenServer
+
+  @moduledoc """
+  This module builds all the project elements, mainly from the YAML file.
+
+  The main built elements are:
+
+  * The container of the project, where process-based services are started under
+  the service supervisor. The container is frozen and registered in the project
+  registry.
+  * The different grid, prebuild for immediate execution, also stored in the
+    project registry.
+  """
 
   @gen_opts ~w(name timeout debug spawn_opt hibernate_after)a
 
@@ -53,17 +63,7 @@ defmodule Tonka.Project.Builder do
 
     File.mkdir_p!(pinfo.storage_dir)
 
-    container =
-      Container.new()
-      |> Container.bind_impl(ProjectInfo, ProjectInfo.new(pinfo))
-      |> Container.bind_impl(Tonka.Services.ServiceSupervisor, pinfo.service_sup_name)
-      |> Container.bind(
-        Tonka.Services.ProjectStore.Backend,
-        Tonka.Services.ProjectStore.CubDBBackend
-      )
-      |> Container.bind(Tonka.Services.CleanupStore)
-      |> Container.bind(Tonka.Services.ProjectStore)
-      |> Container.bind(Tonka.Services.Credentials, &build_credentials(&1, pinfo))
+    container = build_container_base(pinfo)
 
     container =
       Enum.reduce(layout.services, container, fn {_name, sdef}, c ->
@@ -80,8 +80,21 @@ defmodule Tonka.Project.Builder do
 
     with {:ok, container} <- Container.prebuild_all(container),
          container <- Container.freeze(container) do
-      Tonka.Project.ProjectRegistry.register_value(prk, :container, container)
+      ProjectRegistry.register_value(prk, :container, container)
     end
+  end
+
+  defp build_container_base(pinfo) do
+    Container.new()
+    |> Container.bind_impl(ProjectInfo, ProjectInfo.new(pinfo))
+    |> Container.bind_impl(Tonka.Services.ServiceSupervisor, pinfo.service_sup_name)
+    |> Container.bind(
+      Tonka.Services.ProjectStore.Backend,
+      Tonka.Services.ProjectStore.CubDBBackend
+    )
+    |> Container.bind(Tonka.Services.CleanupStore)
+    |> Container.bind(Tonka.Services.ProjectStore)
+    |> Container.bind(Tonka.Services.Credentials, &build_credentials(&1, pinfo))
   end
 
   defp service_type(module) do
@@ -111,7 +124,7 @@ defmodule Tonka.Project.Builder do
   defp build_publications(%{prk: prk} = _pinfo, layout) do
     Ark.Ok.map_ok(layout.publications, fn {key, raw} ->
       with {:ok, pub} <- build_pub(raw),
-           :ok <- Tonka.Project.ProjectRegistry.register_value(prk, :publication, key, pub) do
+           :ok <- ProjectRegistry.register_value(prk, :publication, key, pub) do
         {:ok, key}
       end
     end)

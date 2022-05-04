@@ -1,7 +1,9 @@
 defmodule Tonka.ProjectSchedulerTest do
-  use ExUnit.Case, async: true
+  alias Crontab.CronExpression.Parser
+  alias Tonka.Data.TimeInterval
   alias Tonka.Project.Scheduler
   import Tonka.Utils
+  use ExUnit.Case, async: true
 
   test "parsing a scheduler spec" do
     raw =
@@ -80,12 +82,12 @@ defmodule Tonka.ProjectSchedulerTest do
     spec1 =
       spec1
       |> Map.put(:run, runner.(:foo))
-      |> Map.put(:schedule, Crontab.CronExpression.Parser.parse!("* * * * * *", true))
+      |> Map.put(:schedule, Parser.parse!("* * * * * *", true))
 
     spec2 =
       spec2
       |> Map.put(:run, runner.(:bar))
-      |> Map.put(:schedule, Crontab.CronExpression.Parser.parse!("* * * * * *", true))
+      |> Map.put(:schedule, Parser.parse!("* * * * * *", true))
 
     assert {:ok, pid} = Scheduler.start_link(specs: [spec1, spec2], prk: "test")
 
@@ -100,7 +102,7 @@ defmodule Tonka.ProjectSchedulerTest do
 
   test "formatting a time interval" do
     t = "2d1h12s"
-    ms = Tonka.Data.TimeInterval.to_ms!(t)
-    assert t == Tonka.Data.TimeInterval.to_string(ms)
+    ms = TimeInterval.to_ms!(t)
+    assert t == TimeInterval.to_string(ms)
   end
 end

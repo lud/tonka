@@ -2,11 +2,10 @@ defmodule Tonka.Data.People do
   @moduledoc """
   Represents a group of `Tonka.Data.Person`
   """
-
-  use Tonka.Core.Service
   alias Tonka.Data.Person
+  use Tonka.Core.Service
 
-  @impl true
+  @impl Service
   def build(_, params) do
     with {:ok, all} <- Ark.Ok.map_ok(params, &validate_person/1) do
       {:ok, new(all)}
@@ -19,7 +18,7 @@ defmodule Tonka.Data.People do
   def ensure_all_people(other),
     do: {:error, {:invalid_person, other}}
 
-  @impl true
+  @impl Service
   def cast_params(raw) when is_map(raw) do
     raw
     |> Enum.map(fn
@@ -33,12 +32,12 @@ defmodule Tonka.Data.People do
     {:error, "people service expecs a map of persons as its params, got: #{inspect(raw)}"}
   end
 
-  @impl true
+  @impl Service
   def configure(config) do
     config
   end
 
-  @impl true
+  @impl Service
   def service_type, do: __MODULE__
 
   defstruct people: []

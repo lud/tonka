@@ -20,8 +20,6 @@ defmodule Tonka.ProjectLoaderTest do
     assert {:error, err} = Loader.get_definitions(raw)
 
     assert Exception.message(err) =~ ~r/no such service: this\.module\.is\.unknown/
-    ## TODO Hugs needs to provide a way to get an error message as a simple string
-    # assert find_error(err, )
   end
 
   test "definitions groups are always defined" do

@@ -1,9 +1,8 @@
 defmodule Tonka.PeopleTest do
-  use ExUnit.Case, async: true
-
-  alias Tonka.Data.Person
-  alias Tonka.Data.People
   alias Tonka.Core.Container
+  alias Tonka.Data.People
+  alias Tonka.Data.Person
+  use ExUnit.Case, async: true
 
   test "basic people api" do
     container =

@@ -1,8 +1,9 @@
 defmodule Tonka.Ext.Slack.Services.SlackAPI do
+  alias Slack.Web.Chat
   alias Tonka.Ext.Slack.Data.Post
-  use Tonka.Project.ProjectLogger, as: Logger
   use TODO
   use Tonka.Core.Service
+  use Tonka.Project.ProjectLogger, as: Logger
 
   @enforce_keys [:send_opts]
   defstruct @enforce_keys
@@ -14,22 +15,25 @@ defmodule Tonka.Ext.Slack.Services.SlackAPI do
 
   @pretty_json Mix.env() != :prod
 
-  @impl Tonka.Core.Service
+  @impl Service
   def service_type, do: __MODULE__
 
   def new(opts) do
     struct!(__MODULE__, opts)
   end
 
+  @impl Service
   def cast_params(params) do
     Hugs.denormalize(params, @params_caster)
   end
 
+  @impl Service
   def configure(config) do
     config
     |> use_service(:credentials, Tonka.Services.Credentials)
   end
 
+  @impl Service
   def build(%{credentials: credentials}, %{credentials: path}) do
     case Tonka.Services.Credentials.get_string(credentials, path) do
       {:ok, token} -> {:ok, new(send_opts: %{token: token})}
@@ -43,7 +47,7 @@ defmodule Tonka.Ext.Slack.Services.SlackAPI do
   def send_chat_message(%__MODULE__{} = slack, %Post{} = post, channel) do
     message = build_message(slack, post)
 
-    post_result = Slack.Web.Chat.post_message(channel, post.title, message)
+    post_result = Chat.post_message(channel, post.title, message)
 
     print_warnings(post_result)
 
@@ -111,7 +115,7 @@ defmodule Tonka.Ext.Slack.Services.SlackAPI do
   end
 
   def cleanup_chat_message(%__MODULE__{send_opts: opts}, %{channel: channel, ts: ts}) do
-    case Slack.Web.Chat.delete(channel, ts, opts) do
+    case Chat.delete(channel, ts, opts) do
       %{"ok" => true} ->
         :ok
 

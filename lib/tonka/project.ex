@@ -1,11 +1,10 @@
 defmodule Tonka.Project do
-  use Supervisor
-  alias Tonka.Project.ProjectRegistry
-  alias Tonka.Project.Loader
   alias Tonka.Core.Container
   alias Tonka.Data.ProjectInfo
-
+  alias Tonka.Project.Loader
+  alias Tonka.Project.ProjectRegistry
   require Logger
+  use Supervisor
 
   @moduledoc """
   The supervisor that manages a single project's processes.

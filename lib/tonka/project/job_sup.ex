@@ -9,7 +9,7 @@ defmodule Tonka.Project.JobSup do
     DynamicSupervisor.start_link(__MODULE__, [prk: prk], gen_opts)
   end
 
-  @impl true
+  @impl DynamicSupervisor
   def init(prk: prk) do
     Logger.info("initializing job supervisor for #{prk}")
     DynamicSupervisor.init(strategy: :one_for_one)

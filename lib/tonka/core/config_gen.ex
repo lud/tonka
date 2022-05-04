@@ -1,8 +1,8 @@
 defmodule Tonka.Core.ConfigGen do
-  alias Tonka.Core.Container
-  alias Tonka.Core.Service
-  alias Tonka.Core.Grid
   alias Tonka.Core.Action
+  alias Tonka.Core.Container
+  alias Tonka.Core.Grid
+  alias Tonka.Core.Service
 
   def generate_config(container, grids) do
     services = generate_services(container)

@@ -127,16 +127,10 @@ defmodule Tonka.Project.Loader do
 
   defp get_publications_defs(%{"publications" => raw}) do
     action_index = Tonka.Extension.build_action_index()
+    denorm_context = %{resolver: action_index}
 
     map_ok(raw, fn {key, pubdef} when is_binary(key) ->
-      try do
-        case PublicationDef.denormalize(pubdef, context_arg: %{resolver: action_index}) do
-          {:ok, pub} -> {:ok, {key, Map.put(pub, :id, key)}}
-          {:error, _} = err -> err
-        end
-      catch
-        t, e -> {:error, {t, e}}
-      end
+      denormalize_pub(pubdef, key, denorm_context)
     end)
     |> case do
       {:ok, v} -> {:ok, Map.new(v)}
@@ -145,4 +139,13 @@ defmodule Tonka.Project.Loader do
   end
 
   defp get_publications_defs(_), do: {:ok, %{}}
+
+  defp denormalize_pub(pubdef, key, denorm_context) do
+    case PublicationDef.denormalize(pubdef, context_arg: denorm_context) do
+      {:ok, pub} -> {:ok, {key, Map.put(pub, :id, key)}}
+      {:error, _} = err -> err
+    end
+  catch
+    t, e -> {:error, {t, e}}
+  end
 end

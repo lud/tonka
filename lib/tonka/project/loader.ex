@@ -103,7 +103,6 @@ defmodule Tonka.Project.Loader do
   @spec get_definitions(map) :: {:ok, project_defs} | {:error, :x}
   def get_definitions(map) when is_map(map) do
     with {:ok, services} <- get_services_defs(map),
-         IO.puts("services ok"),
          {:ok, publications} <- get_publications_defs(map) do
       {:ok, %{services: services, publications: publications}}
     end
